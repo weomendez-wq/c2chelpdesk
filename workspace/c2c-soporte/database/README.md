@@ -36,12 +36,25 @@ database: soporte
 4. Ejecutar `sql/01-create-schemas.sql`.
 5. Validar con `sql/99-verify-local.sql`.
 
+## Scripts de inspeccion
+
+Estos scripts son de solo lectura:
+
+- `sql/10-inspect-schemas.sql`: lista schemas locales esperados.
+- `sql/11-inspect-tables-columns.sql`: lista tablas y columnas.
+- `sql/12-inspect-indexes.sql`: lista indices.
+- `sql/13-inspect-table-estimates.sql`: lista estimaciones de filas y tamanos sin usar `COUNT(*)`.
+
 ## Comandos de referencia
 
 ```powershell
 psql -h localhost -p 5434 -U postgres -d postgres -f .\database\sql\00-create-database.sql
 psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\01-create-schemas.sql
 psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\99-verify-local.sql
+psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\10-inspect-schemas.sql
+psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\11-inspect-tables-columns.sql
+psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\12-inspect-indexes.sql
+psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\13-inspect-table-estimates.sql
 ```
 
 ## Estado

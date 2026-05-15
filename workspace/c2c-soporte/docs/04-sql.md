@@ -35,6 +35,10 @@ Los scripts iniciales estan en `database/sql/`:
 - `00-create-database.sql`: crea la base local `soporte` si no existe.
 - `01-create-schemas.sql`: crea `staging_public` y `rr_gestion_soporte` si no existen.
 - `99-verify-local.sql`: valida base actual y schemas esperados.
+- `10-inspect-schemas.sql`: lista schemas locales esperados.
+- `11-inspect-tables-columns.sql`: lista tablas y columnas.
+- `12-inspect-indexes.sql`: lista indices.
+- `13-inspect-table-estimates.sql`: lista estimaciones de filas y tamanos sin `COUNT(*)`.
 
 Estos scripts no deben ejecutarse contra produccion.
 

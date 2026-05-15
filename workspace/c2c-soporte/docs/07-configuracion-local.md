@@ -53,6 +53,10 @@ LOG_LEVEL=debug
 database/sql/00-create-database.sql
 database/sql/01-create-schemas.sql
 database/sql/99-verify-local.sql
+database/sql/10-inspect-schemas.sql
+database/sql/11-inspect-tables-columns.sql
+database/sql/12-inspect-indexes.sql
+database/sql/13-inspect-table-estimates.sql
 ```
 
 No se ejecutan automaticamente. Ya fueron ejecutados en el entorno local confirmado.
