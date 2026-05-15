@@ -19,6 +19,7 @@
 - Clasificar candidatos de copia controlada.
 - Definir bloque 1 de copia completa para tablas pequenas.
 - Preparar copia controlada de datos.
+- Disenar bloque 2 para tablas especiales con `EXPLAIN` previo.
 
 ## Fase 3 - Seguridad SQL y observabilidad
 

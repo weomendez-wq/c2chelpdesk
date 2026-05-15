@@ -69,6 +69,8 @@ El resumen del inventario actual esta en `docs/10-resumen-inventario-origen.md`.
 
 El plan de copia controlada esta en `docs/11-plan-copia-controlada.md`.
 
+El plan para tablas especiales del bloque 2 esta en `docs/12-plan-bloque2-tablas-especiales.md`.
+
 Los scripts generados para copia controlada quedan en `database/generated/` y no se versionan.
 
 ## Regla principal
