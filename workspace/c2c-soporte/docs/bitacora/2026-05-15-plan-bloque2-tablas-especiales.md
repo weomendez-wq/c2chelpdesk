@@ -40,3 +40,25 @@ database/sql/source-readonly/30-block2-explain-candidates.sql
 ## Siguiente paso
 
 Generar bloque 2A como copia acotada para `sincronizacionsap` y `mv_device_operacion`, manteniendo export/import CSV y validacion de conteos.
+
+## Avance posterior
+
+Se agrega `database/scripts/generate-copy-block2a.ps1` para preparar artefactos locales de copia. El script no ejecuta copia automaticamente.
+
+## Resultado bloque 2A
+
+Artefactos locales:
+
+```txt
+database/generated/copy-block2a/20260515-031521
+```
+
+Resultado validado:
+
+- `sincronizacionsap`: 192903 filas origen y local.
+- `mv_device_operacion`: 384 filas origen y local.
+- Total origen: 193287.
+- Total local: 193287.
+- Diferencias: 0.
+
+Los CSV y archivos de comparacion quedan ignorados por Git en `database/generated/`.

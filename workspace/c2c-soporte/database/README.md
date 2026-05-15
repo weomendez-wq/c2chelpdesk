@@ -85,6 +85,25 @@ Si no existe usuario solo lectura, se permite usar `master` solo con `-ReadOnlyS
 
 Los scripts generados quedan en `database/generated/copy-block1/` y no se versionan.
 
+## Generar bloque 2A de copia
+
+```powershell
+.\database\scripts\generate-copy-block2a.ps1
+```
+
+Los scripts generados quedan en `database/generated/copy-block2a/` y no se versionan.
+
+## Copia local bloque 2A
+
+El bloque 2A fue ejecutado localmente desde origen `dte.public` hacia `soporte.staging_public`.
+
+Resultado validado:
+
+- 2 relaciones copiadas.
+- 193287 filas en origen.
+- 193287 filas en local.
+- 0 diferencias por conteo.
+
 ## Copia local bloque 1
 
 El bloque 1 fue ejecutado localmente desde origen `dte.public` hacia `soporte.staging_public`.

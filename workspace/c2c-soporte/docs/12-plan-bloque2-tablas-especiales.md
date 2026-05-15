@@ -47,6 +47,21 @@ Copiar tablas pequenas o moderadas:
 1. `sincronizacionsap` completa.
 2. `mv_device_operacion` como snapshot local.
 
+Generador:
+
+```powershell
+.\database\scripts\generate-copy-block2a.ps1
+```
+
+Ejecucion local completada el 2026-05-15 con artefactos en `database/generated/copy-block2a/20260515-031521`.
+
+Resultado:
+
+- Relaciones copiadas: 2.
+- Filas origen: 193287.
+- Filas locales: 193287.
+- Diferencias por conteo: 0.
+
 ### Bloque 2B
 
 Copiar `contabilizaciondocs` por ventana anual 2026 usando `fechaemision`.
