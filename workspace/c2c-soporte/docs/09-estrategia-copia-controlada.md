@@ -29,10 +29,13 @@ Opcionalmente usar el runner:
   -HostName "<host_origen>" `
   -Port 5432 `
   -Database "<base_origen>" `
-  -User "<usuario_solo_lectura>"
+  -User "<usuario_solo_lectura>" `
+  -ReadOnlySession
 ```
 
 Los resultados se guardan como CSV locales ignorados por Git en `database/inventory/source/`.
+
+Si no existe usuario solo lectura, se puede usar `master` solo con `-ReadOnlySession`, que fuerza la sesion a solo lectura y agrega timeouts.
 
 ## Fase 2 - Decision de copia
 

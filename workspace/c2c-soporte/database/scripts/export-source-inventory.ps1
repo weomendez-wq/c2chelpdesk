@@ -11,7 +11,13 @@ param(
   [Parameter(Mandatory = $true)]
   [string] $User,
 
-  [string] $OutputDir = ".\database\inventory\source"
+  [string] $OutputDir = ".\database\inventory\source",
+
+  [switch] $ReadOnlySession,
+
+  [int] $StatementTimeoutMs = 30000,
+
+  [int] $LockTimeoutMs = 5000
 )
 
 $ErrorActionPreference = "Stop"
@@ -33,19 +39,29 @@ $queries = @(
   @{ Name = "24-documentos-date-candidates"; File = ".\database\sql\source-readonly\24-documentos-date-candidates.sql" }
 )
 
-foreach ($query in $queries) {
-  $outputPath = Join-Path $targetDir "$($query.Name).csv"
+$previousPgOptions = $env:PGOPTIONS
 
-  & $psql.Source `
-    -h $HostName `
-    -p $Port `
-    -U $User `
-    -d $Database `
-    -v ON_ERROR_STOP=1 `
-    -f $query.File `
-    --csv `
-    -o $outputPath
+try {
+  if ($ReadOnlySession) {
+    $env:PGOPTIONS = "-c default_transaction_read_only=on -c statement_timeout=$StatementTimeoutMs -c lock_timeout=$LockTimeoutMs"
+  }
+
+  foreach ($query in $queries) {
+    $outputPath = Join-Path $targetDir "$($query.Name).csv"
+
+    & $psql.Source `
+      -h $HostName `
+      -p $Port `
+      -U $User `
+      -d $Database `
+      -v ON_ERROR_STOP=1 `
+      -f $query.File `
+      --csv `
+      -o $outputPath
+  }
+}
+finally {
+  $env:PGOPTIONS = $previousPgOptions
 }
 
 Write-Host "Inventario exportado en: $targetDir"
-

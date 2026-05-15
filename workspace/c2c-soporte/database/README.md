@@ -67,10 +67,13 @@ Desde `workspace/c2c-soporte`:
   -HostName "<host_origen>" `
   -Port 5432 `
   -Database "<base_origen>" `
-  -User "<usuario_solo_lectura>"
+  -User "<usuario_solo_lectura>" `
+  -ReadOnlySession
 ```
 
 Los CSV quedan en `database/inventory/source/` y no se versionan.
+
+Si no existe usuario solo lectura, se permite usar `master` solo con `-ReadOnlySession` y password temporal en variable de entorno local.
 
 ## Comandos de referencia
 
