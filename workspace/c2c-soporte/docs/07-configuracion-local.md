@@ -31,5 +31,14 @@ LOG_LEVEL=debug
 
 - Confirmar si PostgreSQL local ya esta instalado.
 - Confirmar credenciales locales.
-- Crear scripts SQL base despues de validar la conexion local.
+- Ejecutar scripts SQL base despues de validar la conexion local.
 
+## Scripts SQL locales
+
+```txt
+database/sql/00-create-database.sql
+database/sql/01-create-schemas.sql
+database/sql/99-verify-local.sql
+```
+
+No se ejecutan automaticamente. Primero se debe confirmar que la conexion apunta al PostgreSQL local correcto.

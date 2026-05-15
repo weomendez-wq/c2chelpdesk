@@ -28,6 +28,16 @@ El esquema `public` productivo se considera solo lectura.
 - Esquema de copia controlada: `staging_public`.
 - Esquema de objetos propios: `rr_gestion_soporte`.
 
+## Scripts locales
+
+Los scripts iniciales estan en `database/sql/`:
+
+- `00-create-database.sql`: crea la base local `soporte` si no existe.
+- `01-create-schemas.sql`: crea `staging_public` y `rr_gestion_soporte` si no existen.
+- `99-verify-local.sql`: valida base actual y schemas esperados.
+
+Estos scripts no deben ejecutarse contra produccion.
+
 ## Endpoint inicial de analisis
 
 ```txt
