@@ -53,6 +53,8 @@ Reglas:
 - No copian datos.
 - `25-documentos-window-explain-template.sql` es una plantilla y requiere reemplazar `<columna_fecha>`.
 
+Los resultados de inventario exportados por `database/scripts/export-source-inventory.ps1` quedan en `database/inventory/source/` y no se versionan.
+
 ## Endpoint inicial de analisis
 
 ```txt

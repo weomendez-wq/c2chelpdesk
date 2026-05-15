@@ -63,6 +63,8 @@ La conexion local validada usa PostgreSQL en `localhost:5434` con base `soporte`
 
 La estrategia de copia controlada esta documentada en `docs/09-estrategia-copia-controlada.md`.
 
+Los resultados de inventario de origen deben guardarse localmente en `database/inventory/source/`; esa carpeta ignora CSV generados para evitar subir metadatos sensibles.
+
 ## Regla principal
 
 No ejecutar cambios sobre base productiva ni crear scripts SQL sin documentar antes el objetivo, el alcance y la forma de validacion.

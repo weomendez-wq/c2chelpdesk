@@ -58,6 +58,20 @@ La carpeta `sql/source-readonly/` contiene consultas de solo lectura para inspec
 
 No modifican datos ni estructura. La plantilla de `documentos` requiere reemplazar `<columna_fecha>` antes de ejecutarse.
 
+## Exportar inventario de origen
+
+Desde `workspace/c2c-soporte`:
+
+```powershell
+.\database\scripts\export-source-inventory.ps1 `
+  -HostName "<host_origen>" `
+  -Port 5432 `
+  -Database "<base_origen>" `
+  -User "<usuario_solo_lectura>"
+```
+
+Los CSV quedan en `database/inventory/source/` y no se versionan.
+
 ## Comandos de referencia
 
 ```powershell

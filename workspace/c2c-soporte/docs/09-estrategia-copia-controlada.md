@@ -22,6 +22,18 @@ Ejecutar solo consultas de lectura:
 - `database/sql/source-readonly/23-public-table-estimates.sql`
 - `database/sql/source-readonly/24-documentos-date-candidates.sql`
 
+Opcionalmente usar el runner:
+
+```powershell
+.\database\scripts\export-source-inventory.ps1 `
+  -HostName "<host_origen>" `
+  -Port 5432 `
+  -Database "<base_origen>" `
+  -User "<usuario_solo_lectura>"
+```
+
+Los resultados se guardan como CSV locales ignorados por Git en `database/inventory/source/`.
+
 ## Fase 2 - Decision de copia
 
 Con el inventario se clasifican tablas:
@@ -52,4 +64,3 @@ El placeholder `<columna_fecha>` debe reemplazarse por la columna validada.
 - Obtener inventario real de origen.
 - Identificar columna de fecha correcta en `public.documentos`.
 - Definir scripts de copia hacia `staging_public`.
-
