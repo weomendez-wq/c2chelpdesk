@@ -259,11 +259,48 @@ Orden recomendado:
 5. device_alertas_resumen
 ```
 
+## Decision de implementacion inicial
+
+Se decide implementar la primera integracion como `VIEW`, no como `TABLE` ni `MATERIALIZED VIEW`.
+
+Motivos:
+
+- Evita duplicar datos ya presentes en `rr_gestion_soporte.documentos_2026`.
+- Evita procesos de refresh mientras aun se valida el modelo.
+- Evita cargas incrementales con `UPDATE` u `ON CONFLICT DO UPDATE`.
+- Permite validar totales contra la vista base antes de optimizar rendimiento.
+- Mantiene la integracion acotada a lectura sobre `rr_gestion_soporte` y `staging_public`.
+
+Scripts propuestos para esta etapa:
+
+```txt
+database/sql/26-create-documentos-operational-views.sql
+database/sql/27-verify-documentos-operational-views.sql
+database/sql/28-create-device-operational-views.sql
+database/sql/29-verify-device-operational-views.sql
+```
+
+Objetos propuestos:
+
+```txt
+rr_gestion_soporte.documentos_2026_normalizados
+rr_gestion_soporte.documentos_2026_mensual
+rr_gestion_soporte.documentos_2026_device_mensual
+rr_gestion_soporte.device_control_resumen
+```
+
+Quedan fuera de esta etapa:
+
+- `etl_control`.
+- `fact_docs_aggregados` como tabla fisica.
+- Cargas incrementales.
+- `MATERIALIZED VIEW`.
+- Cualquier sentencia `DROP`, `UPDATE` o `ALTER`.
+
 ## Pendiente antes de implementar
 
-- Confirmar si `database/integrar/` debe quedar versionado como insumo historico o si se debe dejar fuera y solo versionar scripts adaptados.
-- Definir si se crea una funcion oficial para parseo seguro de fechas.
-- Decidir si la capa normalizada sera `VIEW`, `TABLE` o `MATERIALIZED VIEW`.
+- Definir si se crea una funcion oficial para parseo seguro de fechas posterior a la validacion de vistas.
+- Evaluar performance antes de pasar alguna vista a `MATERIALIZED VIEW`.
 
 ## Limpieza preventiva aplicada
 

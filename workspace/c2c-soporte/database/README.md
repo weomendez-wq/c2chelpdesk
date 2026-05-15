@@ -51,6 +51,12 @@ Estos scripts son de solo lectura:
 - `sql/21-verify-documentos-2026-view.sql`: verifica conteos por periodo y total de la vista.
 - `sql/22-create-base-support-views.sql`: crea vistas base de empresa y dispositivos.
 - `sql/23-verify-base-support-views.sql`: verifica conteos de vistas base.
+- `sql/24-create-empresa-control-resumen.sql`: crea vista de control por empresa.
+- `sql/25-verify-empresa-control-resumen.sql`: verifica control por empresa.
+- `sql/26-create-documentos-operational-views.sql`: crea vistas documentales operativas de lectura.
+- `sql/27-verify-documentos-operational-views.sql`: verifica vistas documentales operativas.
+- `sql/28-create-device-operational-views.sql`: crea vista operacional por device.
+- `sql/29-verify-device-operational-views.sql`: verifica vista operacional por device.
 
 ## Scripts de inventario de origen
 

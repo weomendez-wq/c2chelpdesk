@@ -27,6 +27,19 @@ Se detectaron tres grupos:
 
 No ejecutar scripts heredados directamente. Integrar la logica en scripts nuevos, no destructivos y adaptados a la base local actual.
 
+## Decision de implementacion
+
+La primera integracion se hara con vistas de lectura:
+
+- `rr_gestion_soporte.documentos_2026_normalizados`
+- `rr_gestion_soporte.documentos_2026_mensual`
+- `rr_gestion_soporte.documentos_2026_device_mensual`
+- `rr_gestion_soporte.device_control_resumen`
+
+No se integraran aun cargas incrementales, tablas fisicas, materialized views ni controles ETL.
+
+La causa es que los scripts heredados mezclan analisis, carga y optimizacion. Para certificar numeros primero se necesita una capa consultable que cuadre contra `rr_gestion_soporte.documentos_2026`.
+
 ## Limpieza posterior
 
 Se quitaron todas las lineas con `DROP` de los scripts en `database/integrar/`.
