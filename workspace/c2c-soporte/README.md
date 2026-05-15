@@ -41,6 +41,7 @@ workspace/c2c-soporte/
 - `docs/07-configuracion-local.md`
 - `docs/08-api-estandar.md`
 - `docs/15-manual-usuario-primario.md`
+- `docs/16-consultas-control-operativo.md`
 - `docs/decisiones/`
 - `docs/bitacora/`
 
@@ -81,6 +82,8 @@ El plan especifico para `documentos` esta en `docs/13-plan-documentos.md`.
 El orden funcional para iniciar el frontend esta en `docs/14-orden-funcional-frontend.md`.
 
 El manual primario para validar frontend y backend juntos esta en `docs/15-manual-usuario-primario.md`.
+
+Las consultas actuales y propuestas para control operativo estan en `docs/16-consultas-control-operativo.md`.
 
 La decision de dejar un branch/proyecto posterior de normalizacion de base de datos esta en `docs/decisiones/2026-05-15-branch-normalizacion-base-datos.md`.
 
