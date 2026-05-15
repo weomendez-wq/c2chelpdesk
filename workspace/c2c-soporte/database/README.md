@@ -84,6 +84,17 @@ Si no existe usuario solo lectura, se permite usar `master` solo con `-ReadOnlyS
 
 Los scripts generados quedan en `database/generated/copy-block1/` y no se versionan.
 
+## Copia local bloque 1
+
+El bloque 1 fue ejecutado localmente desde origen `dte.public` hacia `soporte.staging_public`.
+
+Resultado validado:
+
+- 35 tablas copiadas.
+- 229211 filas en origen.
+- 229211 filas en local.
+- 0 diferencias por conteo.
+
 ## Comandos de referencia
 
 ```powershell

@@ -62,7 +62,34 @@ Los artefactos se crean en `database/generated/copy-block1/` y no se versionan.
 
 ## Siguiente paso tecnico
 
-Revisar el ultimo directorio generado y ejecutar el flujo manualmente en este orden:
+Bloque 1 ejecutado localmente el 2026-05-15 con artefactos generados en `database/generated/copy-block1/20260515-030016`.
+
+Resultado:
+
+- Tablas copiadas: 35.
+- Filas origen: 229211.
+- Filas locales: 229211.
+- Diferencias por conteo: 0.
+
+Los archivos de evidencia (`source-counts.csv`, `local-counts.csv`, `count-comparison.csv`) quedan en `database/generated/` y no se versionan.
+
+## Siguiente paso tecnico
+
+Disenar el bloque 2 para tablas de revision/especiales:
+
+- `sincronizacionsap`
+- `contabilizaciondocs`
+- `documentos_fecha_normalizada`
+- `cierrecaja_documento`
+- `enviosiidocs`
+- `documentos`
+- `mv_device_operacion`
+
+Para cada tabla especial se debe definir primero filtro, ventana, indice util, `EXPLAIN` esperado y limite operacional.
+
+## Referencia de ejecucion
+
+El flujo manual del bloque 1 fue:
 
 1. Crear tablas locales con `01-create-staging-tables.sql`.
 2. Exportar CSV desde origen con `02-export-source-csv.ps1`.
