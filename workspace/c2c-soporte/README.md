@@ -6,7 +6,7 @@ Espacio reservado para preparar el proyecto C2C Soporte / DTE / Torre de Control
 
 ## Estado actual
 
-Base documental, backend inicial y herramientas de inventario/copia controlada en curso.
+Base documental, backend inicial, frontend inicial y herramientas de inventario/copia controlada en curso.
 
 ## Alcance inicial
 
@@ -46,14 +46,18 @@ workspace/c2c-soporte/
 ## Stack definido
 
 - Backend: Node.js + Express + TypeScript + Zod + Pino + `pg`.
-- Frontend: React + Vite + TypeScript + Tailwind.
-- Datos UI: TanStack Query y TanStack Table.
-- Graficos: Recharts.
+- Frontend: React + Vite + TypeScript.
+- Datos UI iniciales: `fetch` encapsulado en services.
+- UI posterior evaluable: Tailwind, TanStack Query, TanStack Table y Recharts cuando el flujo lo justifique.
 - Base de datos: PostgreSQL.
 
 ## Backend inicial
 
 El backend minimo esta en `backend/` e incluye healthcheck, logger, `requestId`, validacion de entorno y formato API estandar. Antes de ejecutarlo se deben instalar dependencias con `npm install` dentro de `backend/`.
+
+## Frontend inicial
+
+El frontend inicial esta en `frontend/` y consume `GET /api/support/company-devices` para la vista operativa Empresa -> Dispositivos. Antes de ejecutarlo se deben instalar dependencias con `npm install` dentro de `frontend/`.
 
 ## Database inicial
 
