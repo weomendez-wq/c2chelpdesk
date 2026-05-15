@@ -14,6 +14,15 @@ Estos scripts son para entorno local. No se deben ejecutar contra una base produ
 soporte
 ```
 
+## Conexion local confirmada
+
+```txt
+host: localhost
+port: 5434
+user: postgres
+database: soporte
+```
+
 ## Schemas locales objetivo
 
 - `staging_public`: copia controlada, snapshots y staging local.
@@ -30,12 +39,11 @@ soporte
 ## Comandos de referencia
 
 ```powershell
-psql -U postgres -d postgres -f .\database\sql\00-create-database.sql
-psql -U postgres -d soporte -f .\database\sql\01-create-schemas.sql
-psql -U postgres -d soporte -f .\database\sql\99-verify-local.sql
+psql -h localhost -p 5434 -U postgres -d postgres -f .\database\sql\00-create-database.sql
+psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\01-create-schemas.sql
+psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\99-verify-local.sql
 ```
 
-## Pendiente
+## Estado
 
-Confirmar usuario, host, puerto y credenciales locales antes de ejecutar.
-
+Scripts ejecutados localmente por Rodrigo. Conexion validada desde backend con `pg` y endpoint `POST /api/admin/sql/explain`.

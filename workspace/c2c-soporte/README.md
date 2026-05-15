@@ -59,6 +59,8 @@ El backend minimo esta en `backend/` e incluye healthcheck, logger, `requestId`,
 
 Los scripts locales estan en `database/sql/` y preparan la base `soporte` con schemas `staging_public` y `rr_gestion_soporte`. No se ejecutan automaticamente ni deben usarse contra produccion.
 
+La conexion local validada usa PostgreSQL en `localhost:5434` con base `soporte`.
+
 ## Regla principal
 
 No ejecutar cambios sobre base productiva ni crear scripts SQL sin documentar antes el objetivo, el alcance y la forma de validacion.

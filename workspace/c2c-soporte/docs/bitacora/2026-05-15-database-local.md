@@ -21,7 +21,17 @@ Los scripts quedan documentados como uso local. No se ejecutan automaticamente y
 
 ## Pendientes
 
-- Confirmar instalacion local de PostgreSQL.
-- Confirmar usuario, host, puerto y credenciales.
-- Ejecutar scripts manualmente o con autorizacion explicita cuando el entorno local este validado.
+- Validar conexion desde backend con `DATABASE_URL=postgres://postgres:postgres@localhost:5434/soporte`.
+- Probar endpoint SQL explain contra la base local.
 
+## Actualizacion
+
+Rodrigo ejecuto los scripts localmente. La conexion local confirmada usa:
+
+```txt
+host: localhost
+port: 5434
+user: postgres
+password: postgres
+database: soporte
+```
