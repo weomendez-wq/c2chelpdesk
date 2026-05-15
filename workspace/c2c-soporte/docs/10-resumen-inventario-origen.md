@@ -9,7 +9,7 @@
 Inventario local generado en:
 
 ```txt
-database/inventory/source/20260515-023615/
+database/inventory/source/20260515-025144/
 ```
 
 Los CSV no se versionan.
@@ -18,10 +18,11 @@ Los CSV no se versionan.
 
 - Tablas base detectadas en `public`: 40.
 - Vistas detectadas: 0.
-- `documentos` tiene aproximadamente 38 millones de filas y 67 GB.
-- `enviosiidocs` tiene aproximadamente 39 millones de filas y 9.5 GB.
-- `cierrecaja_documento` tiene aproximadamente 37 millones de filas y 10 GB.
-- `contabilizaciondocs` tiene aproximadamente 6.2 millones de filas y 2.8 GB.
+- `documentos` tiene aproximadamente 38.4 millones de filas y 67 GB.
+- `enviosiidocs` tiene aproximadamente 40.1 millones de filas y 9.5 GB.
+- `cierrecaja_documento` tiene aproximadamente 38 millones de filas y 10 GB.
+- `contabilizaciondocs` tiene aproximadamente 6.3 millones de filas y 2.8 GB.
+- `sincronizacionsap` tiene aproximadamente 193 mil filas y 35 MB.
 
 ## Hallazgos sobre documentos
 
@@ -59,11 +60,11 @@ database/inventory/source/20260515-023615/copy-candidates/
 
 Resultado de `build-copy-candidates.ps1`:
 
-- Candidatas a copia completa: 11.
+- Candidatas a copia completa: 35.
 - Tablas grandes para revision: 1.
 - Tablas limitadas o especiales: 5.
 - Relaciones no tabla base: 1.
-- Tablas con estimacion desconocida: 24.
+- Tablas con estimacion desconocida: 0.
 
 ## Candidatas iniciales a copia completa
 
@@ -71,13 +72,37 @@ Resultado de `build-copy-candidates.ps1`:
 - `caf`
 - `cierrecaja`
 - `cierrecaja_rango`
+- `clasificacion_folios`
+- `cognito_users`
+- `complementoventas`
+- `complementoventasdocs`
+- `complementoventasresumen`
+- `complementoventasresumentest`
+- `contabilizacion`
 - `device`
 - `deviceconfiggroup`
+- `deviceposconfig`
+- `deviceregistrationkey`
+- `deviceservices`
+- `documento_estado_sii`
+- `duplicados`
 - `empresa`
+- `enviorcof`
 - `foliosdisponibles`
 - `foliosdispservice`
+- `historial_folios_rangos`
 - `historialasignacionfolios`
+- `internalids`
+- `permissions`
+- `posconfig`
+- `posuser`
 - `receptores`
+- `roles`
+- `tenant`
+- `tenant_acteco`
+- `tenant_permissions`
+- `tmpfolios`
+- `user_permissions`
 
 ## Requieren estrategia especial
 
@@ -90,4 +115,19 @@ Resultado de `build-copy-candidates.ps1`:
 
 ## Riesgo pendiente
 
-Las tablas con `estimated_rows = -1` requieren conteo controlado o `ANALYZE` en origen, pero no se debe ejecutar mantenimiento sobre origen. La opcion segura es generar `SELECT count(*)` solo para tablas pequenas por tamaño fisico y revisar tiempos.
+`sincronizacionsap` queda fuera de copia completa automatica por superar 100 mil filas. Puede copiarse despues de revisar si su volumen completo es aceptable o si requiere filtro.
+
+## EXPLAIN documentos
+
+Filtro directo sobre `public.documentos.fechaemision` para ventana 2026:
+
+- Plan: `Seq Scan`.
+- Filas estimadas: ~3.8 millones.
+- Decision: no usar esta consulta como base de copia directa.
+
+Filtro sobre `public.documentos_fecha_normalizada.fecha` para ventana 2026:
+
+- Plan: `Index Only Scan`.
+- Indice: `idx_doc_norm_tenant_rut_fecha`.
+- Filas estimadas: ~1.86 millones.
+- Decision: usar como apoyo analitico de fecha, pero no como reemplazo de `documentos` porque solo contiene `tenant_id`, `rut` y `fecha`.

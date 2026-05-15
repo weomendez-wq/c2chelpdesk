@@ -67,6 +67,8 @@ Los resultados de inventario de origen deben guardarse localmente en `database/i
 
 El resumen del inventario actual esta en `docs/10-resumen-inventario-origen.md`.
 
+El plan de copia controlada esta en `docs/11-plan-copia-controlada.md`.
+
 ## Regla principal
 
 No ejecutar cambios sobre base productiva ni crear scripts SQL sin documentar antes el objetivo, el alcance y la forma de validacion.

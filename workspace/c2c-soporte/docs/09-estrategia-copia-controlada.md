@@ -52,6 +52,12 @@ La clasificacion inicial se genera con:
   -InventoryDir ".\database\inventory\source\YYYYMMDD-HHMMSS"
 ```
 
+La decision actual esta documentada en:
+
+```txt
+docs/11-plan-copia-controlada.md
+```
+
 ## Fase 3 - EXPLAIN antes de copiar documentos
 
 Antes de copiar `documentos`, definir la columna de fecha y ejecutar:
