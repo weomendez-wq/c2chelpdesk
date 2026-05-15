@@ -32,11 +32,11 @@ backend/
 
 ## Pendientes antes de implementar
 
-- Crear scaffolding TypeScript.
-- Crear configuracion de entorno validada con Zod.
-- Crear logger Pino.
-- Crear pool PostgreSQL con `pg`.
-- Crear middleware de `requestId`.
+- Instalar dependencias.
+- Ejecutar typecheck.
+- Probar endpoint `GET /api/health`.
+- Agregar endpoint SQL seguro.
+- Agregar pruebas automatizadas.
 
 ## Decisiones tecnicas
 
@@ -46,3 +46,18 @@ backend/
 - Logger: Pino.
 - PostgreSQL: `pg`, sin ORM en la primera etapa.
 - Formato API: respuesta estandar documentada en `docs/08-api-estandar.md`.
+
+## Scaffolding inicial
+
+El backend inicial incluye:
+
+- `src/server.ts`
+- `src/app/createApp.ts`
+- `src/config/env.ts`
+- `src/config/database.ts`
+- `src/middlewares/requestId.ts`
+- `src/middlewares/notFoundHandler.ts`
+- `src/middlewares/errorHandler.ts`
+- `src/modules/health/health.routes.ts`
+- `src/shared/apiResponse.ts`
+- `src/shared/logger.ts`

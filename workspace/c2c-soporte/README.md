@@ -51,6 +51,10 @@ workspace/c2c-soporte/
 - Graficos: Recharts.
 - Base de datos: PostgreSQL.
 
+## Backend inicial
+
+El backend minimo esta en `backend/` e incluye healthcheck, logger, `requestId`, validacion de entorno y formato API estandar. Antes de ejecutarlo se deben instalar dependencias con `npm install` dentro de `backend/`.
+
 ## Regla principal
 
 No ejecutar cambios sobre base productiva ni crear scripts SQL sin documentar antes el objetivo, el alcance y la forma de validacion.

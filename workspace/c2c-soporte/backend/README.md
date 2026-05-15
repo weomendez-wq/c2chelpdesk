@@ -1,0 +1,55 @@
+# Backend C2C Soporte
+
+## Objetivo
+
+Backend inicial para C2C Soporte / DTE / Torre de Control.
+
+## Stack
+
+- Node.js 20+
+- Express
+- TypeScript
+- Zod
+- Pino
+- PostgreSQL con `pg`
+
+## Scripts
+
+```bash
+npm run dev
+npm run build
+npm run start
+npm run typecheck
+```
+
+## Configuracion
+
+Crear un `.env` local basado en `.env.example`.
+
+```txt
+NODE_ENV=development
+PORT=3000
+DATABASE_URL=postgres://usuario:password@localhost:5432/soporte
+LOG_LEVEL=debug
+```
+
+## Endpoint inicial
+
+```txt
+GET /api/health
+```
+
+Respuesta esperada:
+
+```json
+{
+  "ok": true,
+  "data": {
+    "status": "ok",
+    "service": "c2c-soporte-backend"
+  },
+  "meta": {
+    "requestId": "string"
+  }
+}
+```
