@@ -23,6 +23,7 @@
 - Bloquear comandos peligrosos.
 - Agregar logger estructurado y `requestId`.
 - Estandarizar formato de respuesta API.
+- Detectar `Seq Scan` en el plan JSON.
 
 ## Fase 4 - Consolidacion backend
 

@@ -53,3 +53,19 @@ Respuesta esperada:
   }
 }
 ```
+
+## Endpoint SQL explain
+
+```txt
+POST /api/admin/sql/explain
+```
+
+Body:
+
+```json
+{
+  "sql": "SELECT * FROM staging_public.documentos LIMIT 10"
+}
+```
+
+Este endpoint ejecuta solo `EXPLAIN (FORMAT JSON)` y bloquea comandos de escritura o multiples sentencias.

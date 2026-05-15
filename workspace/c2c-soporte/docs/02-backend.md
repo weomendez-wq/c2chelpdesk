@@ -32,9 +32,6 @@ backend/
 
 ## Pendientes antes de implementar
 
-- Instalar dependencias.
-- Ejecutar typecheck.
-- Probar endpoint `GET /api/health`.
 - Agregar endpoint SQL seguro.
 - Agregar pruebas automatizadas.
 
@@ -61,3 +58,7 @@ El backend inicial incluye:
 - `src/modules/health/health.routes.ts`
 - `src/shared/apiResponse.ts`
 - `src/shared/logger.ts`
+
+## Modulo SQL inicial
+
+El primer modulo administrativo sera `POST /api/admin/sql/explain`. Debe validar que la consulta sea de solo lectura, bloquear comandos peligrosos y ejecutar solo `EXPLAIN (FORMAT JSON)`.

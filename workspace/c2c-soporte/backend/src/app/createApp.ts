@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
+import { adminSqlRouter } from "../modules/adminSql/adminSql.routes.js";
 import { healthRouter } from "../modules/health/health.routes.js";
 import { errorHandler } from "../middlewares/errorHandler.js";
 import { notFoundHandler } from "../middlewares/notFoundHandler.js";
@@ -17,6 +18,7 @@ export const createApp = () => {
   app.use(express.json({ limit: "1mb" }));
 
   app.use("/api/health", healthRouter);
+  app.use("/api/admin/sql", adminSqlRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
