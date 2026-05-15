@@ -12,9 +12,9 @@ C:\RODPROJECTSCODEX
 
 - Repositorio Git raiz inicializado en `main`.
 - Remoto configurado: `https://github.com/weomendez-wq/c2chelpdesk.git`.
-- El remoto fue verificado con `git ls-remote` y no contiene refs.
+- El remoto fue publicado con la rama `main`.
 - `asistente-ingles-personal` existe como proyecto independiente y no se mueve todavia.
-- `c2c-soporte` queda reservado para una etapa posterior.
+- `workspace/c2c-soporte` queda reservado como proyecto objetivo de C2C Soporte / DTE / Torre de Control.
 
 ## Estructura global
 
@@ -25,8 +25,14 @@ templates/
 sandbox/
 logs/
 workspace/
+docs/
 README_GLOBAL.md
 ```
+
+## Proyectos
+
+- `asistente-ingles-personal`: proyecto existente, gestionado por separado y excluido del repo maestro por ahora.
+- `workspace/c2c-soporte`: espacio reservado y documentado para el proyecto C2C.
 
 ## Flujo de trabajo
 
@@ -42,4 +48,3 @@ README_GLOBAL.md
 ## Regla importante
 
 No se deben mover proyectos internos ni ejecutar cambios destructivos sin una validacion previa del arbol, respaldo o commit aplicable.
-
