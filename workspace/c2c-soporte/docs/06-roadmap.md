@@ -44,3 +44,11 @@
 - Crear KPIs globales.
 - Crear ranking de empresas y dispositivos.
 - Preparar alertas criticas.
+
+## Fase posterior - Normalizacion base de datos
+
+- Usar este proyecto como baseline operativo.
+- Documentar oportunidades de normalizacion detectadas.
+- Evaluar claves, tipos de datos, fechas, indices y datos derivados.
+- Proponer mejoras de rendimiento con evidencia local.
+- No aplicar cambios estructurales sobre origen productivo desde este proyecto.

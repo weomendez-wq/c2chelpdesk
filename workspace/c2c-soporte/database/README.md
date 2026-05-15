@@ -49,6 +49,8 @@ Estos scripts son de solo lectura:
 
 - `sql/20-create-documentos-2026-view.sql`: crea `rr_gestion_soporte.documentos_2026` como union de ventanas staging.
 - `sql/21-verify-documentos-2026-view.sql`: verifica conteos por periodo y total de la vista.
+- `sql/22-create-base-support-views.sql`: crea vistas base de empresa y dispositivos.
+- `sql/23-verify-base-support-views.sql`: verifica conteos de vistas base.
 
 ## Scripts de inventario de origen
 
