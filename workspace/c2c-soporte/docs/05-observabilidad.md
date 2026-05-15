@@ -22,8 +22,12 @@ Agregar trazabilidad desde el inicio para diagnosticar errores, rendimiento y co
 
 ## Pendientes antes de implementar
 
-- Definir logger.
-- Definir formato de respuesta API.
-- Definir campos minimos de log.
+- Implementar logger Pino.
+- Implementar middleware de `requestId`.
+- Implementar formato de respuesta API.
+- Definir campos minimos de log en codigo.
 - Definir estrategia de metricas.
 
+## Decision inicial
+
+Usar Pino para logs estructurados. Cada request debe incluir `requestId`, metodo, path, statusCode, duracion y nivel de log. No se deben registrar secretos ni tokens.

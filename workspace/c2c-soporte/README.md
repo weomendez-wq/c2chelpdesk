@@ -38,7 +38,18 @@ workspace/c2c-soporte/
 - `docs/04-sql.md`
 - `docs/05-observabilidad.md`
 - `docs/06-roadmap.md`
+- `docs/07-configuracion-local.md`
+- `docs/08-api-estandar.md`
+- `docs/decisiones/`
 - `docs/bitacora/`
+
+## Stack definido
+
+- Backend: Node.js + Express + TypeScript + Zod + Pino + `pg`.
+- Frontend: React + Vite + TypeScript + Tailwind.
+- Datos UI: TanStack Query y TanStack Table.
+- Graficos: Recharts.
+- Base de datos: PostgreSQL.
 
 ## Regla principal
 

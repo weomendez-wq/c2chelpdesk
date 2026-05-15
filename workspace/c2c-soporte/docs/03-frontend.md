@@ -30,8 +30,18 @@ frontend/
 
 ## Pendientes antes de implementar
 
-- Confirmar libreria de graficos.
-- Confirmar sistema de tablas y paginacion.
-- Definir convencion de llamadas API.
+- Crear scaffolding React + Vite + TypeScript.
+- Configurar Tailwind.
+- Crear estructura `src` por modulos.
+- Crear cliente API encapsulado.
 - Definir criterios responsive para dashboard operacional.
 
+## Decisiones tecnicas
+
+- Lenguaje: TypeScript.
+- Build tool: Vite.
+- Estilos: Tailwind.
+- Estado remoto/API: TanStack Query.
+- Tablas: TanStack Table.
+- Graficos: Recharts.
+- Cliente HTTP: `fetch` encapsulado en services/adapters.

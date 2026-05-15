@@ -32,8 +32,17 @@ backend/
 
 ## Pendientes antes de implementar
 
-- Confirmar si se usara JavaScript o TypeScript.
-- Definir libreria de validacion, recomendada: Zod.
-- Definir logger, recomendado: Pino.
-- Definir cliente PostgreSQL y pool de conexiones.
+- Crear scaffolding TypeScript.
+- Crear configuracion de entorno validada con Zod.
+- Crear logger Pino.
+- Crear pool PostgreSQL con `pg`.
+- Crear middleware de `requestId`.
 
+## Decisiones tecnicas
+
+- Lenguaje: TypeScript.
+- Framework HTTP: Express.
+- Validacion: Zod.
+- Logger: Pino.
+- PostgreSQL: `pg`, sin ORM en la primera etapa.
+- Formato API: respuesta estandar documentada en `docs/08-api-estandar.md`.

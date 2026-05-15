@@ -6,6 +6,7 @@
 - Completar documentacion base.
 - Definir estructura del proyecto.
 - Preparar reglas SQL y contexto Codex.
+- Cerrar decisiones tecnicas base.
 
 ## Fase 2 - Base local soporte
 
@@ -20,6 +21,7 @@
 - Validar SQL.
 - Bloquear comandos peligrosos.
 - Agregar logger estructurado y `requestId`.
+- Estandarizar formato de respuesta API.
 
 ## Fase 4 - Consolidacion backend
 
@@ -34,4 +36,3 @@
 - Crear KPIs globales.
 - Crear ranking de empresas y dispositivos.
 - Preparar alertas criticas.
-
