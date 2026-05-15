@@ -75,6 +75,15 @@ Los CSV quedan en `database/inventory/source/` y no se versionan.
 
 Si no existe usuario solo lectura, se permite usar `master` solo con `-ReadOnlySession` y password temporal en variable de entorno local.
 
+## Generar bloque 1 de copia
+
+```powershell
+.\database\scripts\generate-copy-block1.ps1 `
+  -InventoryDir ".\database\inventory\source\YYYYMMDD-HHMMSS"
+```
+
+Los scripts generados quedan en `database/generated/copy-block1/` y no se versionan.
+
 ## Comandos de referencia
 
 ```powershell

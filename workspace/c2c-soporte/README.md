@@ -6,7 +6,7 @@ Espacio reservado para preparar el proyecto C2C Soporte / DTE / Torre de Control
 
 ## Estado actual
 
-Base documental y estructura inicial. Todavia no contiene codigo de aplicacion.
+Base documental, backend inicial y herramientas de inventario/copia controlada en curso.
 
 ## Alcance inicial
 
@@ -68,6 +68,8 @@ Los resultados de inventario de origen deben guardarse localmente en `database/i
 El resumen del inventario actual esta en `docs/10-resumen-inventario-origen.md`.
 
 El plan de copia controlada esta en `docs/11-plan-copia-controlada.md`.
+
+Los scripts generados para copia controlada quedan en `database/generated/` y no se versionan.
 
 ## Regla principal
 
