@@ -29,7 +29,13 @@ export const companyControlQuerySchema = paginationQuerySchema.extend({
   alert: z.enum(["OK", "WARNING", "URGENTE", "SIN_EMISION"]).optional()
 });
 
+export const documentsSummaryQuerySchema = z.object({
+  tenantId: z.string().uuid().optional(),
+  rut: z.coerce.number().int().positive().optional()
+});
+
 export type CompaniesQuery = z.infer<typeof companiesQuerySchema>;
 export type DevicesQuery = z.infer<typeof devicesQuerySchema>;
 export type CompanyDevicesQuery = z.infer<typeof companyDevicesQuerySchema>;
 export type CompanyControlQuery = z.infer<typeof companyControlQuerySchema>;
+export type DocumentsSummaryQuery = z.infer<typeof documentsSummaryQuerySchema>;

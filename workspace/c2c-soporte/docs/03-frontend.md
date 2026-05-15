@@ -66,6 +66,8 @@ Objetivo:
 - Mostrar alertas por emision: `OK`, `WARNING`, `URGENTE`, `SIN_EMISION`.
 - Permitir buscar por empresa, RUT o tenant.
 - Filtrar por estado de empresa y nivel de alerta.
+- Permitir seleccionar una empresa para ver resumen documental 2026 filtrado por `tenantId` y `rut`.
+- Mostrar indicador de espera cuando se cargan empresas o resumen documental.
 
 ## Decisiones tecnicas
 

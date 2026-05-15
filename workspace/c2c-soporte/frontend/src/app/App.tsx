@@ -1,15 +1,29 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   getCompanyControl,
+  getDocumentsSummary,
   type CompanyControl,
   type CompanyControlAlert,
-  type CompanyControlQuery
+  type CompanyControlQuery,
+  type DocumentsSummary
 } from "../services/supportApi";
 
-type LoadState =
-  | { status: "idle" | "loading"; data: CompanyControl[]; error: null }
-  | { status: "success"; data: CompanyControl[]; error: null }
-  | { status: "error"; data: CompanyControl[]; error: string };
+type LoadState<TData> =
+  | { status: "idle" | "loading"; data: TData; error: null }
+  | { status: "success"; data: TData; error: null }
+  | { status: "error"; data: TData; error: string };
+
+const emptyDocumentsSummary: DocumentsSummary = {
+  byDocumentType: [],
+  filters: {},
+  monthly: [],
+  totals: {
+    companies: 0,
+    devices: 0,
+    documents: 0,
+    documentTypes: 0
+  }
+};
 
 const statusOptions = [
   { value: "", label: "Todos" },
@@ -25,6 +39,7 @@ const alertOptions: Array<{ value: "" | CompanyControlAlert; label: string }> = 
 ];
 
 const formatDate = (value: string | null) => value ?? "-";
+const formatNumber = (value: number) => value.toLocaleString("es-CL");
 
 const formatDays = (value: number | null) => {
   if (value === null) {
@@ -34,13 +49,26 @@ const formatDays = (value: number | null) => {
   return `${value} dias`;
 };
 
+const LoadingIndicator = ({ label }: { label: string }) => (
+  <div className="loading-indicator" role="status" aria-live="polite">
+    <span className="spinner" aria-hidden="true" />
+    <span>{label}</span>
+  </div>
+);
+
 export const App = () => {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [alert, setAlert] = useState<"" | CompanyControlAlert>("");
-  const [state, setState] = useState<LoadState>({
+  const [selectedCompany, setSelectedCompany] = useState<CompanyControl | null>(null);
+  const [companyState, setCompanyState] = useState<LoadState<CompanyControl[]>>({
     status: "idle",
     data: [],
+    error: null
+  });
+  const [documentsState, setDocumentsState] = useState<LoadState<DocumentsSummary>>({
+    status: "idle",
+    data: emptyDocumentsSummary,
     error: null
   });
 
@@ -54,7 +82,7 @@ export const App = () => {
       alert: alert || undefined
     };
 
-    setState((current) => ({
+    setCompanyState((current) => ({
       status: "loading",
       data: current.data,
       error: null
@@ -62,7 +90,7 @@ export const App = () => {
 
     getCompanyControl(query, abortController.signal)
       .then((response) => {
-        setState({
+        setCompanyState({
           status: "success",
           data: response.items,
           error: null
@@ -73,7 +101,7 @@ export const App = () => {
           return;
         }
 
-        setState({
+        setCompanyState({
           status: "error",
           data: [],
           error: error instanceof Error ? error.message : "No se pudo cargar la informacion"
@@ -83,23 +111,65 @@ export const App = () => {
     return () => abortController.abort();
   }, [alert, search, status]);
 
-  const summary = useMemo(() => {
-    const total = state.data.length;
-    const active = state.data.filter((item) => item.empresa_status === "active").length;
-    const withoutEmission = state.data.filter(
+  useEffect(() => {
+    const abortController = new AbortController();
+    const query =
+      selectedCompany?.tenant_id && selectedCompany.rut
+        ? {
+            rut: selectedCompany.rut,
+            tenantId: selectedCompany.tenant_id
+          }
+        : {};
+
+    setDocumentsState((current) => ({
+      status: "loading",
+      data: current.data,
+      error: null
+    }));
+
+    getDocumentsSummary(query, abortController.signal)
+      .then((response) => {
+        setDocumentsState({
+          status: "success",
+          data: response,
+          error: null
+        });
+      })
+      .catch((error: unknown) => {
+        if (abortController.signal.aborted) {
+          return;
+        }
+
+        setDocumentsState({
+          status: "error",
+          data: emptyDocumentsSummary,
+          error: error instanceof Error ? error.message : "No se pudo cargar documentos"
+        });
+      });
+
+    return () => abortController.abort();
+  }, [selectedCompany]);
+
+  const companySummary = useMemo(() => {
+    const total = companyState.data.length;
+    const active = companyState.data.filter((item) => item.empresa_status === "active").length;
+    const withoutEmission = companyState.data.filter(
       (item) => item.nivel_alerta_emision === "SIN_EMISION"
     ).length;
-    const urgent = state.data.filter((item) => item.nivel_alerta_emision === "URGENTE").length;
-    const emitted = state.data.reduce((totalDocs, item) => totalDocs + item.documentos_emitidos_2026, 0);
+    const urgent = companyState.data.filter((item) => item.nivel_alerta_emision === "URGENTE").length;
 
     return {
       active,
-      emitted,
       total,
       urgent,
       withoutEmission
     };
-  }, [state.data]);
+  }, [companyState.data]);
+
+  const maxMonthlyDocuments = Math.max(
+    1,
+    ...documentsState.data.monthly.map((item) => item.documents)
+  );
 
   return (
     <main className="app-shell">
@@ -143,31 +213,105 @@ export const App = () => {
         </div>
       </section>
 
-      <section className="metrics" aria-label="Resumen certificado">
+      <section className="metrics" aria-label="Resumen empresas">
         <div className="metric">
           <span>Empresas</span>
-          <strong>{summary.total}</strong>
+          <strong>{formatNumber(companySummary.total)}</strong>
         </div>
         <div className="metric">
           <span>Activas</span>
-          <strong>{summary.active}</strong>
+          <strong>{formatNumber(companySummary.active)}</strong>
         </div>
         <div className="metric warning">
           <span>Sin emision</span>
-          <strong>{summary.withoutEmission}</strong>
+          <strong>{formatNumber(companySummary.withoutEmission)}</strong>
         </div>
         <div className="metric urgent">
           <span>Urgentes</span>
-          <strong>{summary.urgent}</strong>
-        </div>
-        <div className="metric">
-          <span>Docs 2026</span>
-          <strong>{summary.emitted.toLocaleString("es-CL")}</strong>
+          <strong>{formatNumber(companySummary.urgent)}</strong>
         </div>
       </section>
 
-      {state.status === "error" ? <p className="status error">{state.error}</p> : null}
-      {state.status === "loading" ? <p className="status">Cargando datos certificados...</p> : null}
+      <section className="detail-panel" aria-label="Resumen documental">
+        <div className="detail-heading">
+          <div>
+            <p className="eyebrow">Documentos 2026</p>
+            <h2>{selectedCompany?.empresa_name ?? "Resumen general"}</h2>
+            <p className="compact-id">
+              {selectedCompany
+                ? `Tenant ${selectedCompany.tenant_id} | RUT ${selectedCompany.rut ?? "-"}`
+                : "Todas las empresas con documentos 2026"}
+            </p>
+          </div>
+          {selectedCompany ? (
+            <button className="ghost-button" type="button" onClick={() => setSelectedCompany(null)}>
+              Ver general
+            </button>
+          ) : null}
+        </div>
+
+        {documentsState.status === "error" ? (
+          <p className="status error">{documentsState.error}</p>
+        ) : null}
+        {documentsState.status === "loading" ? (
+          <LoadingIndicator label="Cargando resumen documental..." />
+        ) : null}
+
+        <div className="metrics documents">
+          <div className="metric">
+            <span>Total emitidos</span>
+            <strong>{formatNumber(documentsState.data.totals.documents)}</strong>
+          </div>
+          <div className="metric">
+            <span>Empresas con docs</span>
+            <strong>{formatNumber(documentsState.data.totals.companies)}</strong>
+          </div>
+          <div className="metric">
+            <span>Devices con docs</span>
+            <strong>{formatNumber(documentsState.data.totals.devices)}</strong>
+          </div>
+          <div className="metric">
+            <span>Tipos DTE</span>
+            <strong>{formatNumber(documentsState.data.totals.documentTypes)}</strong>
+          </div>
+        </div>
+
+        <div className="analytics-grid">
+          <div className="chart-panel">
+            <h3>Emision mensual</h3>
+            <div className="month-chart" aria-label="Grafico mensual documentos emitidos">
+              {documentsState.data.monthly.map((item) => (
+                <div className="month-row" key={item.period}>
+                  <span>{item.period}</span>
+                  <div className="month-track">
+                    <div
+                      className="month-bar"
+                      style={{ width: `${Math.max(2, (item.documents / maxMonthlyDocuments) * 100)}%` }}
+                    />
+                  </div>
+                  <strong>{formatNumber(item.documents)}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="chart-panel">
+            <h3>Por tipo documento</h3>
+            <div className="doc-type-list">
+              {documentsState.data.byDocumentType.map((item) => (
+                <div className="doc-type-row" key={item.documentType}>
+                  <span>Tipo {item.documentType}</span>
+                  <strong>{formatNumber(item.documents)}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {companyState.status === "error" ? <p className="status error">{companyState.error}</p> : null}
+      {companyState.status === "loading" ? (
+        <LoadingIndicator label="Cargando datos certificados..." />
+      ) : null}
 
       <section className="table-wrap" aria-label="Control empresas">
         <table>
@@ -185,32 +329,41 @@ export const App = () => {
             </tr>
           </thead>
           <tbody>
-            {state.data.map((item) => (
-              <tr key={`${item.tenant_id}-${item.rut}`}>
-                <td>
-                  <strong className="table-title">{item.empresa_name}</strong>
-                  <span className="table-subtitle">{item.tenant_name ?? "Sin tenant"}</span>
-                </td>
-                <td>{item.rut}</td>
-                <td>
-                  <span className={`badge ${item.empresa_status ?? ""}`}>{item.empresa_status}</span>
-                </td>
-                <td>
-                  <span className={`badge alert-${item.nivel_alerta_emision.toLowerCase()}`}>
-                    {item.nivel_alerta_emision}
-                  </span>
-                </td>
-                <td>{item.documentos_emitidos_2026.toLocaleString("es-CL")}</td>
-                <td>{formatDate(item.primera_emision)}</td>
-                <td>{formatDate(item.ultima_emision)}</td>
-                <td>{formatDays(item.dias_sin_emitir)}</td>
-                <td>{item.comuna ?? item.ciudad ?? "-"}</td>
-              </tr>
-            ))}
+            {companyState.data.map((item) => {
+              const selected =
+                selectedCompany?.tenant_id === item.tenant_id && selectedCompany.rut === item.rut;
+
+              return (
+                <tr
+                  className={selected ? "selected-row" : ""}
+                  key={`${item.tenant_id}-${item.rut}`}
+                  onClick={() => setSelectedCompany(item)}
+                >
+                  <td>
+                    <strong className="table-title">{item.empresa_name}</strong>
+                    <span className="table-subtitle">{item.tenant_id}</span>
+                  </td>
+                  <td>{item.rut}</td>
+                  <td>
+                    <span className={`badge ${item.empresa_status ?? ""}`}>{item.empresa_status}</span>
+                  </td>
+                  <td>
+                    <span className={`badge alert-${item.nivel_alerta_emision.toLowerCase()}`}>
+                      {item.nivel_alerta_emision}
+                    </span>
+                  </td>
+                  <td>{formatNumber(item.documentos_emitidos_2026)}</td>
+                  <td>{formatDate(item.primera_emision)}</td>
+                  <td>{formatDate(item.ultima_emision)}</td>
+                  <td>{formatDays(item.dias_sin_emitir)}</td>
+                  <td>{item.comuna ?? item.ciudad ?? "-"}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
 
-        {state.status === "success" && state.data.length === 0 ? (
+        {companyState.status === "success" && companyState.data.length === 0 ? (
           <p className="empty">No hay empresas para los filtros seleccionados.</p>
         ) : null}
       </section>

@@ -42,6 +42,32 @@ export type CompanyControlQuery = {
   alert?: CompanyControlAlert;
 };
 
+export type DocumentsSummaryQuery = {
+  tenantId?: string;
+  rut?: number;
+};
+
+export type DocumentsSummary = {
+  filters: {
+    tenantId?: string;
+    rut?: number;
+  };
+  totals: {
+    documents: number;
+    companies: number;
+    devices: number;
+    documentTypes: number;
+  };
+  monthly: Array<{
+    period: string;
+    documents: number;
+  }>;
+  byDocumentType: Array<{
+    documentType: number;
+    documents: number;
+  }>;
+};
+
 const buildQueryString = (query: Record<string, string | number | undefined>) => {
   const params = new URLSearchParams();
 
@@ -68,6 +94,27 @@ export const getCompanyControl = async (
   }
 
   const payload = (await response.json()) as ApiSuccess<PaginatedResponse<CompanyControl>>;
+
+  if (!payload.ok) {
+    throw new Error("Respuesta API invalida");
+  }
+
+  return payload.data;
+};
+
+export const getDocumentsSummary = async (
+  query: DocumentsSummaryQuery,
+  signal?: AbortSignal
+): Promise<DocumentsSummary> => {
+  const response = await fetch(`/api/support/control/documents-summary${buildQueryString(query)}`, {
+    signal
+  });
+
+  if (!response.ok) {
+    throw new Error("No se pudo consultar el resumen documental");
+  }
+
+  const payload = (await response.json()) as ApiSuccess<DocumentsSummary>;
 
   if (!payload.ok) {
     throw new Error("Respuesta API invalida");

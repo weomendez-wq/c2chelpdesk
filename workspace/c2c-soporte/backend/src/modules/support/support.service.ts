@@ -3,6 +3,7 @@ import type {
   CompaniesQuery,
   CompanyControlQuery,
   CompanyDevicesQuery,
+  DocumentsSummaryQuery,
   DevicesQuery
 } from "./support.schemas.js";
 
@@ -12,6 +13,27 @@ export type PaginatedResult<TItem> = {
     limit: number;
     offset: number;
   };
+};
+
+export type DocumentsSummaryResult = {
+  filters: {
+    tenantId?: string;
+    rut?: number;
+  };
+  totals: {
+    documents: number;
+    companies: number;
+    devices: number;
+    documentTypes: number;
+  };
+  monthly: Array<{
+    period: string;
+    documents: number;
+  }>;
+  byDocumentType: Array<{
+    documentType: number;
+    documents: number;
+  }>;
 };
 
 const addFilter = (clauses: string[], values: unknown[], sql: string, value: unknown) => {
@@ -188,5 +210,85 @@ export const listCompanyControl = async (
       limit: query.limit,
       offset: query.offset
     }
+  };
+};
+
+const buildDocumentsWhere = (query: DocumentsSummaryQuery, values: unknown[]) => {
+  const clauses: string[] = [];
+
+  addFilter(clauses, values, "tenant_id = ?", query.tenantId);
+  addFilter(clauses, values, "rut = ?", query.rut);
+
+  return clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+};
+
+export const getDocumentsSummary = async (
+  query: DocumentsSummaryQuery
+): Promise<DocumentsSummaryResult> => {
+  const totalValues: unknown[] = [];
+  const totalWhereSql = buildDocumentsWhere(query, totalValues);
+  const totalsResult = await dbPool.query(
+    `SELECT
+       count(*)::bigint AS documents,
+       count(DISTINCT tenant_id || '-' || rut::text)::bigint AS companies,
+       count(DISTINCT device_id)::bigint AS devices,
+       count(DISTINCT tipodocumento)::bigint AS document_types
+     FROM rr_gestion_soporte.documentos_2026
+     ${totalWhereSql}`,
+    totalValues
+  );
+
+  const monthlyValues: unknown[] = [];
+  const monthlyWhereSql = buildDocumentsWhere(query, monthlyValues);
+  const monthlyResult = await dbPool.query(
+    `SELECT
+       periodo,
+       count(*)::bigint AS documents
+     FROM rr_gestion_soporte.documentos_2026
+     ${monthlyWhereSql}
+     GROUP BY periodo
+     ORDER BY periodo`,
+    monthlyValues
+  );
+
+  const typeValues: unknown[] = [];
+  const typeWhereSql = buildDocumentsWhere(query, typeValues);
+  const typeResult = await dbPool.query(
+    `SELECT
+       tipodocumento,
+       count(*)::bigint AS documents
+     FROM rr_gestion_soporte.documentos_2026
+     ${typeWhereSql}
+     GROUP BY tipodocumento
+     ORDER BY tipodocumento`,
+    typeValues
+  );
+
+  const totals = totalsResult.rows[0] as {
+    companies: string;
+    devices: string;
+    documents: string;
+    document_types: string;
+  };
+
+  return {
+    filters: {
+      tenantId: query.tenantId,
+      rut: query.rut
+    },
+    totals: {
+      companies: Number(totals.companies),
+      devices: Number(totals.devices),
+      documents: Number(totals.documents),
+      documentTypes: Number(totals.document_types)
+    },
+    monthly: monthlyResult.rows.map((row) => ({
+      documents: Number(row.documents),
+      period: row.period as string
+    })),
+    byDocumentType: typeResult.rows.map((row) => ({
+      documentType: Number(row.tipodocumento),
+      documents: Number(row.documents)
+    }))
   };
 };

@@ -594,6 +594,7 @@ GET /api/support/control/companies
 GET /api/support/control/devices
 GET /api/support/control/folios
 GET /api/support/control/alerts
+GET /api/support/control/documents-summary
 ```
 
 El frontend debe consumir estas vistas por bloque y no mezclar todo en una sola tabla.
@@ -619,6 +620,55 @@ Filtros:
 - `tenantId`
 - `rut`
 - `alert`
+
+## Endpoint planificado - documents summary
+
+```txt
+GET /api/support/control/documents-summary
+```
+
+Filtros:
+
+- `tenantId`
+- `rut`
+
+Consulta total anual:
+
+```sql
+SELECT count(*) AS total_rows
+FROM rr_gestion_soporte.documentos_2026;
+```
+
+Consulta mensual:
+
+```sql
+SELECT periodo, count(*) AS rows_count
+FROM rr_gestion_soporte.documentos_2026
+GROUP BY periodo
+ORDER BY periodo;
+```
+
+Respuesta backend esperada:
+
+```txt
+totals.documents
+totals.companies
+totals.devices
+totals.documentTypes
+monthly[]
+byDocumentType[]
+```
+
+Version filtrada por empresa:
+
+```sql
+SELECT periodo, count(*) AS rows_count
+FROM rr_gestion_soporte.documentos_2026
+WHERE tenant_id = $1
+  AND rut = $2
+GROUP BY periodo
+ORDER BY periodo;
+```
 
 ## Vista implementada - empresa control
 
