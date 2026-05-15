@@ -44,3 +44,7 @@ Resultado:
 Decision:
 
 - Usar filtro funcional para la copia por coherencia con la normalizacion de fechas y porque el filtro anual directo ya habia producido `Seq Scan`.
+
+## Avance posterior
+
+Se agrega `database/scripts/generate-copy-documentos-2026-05.ps1` para preparar artefactos locales del lote mayo 2026. El script no ejecuta copia automaticamente.

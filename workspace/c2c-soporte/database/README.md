@@ -105,6 +105,17 @@ El bloque 2B crea `staging_public.contabilizaciondocs_2026` como tabla de ventan
 
 Los scripts generados quedan en `database/generated/copy-block2b/` y no se versionan.
 
+## Generar documentos mayo 2026
+
+```powershell
+.\database\scripts\generate-copy-documentos-2026-05.ps1 `
+  -InventoryDir ".\database\inventory\source\YYYYMMDD-HHMMSS"
+```
+
+El destino local es `staging_public.documentos_2026_05`.
+
+Los scripts generados quedan en `database/generated/copy-documentos-2026-05/` y no se versionan.
+
 ## Copia local bloque 2B
 
 El bloque 2B fue ejecutado localmente desde origen `dte.public` hacia `soporte.staging_public`.

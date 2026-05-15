@@ -61,6 +61,13 @@ Motivo:
 5. Validar conteos origen/local.
 6. Evaluar si se requiere reconstruir o copiar `documentos_fecha_normalizada`.
 
+## Generador
+
+```powershell
+.\database\scripts\generate-copy-documentos-2026-05.ps1 `
+  -InventoryDir ".\database\inventory\source\20260515-025144"
+```
+
 ## Regla
 
 No crear una tabla local llamada `documentos` hasta definir si sera copia completa, vista consolidada o union de ventanas.
