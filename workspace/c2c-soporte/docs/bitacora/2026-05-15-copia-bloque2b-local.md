@@ -62,4 +62,15 @@ Estos archivos no se versionan.
 
 ## Siguiente paso
 
-Preparar bloque 2C para `documentos_fecha_normalizada` por ventana 2026, revisando volumen y validando nuevamente conteos origen/local.
+Preparar estrategia para `documentos` por ventana 2026 usando indice funcional.
+
+## Acotacion posterior
+
+Se decide diferir `documentos_fecha_normalizada`.
+
+Motivo:
+
+- Es una normalizacion derivada de `documentos`.
+- Aun no sabemos que subconjunto real de `documentos` importaremos.
+- Evita agregar volumen que podria no ser necesario.
+- Se reevaluara despues de importar o definir el subconjunto de `documentos`.

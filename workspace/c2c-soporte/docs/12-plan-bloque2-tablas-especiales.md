@@ -15,7 +15,7 @@ El bloque 2 contiene tablas con alto volumen, materialized views o dependencias 
 | `sincronizacionsap` | tabla | 192903 | 35 MB | Copia completa candidata bloque 2A |
 | `mv_device_operacion` | matview | 384 | 72 kB | Copia snapshot candidata bloque 2A |
 | `contabilizaciondocs` | tabla | 6326644 | 2895 MB | Copia por ventana 2026 candidata |
-| `documentos_fecha_normalizada` | matview | 36590120 | 2363 MB | Copia por ventana 2026 candidata |
+| `documentos_fecha_normalizada` | matview | 36590120 | 2363 MB | Diferida hasta definir subconjunto de `documentos` |
 | `documentos` | tabla | 38482288 | 67 GB | Solo con indice funcional y ventana controlada |
 | `enviosiidocs` | tabla | 40106000 | 9588 MB | No copiar por join directo |
 | `cierrecaja_documento` | tabla | 38069268 | 10 GB | No copiar por join completo |
@@ -98,18 +98,24 @@ Resultado:
 - Diferencias por conteo: 0.
 - La estimacion previa por `EXPLAIN` fue 448666 filas; el conteo real quedo dentro de rango operativo.
 
-### Bloque 2C
+### Bloque 2C diferido
 
-Copiar `documentos_fecha_normalizada` por ventana anual 2026.
+No copiar `documentos_fecha_normalizada` por ahora.
 
-Condicion candidata:
+Motivo:
+
+- Es una normalizacion derivada de `documentos`.
+- Puede duplicar volumen antes de saber que subconjunto real de `documentos` necesitaremos.
+- Si importamos solo una ventana o subconjunto de `documentos`, conviene evaluar si esta tabla debe reconstruirse localmente desde ese subconjunto o si no aporta valor inmediato.
+
+Condicion candidata ya evaluada, pero no aprobada para copia inmediata:
 
 ```sql
 WHERE fecha >= timestamp '2026-01-01'
   AND fecha < timestamp '2027-01-01'
 ```
 
-### Bloque 2D
+### Bloque 2C
 
 Copiar subconjunto de `documentos` solo si se usa el indice funcional `idx_documentos_fechaemision_v2`.
 
@@ -122,9 +128,15 @@ WHERE rr_gestion_soporte.fn_parse_dte_timestamp(fechaemision) >= timestamp '2026
 
 No usar filtro directo por `fechaemision` porque produce `Seq Scan`.
 
+Despues de definir y copiar el subconjunto de `documentos`, reevaluar si `documentos_fecha_normalizada` debe:
+
+1. No copiarse.
+2. Copiarse como snapshot filtrado.
+3. Reconstruirse localmente desde `staging_public.documentos_*`.
+
 ### Pendientes
 
-`enviosiidocs` y `cierrecaja_documento` requieren estrategia por lotes basada en llaves ya copiadas o necesidad funcional concreta. No se aprueba join directo contra origen porque los planes estiman recorridos masivos.
+`documentos_fecha_normalizada`, `enviosiidocs` y `cierrecaja_documento` requieren estrategia por lotes, derivacion local o necesidad funcional concreta. No se aprueba join directo contra origen porque los planes estiman recorridos masivos o datos derivados aun no necesarios.
 
 ## Regla de seguridad
 
