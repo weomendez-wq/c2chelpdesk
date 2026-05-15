@@ -56,6 +56,7 @@ La carpeta `sql/source-readonly/` contiene consultas de solo lectura para inspec
 - `24-documentos-date-candidates.sql`
 - `25-documentos-window-explain-template.sql`
 - `30-block2-explain-candidates.sql`
+- `31-documentos-window-explain.sql`
 
 No modifican datos ni estructura. La plantilla de `documentos` requiere reemplazar `<columna_fecha>` antes de ejecutarse.
 

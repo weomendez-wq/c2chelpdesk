@@ -128,6 +128,14 @@ WHERE rr_gestion_soporte.fn_parse_dte_timestamp(fechaemision) >= timestamp '2026
 
 No usar filtro directo por `fechaemision` porque produce `Seq Scan`.
 
+Plan detallado:
+
+```txt
+docs/13-plan-documentos.md
+```
+
+Primer lote recomendado: `staging_public.documentos_2026_05`.
+
 Despues de definir y copiar el subconjunto de `documentos`, reevaluar si `documentos_fecha_normalizada` debe:
 
 1. No copiarse.

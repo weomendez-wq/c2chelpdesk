@@ -71,6 +71,8 @@ El plan de copia controlada esta en `docs/11-plan-copia-controlada.md`.
 
 El plan para tablas especiales del bloque 2 esta en `docs/12-plan-bloque2-tablas-especiales.md`.
 
+El plan especifico para `documentos` esta en `docs/13-plan-documentos.md`.
+
 Los scripts generados para copia controlada quedan en `database/generated/` y no se versionan.
 
 ## Regla principal
