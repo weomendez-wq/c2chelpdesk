@@ -45,3 +45,9 @@ Estos archivos no se versionan.
 ## Siguiente paso
 
 Preparar bloque 2B para `contabilizaciondocs` por ventana 2026, usando el indice confirmado por `EXPLAIN`.
+
+## Avance posterior
+
+Se agrega generador `database/scripts/generate-copy-block2b.ps1` para preparar `staging_public.contabilizaciondocs_2026` desde inventario local y filtro 2026.
+
+El bloque 2B fue ejecutado y validado con 459437 filas origen/local y 0 diferencias.

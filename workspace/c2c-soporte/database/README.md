@@ -93,6 +93,28 @@ Los scripts generados quedan en `database/generated/copy-block1/` y no se versio
 
 Los scripts generados quedan en `database/generated/copy-block2a/` y no se versionan.
 
+## Generar bloque 2B de copia
+
+```powershell
+.\database\scripts\generate-copy-block2b.ps1 `
+  -InventoryDir ".\database\inventory\source\YYYYMMDD-HHMMSS"
+```
+
+El bloque 2B crea `staging_public.contabilizaciondocs_2026` como tabla de ventana, no como copia completa de `contabilizaciondocs`.
+
+Los scripts generados quedan en `database/generated/copy-block2b/` y no se versionan.
+
+## Copia local bloque 2B
+
+El bloque 2B fue ejecutado localmente desde origen `dte.public` hacia `soporte.staging_public`.
+
+Resultado validado:
+
+- 1 relacion copiada.
+- 459437 filas en origen.
+- 459437 filas en local.
+- 0 diferencias por conteo.
+
 ## Copia local bloque 2A
 
 El bloque 2A fue ejecutado localmente desde origen `dte.public` hacia `soporte.staging_public`.

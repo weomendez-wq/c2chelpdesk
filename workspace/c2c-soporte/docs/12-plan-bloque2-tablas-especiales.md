@@ -66,12 +66,37 @@ Resultado:
 
 Copiar `contabilizaciondocs` por ventana anual 2026 usando `fechaemision`.
 
+Destino local:
+
+```txt
+staging_public.contabilizaciondocs_2026
+```
+
+Se usa sufijo `_2026` porque no es una copia completa de la tabla origen.
+
 Condicion candidata:
 
 ```sql
 WHERE fechaemision >= '2026-01-01'
   AND fechaemision < '2027-01-01'
 ```
+
+Generador:
+
+```powershell
+.\database\scripts\generate-copy-block2b.ps1 `
+  -InventoryDir ".\database\inventory\source\20260515-025144"
+```
+
+Ejecucion local completada el 2026-05-15 con artefactos en `database/generated/copy-block2b/20260515-031932`.
+
+Resultado:
+
+- Relaciones copiadas: 1.
+- Filas origen: 459437.
+- Filas locales: 459437.
+- Diferencias por conteo: 0.
+- La estimacion previa por `EXPLAIN` fue 448666 filas; el conteo real quedo dentro de rango operativo.
 
 ### Bloque 2C
 
