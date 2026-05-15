@@ -65,6 +65,8 @@ La estrategia de copia controlada esta documentada en `docs/09-estrategia-copia-
 
 Los resultados de inventario de origen deben guardarse localmente en `database/inventory/source/`; esa carpeta ignora CSV generados para evitar subir metadatos sensibles.
 
+El resumen del inventario actual esta en `docs/10-resumen-inventario-origen.md`.
+
 ## Regla principal
 
 No ejecutar cambios sobre base productiva ni crear scripts SQL sin documentar antes el objetivo, el alcance y la forma de validacion.

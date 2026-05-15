@@ -45,6 +45,13 @@ Con el inventario se clasifican tablas:
 - Tablas medianas/grandes: requieren revision por volumen e indices.
 - `documentos`: copiar solo desde enero del año actual hasta la fecha.
 
+La clasificacion inicial se genera con:
+
+```powershell
+.\database\scripts\build-copy-candidates.ps1 `
+  -InventoryDir ".\database\inventory\source\YYYYMMDD-HHMMSS"
+```
+
 ## Fase 3 - EXPLAIN antes de copiar documentos
 
 Antes de copiar `documentos`, definir la columna de fecha y ejecutar:

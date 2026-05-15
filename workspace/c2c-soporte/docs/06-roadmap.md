@@ -16,6 +16,7 @@
 - Inspeccionar estructura de `public`.
 - Agregar scripts de inspeccion local de schemas, columnas, indices y estimaciones.
 - Preparar inventario de origen `public` solo lectura.
+- Clasificar candidatos de copia controlada.
 - Preparar copia controlada de datos.
 
 ## Fase 3 - Seguridad SQL y observabilidad

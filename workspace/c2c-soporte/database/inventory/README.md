@@ -54,6 +54,23 @@ lock_timeout=5000
 database/inventory/source/YYYYMMDD-HHMMSS/*.csv
 ```
 
+## Clasificar candidatos de copia
+
+Despues de exportar inventario:
+
+```powershell
+.\database\scripts\build-copy-candidates.ps1 `
+  -InventoryDir ".\database\inventory\source\YYYYMMDD-HHMMSS"
+```
+
+Salida local:
+
+```txt
+database/inventory/source/YYYYMMDD-HHMMSS/copy-candidates/
+```
+
+Estos CSV tambien quedan ignorados por Git.
+
 ## Seguridad
 
 - Usar usuario solo lectura.
