@@ -48,3 +48,18 @@ Decision:
 ## Avance posterior
 
 Se agrega `database/scripts/generate-copy-documentos-2026-05.ps1` para preparar artefactos locales del lote mayo 2026. El script no ejecuta copia automaticamente.
+
+## Resultado copia mayo 2026
+
+Artefactos locales:
+
+```txt
+database/generated/copy-documentos-2026-05/20260515-033145
+```
+
+Resultado validado:
+
+- `documentos_2026_05`: 402918 filas origen y local.
+- Diferencias: 0.
+
+El conteo mensual previo fue 402915. La diferencia de 3 filas se atribuye a cambios en origen entre mediciones; la comparacion final origen/local se hizo despues de la exportacion.

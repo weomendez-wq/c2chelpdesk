@@ -68,6 +68,19 @@ Motivo:
   -InventoryDir ".\database\inventory\source\20260515-025144"
 ```
 
+## Ejecucion mayo 2026
+
+Ejecucion local completada el 2026-05-15 con artefactos en `database/generated/copy-documentos-2026-05/20260515-033145`.
+
+Resultado:
+
+- Relaciones copiadas: 1.
+- Filas origen: 402918.
+- Filas locales: 402918.
+- Diferencias por conteo: 0.
+
+El conteo mensual previo habia mostrado 402915 filas. La diferencia de 3 filas se explica por cambio en origen entre consultas; la validacion final compara origen/local despues de la exportacion y quedo en 0 diferencias.
+
 ## Regla
 
 No crear una tabla local llamada `documentos` hasta definir si sera copia completa, vista consolidada o union de ventanas.

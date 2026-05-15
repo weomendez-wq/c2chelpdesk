@@ -116,6 +116,17 @@ El destino local es `staging_public.documentos_2026_05`.
 
 Los scripts generados quedan en `database/generated/copy-documentos-2026-05/` y no se versionan.
 
+## Copia local documentos mayo 2026
+
+El lote mayo 2026 fue ejecutado localmente desde origen `dte.public` hacia `soporte.staging_public`.
+
+Resultado validado:
+
+- 1 relacion copiada.
+- 402918 filas en origen.
+- 402918 filas en local.
+- 0 diferencias por conteo.
+
 ## Copia local bloque 2B
 
 El bloque 2B fue ejecutado localmente desde origen `dte.public` hacia `soporte.staging_public`.
