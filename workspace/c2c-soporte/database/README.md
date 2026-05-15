@@ -139,6 +139,17 @@ Resultado validado:
 - 402918 filas en local.
 - 0 diferencias por conteo.
 
+## Copia local documentos enero-abril 2026
+
+Los lotes enero, febrero, marzo y abril 2026 fueron ejecutados localmente desde origen `dte.public` hacia `soporte.staging_public`.
+
+Resultado validado:
+
+- 4 relaciones copiadas.
+- 3516570 filas en origen.
+- 3516570 filas en local.
+- 0 diferencias por conteo.
+
 ## Copia local bloque 2B
 
 El bloque 2B fue ejecutado localmente desde origen `dte.public` hacia `soporte.staging_public`.

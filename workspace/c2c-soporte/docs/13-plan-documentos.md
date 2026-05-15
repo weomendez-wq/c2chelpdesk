@@ -106,6 +106,22 @@ Cada mes debe mantener tabla staging independiente y validacion origen/local.
 
 Para estas ventanas se permite `statement_timeout=120000` en exportacion read-only porque los meses de enero a abril duplican aproximadamente el volumen de mayo.
 
+## Ejecucion enero-abril 2026
+
+Ejecucion local completada el 2026-05-15 con artefactos en `database/generated/copy-documentos-window/`.
+
+Resultado:
+
+| Tabla local | Filas origen | Filas locales | Diferencia |
+| --- | ---: | ---: | ---: |
+| `documentos_2026_01` | 888389 | 888389 | 0 |
+| `documentos_2026_02` | 857721 | 857721 | 0 |
+| `documentos_2026_03` | 912756 | 912756 | 0 |
+| `documentos_2026_04` | 857704 | 857704 | 0 |
+| Total | 3516570 | 3516570 | 0 |
+
+Con mayo incluido, el total local de `documentos` 2026 importado en ventanas es 3919488 filas.
+
 ## Regla
 
 No crear una tabla local llamada `documentos` hasta definir si sera copia completa, vista consolidada o union de ventanas.
