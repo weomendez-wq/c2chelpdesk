@@ -45,6 +45,11 @@ Estos scripts son de solo lectura:
 - `sql/12-inspect-indexes.sql`: lista indices.
 - `sql/13-inspect-table-estimates.sql`: lista estimaciones de filas y tamanos sin usar `COUNT(*)`.
 
+## Objetos locales de soporte
+
+- `sql/20-create-documentos-2026-view.sql`: crea `rr_gestion_soporte.documentos_2026` como union de ventanas staging.
+- `sql/21-verify-documentos-2026-view.sql`: verifica conteos por periodo y total de la vista.
+
 ## Scripts de inventario de origen
 
 La carpeta `sql/source-readonly/` contiene consultas de solo lectura para inspeccionar el esquema `public` origen antes de definir copias:

@@ -122,6 +122,22 @@ Resultado:
 
 Con mayo incluido, el total local de `documentos` 2026 importado en ventanas es 3919488 filas.
 
+## Vista local
+
+Se define una vista local para consultar las ventanas 2026 como un solo conjunto:
+
+```txt
+rr_gestion_soporte.documentos_2026
+```
+
+Script:
+
+```txt
+database/sql/20-create-documentos-2026-view.sql
+```
+
+La vista agrega columna `periodo` y usa `UNION ALL` sobre las tablas staging mensuales. No representa una copia completa de `public.documentos`.
+
 ## Regla
 
 No crear una tabla local llamada `documentos` hasta definir si sera copia completa, vista consolidada o union de ventanas.
