@@ -70,3 +70,11 @@ npm run dev
 ```
 
 El proxy de Vite apunta a `http://localhost:3000`, por lo que el backend debe estar levantado en ese puerto para consumir `/api/support/company-devices` durante desarrollo.
+
+## Manual de validacion
+
+La validacion funcional primaria del frontend y backend esta documentada en:
+
+```txt
+docs/15-manual-usuario-primario.md
+```
