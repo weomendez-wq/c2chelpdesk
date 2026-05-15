@@ -1,0 +1,19 @@
+# Workspace maestro
+desktop.ini
+
+# Proyectos internos gestionados por separado hasta su integracion formal
+asistente-ingles-personal/
+
+# Dependencias y salidas generadas
+node_modules/
+dist/
+build/
+.cache/
+.npm-cache/
+
+# Archivos locales sensibles o temporales
+.env
+.env.*
+*.log
+*.tmp
+
