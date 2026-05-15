@@ -134,7 +134,7 @@ if (-not `$psql) { throw "psql no esta disponible en PATH." }
 
 New-Item -ItemType Directory -Force -Path `$DataDir | Out-Null
 `$previousPgOptions = `$env:PGOPTIONS
-`$env:PGOPTIONS = "-c default_transaction_read_only=on -c statement_timeout=30000 -c lock_timeout=5000"
+`$env:PGOPTIONS = "-c default_transaction_read_only=on -c statement_timeout=120000 -c lock_timeout=5000"
 
 try {
   Write-Host "Exportando $TargetTable..."

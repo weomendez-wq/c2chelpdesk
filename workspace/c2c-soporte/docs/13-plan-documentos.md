@@ -104,6 +104,8 @@ Orden de importacion:
 
 Cada mes debe mantener tabla staging independiente y validacion origen/local.
 
+Para estas ventanas se permite `statement_timeout=120000` en exportacion read-only porque los meses de enero a abril duplican aproximadamente el volumen de mayo.
+
 ## Regla
 
 No crear una tabla local llamada `documentos` hasta definir si sera copia completa, vista consolidada o union de ventanas.
