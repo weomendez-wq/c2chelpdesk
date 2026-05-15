@@ -85,6 +85,8 @@ El manual primario para validar frontend y backend juntos esta en `docs/15-manua
 
 Las consultas actuales y propuestas para control operativo estan en `docs/16-consultas-control-operativo.md`.
 
+El analisis de scripts SQL pendientes de integrar esta en `docs/17-analisis-querys-integrar.md`.
+
 La primera vista de control por empresa se crea con `database/sql/24-create-empresa-control-resumen.sql` y se verifica con `database/sql/25-verify-empresa-control-resumen.sql`.
 
 La decision de dejar un branch/proyecto posterior de normalizacion de base de datos esta en `docs/decisiones/2026-05-15-branch-normalizacion-base-datos.md`.
