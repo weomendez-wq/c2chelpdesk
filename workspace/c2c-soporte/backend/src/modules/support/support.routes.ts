@@ -1,0 +1,71 @@
+import { Router } from "express";
+import { ok } from "../../shared/apiResponse.js";
+import { AppError } from "../../shared/appError.js";
+import {
+  companiesQuerySchema,
+  companyDevicesQuerySchema,
+  devicesQuerySchema
+} from "./support.schemas.js";
+import { listCompanies, listCompanyDevices, listDevices } from "./support.service.js";
+
+export const supportRouter = Router();
+
+supportRouter.get("/companies", async (req, res, next) => {
+  try {
+    const parsedQuery = companiesQuerySchema.safeParse(req.query);
+
+    if (!parsedQuery.success) {
+      throw new AppError({
+        code: "VALIDATION_ERROR",
+        message: "Parametros de consulta invalidos",
+        statusCode: 400
+      });
+    }
+
+    const data = await listCompanies(parsedQuery.data);
+
+    res.json(ok({ data, requestId: req.requestId }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+supportRouter.get("/devices", async (req, res, next) => {
+  try {
+    const parsedQuery = devicesQuerySchema.safeParse(req.query);
+
+    if (!parsedQuery.success) {
+      throw new AppError({
+        code: "VALIDATION_ERROR",
+        message: "Parametros de consulta invalidos",
+        statusCode: 400
+      });
+    }
+
+    const data = await listDevices(parsedQuery.data);
+
+    res.json(ok({ data, requestId: req.requestId }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+supportRouter.get("/company-devices", async (req, res, next) => {
+  try {
+    const parsedQuery = companyDevicesQuerySchema.safeParse(req.query);
+
+    if (!parsedQuery.success) {
+      throw new AppError({
+        code: "VALIDATION_ERROR",
+        message: "Parametros de consulta invalidos",
+        statusCode: 400
+      });
+    }
+
+    const data = await listCompanyDevices(parsedQuery.data);
+
+    res.json(ok({ data, requestId: req.requestId }));
+  } catch (error) {
+    next(error);
+  }
+});

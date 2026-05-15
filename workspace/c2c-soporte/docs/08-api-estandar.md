@@ -76,3 +76,40 @@ Errores esperados:
 - `SQL_NOT_READ_ONLY`
 - `SQL_FORBIDDEN_COMMAND`
 - `SQL_EXPLAIN_FAILED`
+
+## Endpoints soporte
+
+```txt
+GET /api/support/companies
+GET /api/support/devices
+GET /api/support/company-devices
+```
+
+Query params comunes:
+
+- `limit`: entero entre 1 y 200. Default 50.
+- `offset`: entero desde 0. Default 0.
+- `search`: texto opcional para busqueda simple.
+
+Filtros adicionales:
+
+- `GET /api/support/devices?tenantId=<uuid>&status=active`
+- `GET /api/support/company-devices?tenantId=<uuid>&rut=<rut>`
+
+Respuesta:
+
+```json
+{
+  "ok": true,
+  "data": {
+    "items": [],
+    "pagination": {
+      "limit": 50,
+      "offset": 0
+    }
+  },
+  "meta": {
+    "requestId": "string"
+  }
+}
+```

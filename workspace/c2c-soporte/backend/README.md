@@ -69,3 +69,13 @@ Body:
 ```
 
 Este endpoint ejecuta solo `EXPLAIN (FORMAT JSON)` y bloquea comandos de escritura o multiples sentencias.
+
+## Endpoints soporte
+
+```txt
+GET /api/support/companies
+GET /api/support/devices
+GET /api/support/company-devices
+```
+
+Estos endpoints leen vistas locales en `rr_gestion_soporte` y son el contrato inicial para el frontend.

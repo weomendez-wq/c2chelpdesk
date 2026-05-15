@@ -64,6 +64,28 @@ El backend inicial incluye:
 
 El primer modulo administrativo sera `POST /api/admin/sql/explain`. Debe validar que la consulta sea de solo lectura, bloquear comandos peligrosos y ejecutar solo `EXPLAIN (FORMAT JSON)`.
 
+## Modulo soporte inicial
+
+El primer modulo funcional de lectura sera `GET /api/support/...`.
+
+Objetivo:
+
+- Exponer vistas locales de `rr_gestion_soporte`.
+- Mantener filtros simples y paginacion limitada.
+- Servir como contrato inicial para el frontend.
+
+Endpoints iniciales:
+
+- `GET /api/support/companies`
+- `GET /api/support/devices`
+- `GET /api/support/company-devices`
+
+Fuente:
+
+- `rr_gestion_soporte.empresas_resumen`
+- `rr_gestion_soporte.dispositivos_resumen`
+- `rr_gestion_soporte.empresa_dispositivo_resumen`
+
 ## Tests iniciales
 
 El backend usa `node:test` ejecutado con `tsx` para pruebas TypeScript. Los primeros casos cubren el validador SQL y la deteccion de `Seq Scan`.
