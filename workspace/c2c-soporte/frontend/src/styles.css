@@ -55,7 +55,7 @@ h1 {
 .filters {
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(220px, 320px) 170px;
+  grid-template-columns: minmax(220px, 320px) 150px 170px;
 }
 
 .field {
@@ -82,7 +82,7 @@ h1 {
 .metrics {
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(3, minmax(140px, 1fr));
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
 }
 
 .metric {
@@ -105,6 +105,14 @@ h1 {
   margin-top: 4px;
 }
 
+.metric.warning {
+  border-color: #fde68a;
+}
+
+.metric.urgent {
+  border-color: #fecaca;
+}
+
 .status,
 .empty {
   color: #536275;
@@ -125,7 +133,7 @@ h1 {
 
 table {
   border-collapse: collapse;
-  min-width: 1120px;
+  min-width: 1180px;
   width: 100%;
 }
 
@@ -176,6 +184,41 @@ tbody tr:hover {
 .badge.suspended {
   background: #fef3c7;
   color: #92400e;
+}
+
+.badge.alert-ok {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badge.alert-warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge.alert-urgente {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.badge.alert-sin_emision {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.table-title,
+.table-subtitle {
+  display: block;
+}
+
+.table-title {
+  font-weight: 800;
+}
+
+.table-subtitle {
+  color: #66758a;
+  font-size: 0.78rem;
+  margin-top: 3px;
 }
 
 .empty {

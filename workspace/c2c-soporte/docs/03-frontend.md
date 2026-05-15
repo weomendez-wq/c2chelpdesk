@@ -36,7 +36,7 @@ frontend/
 - Estados de carga, error y vacio.
 - Filtros por busqueda y estado.
 
-## Primera implementacion
+## Primera implementacion original
 
 La primera pantalla consume:
 
@@ -50,6 +50,22 @@ Objetivo:
 - Filtrar por texto y estado de dispositivo.
 - Mostrar conteos basicos para soporte.
 - Mantener el frontend alineado con las vistas locales `rr_gestion_soporte`.
+
+## Enfoque certificado por empresa
+
+La pantalla inicial debe consumir primero:
+
+```txt
+GET /api/support/control/companies
+```
+
+Objetivo:
+
+- Validar empresas como dominio aislado antes de mezclar devices, CAF o folios.
+- Mostrar cuadratura de empresas por estado.
+- Mostrar alertas por emision: `OK`, `WARNING`, `URGENTE`, `SIN_EMISION`.
+- Permitir buscar por empresa, RUT o tenant.
+- Filtrar por estado de empresa y nivel de alerta.
 
 ## Decisiones tecnicas
 
@@ -69,7 +85,7 @@ npm install
 npm run dev
 ```
 
-El proxy de Vite apunta a `http://localhost:3000`, por lo que el backend debe estar levantado en ese puerto para consumir `/api/support/company-devices` durante desarrollo.
+El proxy de Vite apunta a `http://localhost:3000`, por lo que el backend debe estar levantado en ese puerto para consumir `/api/support/control/companies` durante desarrollo.
 
 ## Manual de validacion
 

@@ -14,34 +14,35 @@ export type PaginatedResponse<TItem> = {
   };
 };
 
-export type CompanyDevice = {
+export type CompanyControlAlert = "OK" | "WARNING" | "URGENTE" | "SIN_EMISION";
+
+export type CompanyControl = {
   tenant_id: string;
   tenant_name: string | null;
+  tenant_status: string | null;
   rut: number | null;
   empresa_name: string | null;
   empresa_status: string | null;
-  empresa_comuna: string | null;
-  empresa_ciudad: string | null;
-  device_id: string | null;
-  device_name: string | null;
-  device_status: string | null;
-  device_local: string | null;
-  device_comuna: string | null;
-  device_ciudad: string | null;
-  anydesk: string | null;
-  config_group_name: string | null;
-  registration_key_count: number | null;
-  active_registration_key_count: number | null;
+  giro: string | null;
+  comuna: string | null;
+  ciudad: string | null;
+  documentos_emitidos_2026: number;
+  primera_emision: string | null;
+  ultima_emision: string | null;
+  dias_desde_primera_emision: number | null;
+  dias_sin_emitir: number | null;
+  nivel_alerta_emision: CompanyControlAlert;
 };
 
-export type CompanyDevicesQuery = {
+export type CompanyControlQuery = {
   limit?: number;
   offset?: number;
   search?: string;
   status?: string;
+  alert?: CompanyControlAlert;
 };
 
-const buildQueryString = (query: CompanyDevicesQuery) => {
+const buildQueryString = (query: Record<string, string | number | undefined>) => {
   const params = new URLSearchParams();
 
   Object.entries(query).forEach(([key, value]) => {
@@ -54,19 +55,19 @@ const buildQueryString = (query: CompanyDevicesQuery) => {
   return queryString ? `?${queryString}` : "";
 };
 
-export const getCompanyDevices = async (
-  query: CompanyDevicesQuery,
+export const getCompanyControl = async (
+  query: CompanyControlQuery,
   signal?: AbortSignal
-): Promise<PaginatedResponse<CompanyDevice>> => {
-  const response = await fetch(`/api/support/company-devices${buildQueryString(query)}`, {
+): Promise<PaginatedResponse<CompanyControl>> => {
+  const response = await fetch(`/api/support/control/companies${buildQueryString(query)}`, {
     signal
   });
 
   if (!response.ok) {
-    throw new Error("No se pudo consultar empresas y dispositivos");
+    throw new Error("No se pudo consultar el control de empresas");
   }
 
-  const payload = (await response.json()) as ApiSuccess<PaginatedResponse<CompanyDevice>>;
+  const payload = (await response.json()) as ApiSuccess<PaginatedResponse<CompanyControl>>;
 
   if (!payload.ok) {
     throw new Error("Respuesta API invalida");
