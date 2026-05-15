@@ -42,6 +42,17 @@ Los scripts iniciales estan en `database/sql/`:
 
 Estos scripts no deben ejecutarse contra produccion.
 
+## Inventario de origen public
+
+Los scripts `database/sql/source-readonly/` permiten inspeccionar el origen `public` con consultas de solo lectura antes de copiar datos.
+
+Reglas:
+
+- No modifican `public`.
+- No ejecutan `COUNT(*)`.
+- No copian datos.
+- `25-documentos-window-explain-template.sql` es una plantilla y requiere reemplazar `<columna_fecha>`.
+
 ## Endpoint inicial de analisis
 
 ```txt

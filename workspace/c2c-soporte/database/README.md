@@ -45,6 +45,19 @@ Estos scripts son de solo lectura:
 - `sql/12-inspect-indexes.sql`: lista indices.
 - `sql/13-inspect-table-estimates.sql`: lista estimaciones de filas y tamanos sin usar `COUNT(*)`.
 
+## Scripts de inventario de origen
+
+La carpeta `sql/source-readonly/` contiene consultas de solo lectura para inspeccionar el esquema `public` origen antes de definir copias:
+
+- `20-public-table-inventory.sql`
+- `21-public-columns-inventory.sql`
+- `22-public-indexes-inventory.sql`
+- `23-public-table-estimates.sql`
+- `24-documentos-date-candidates.sql`
+- `25-documentos-window-explain-template.sql`
+
+No modifican datos ni estructura. La plantilla de `documentos` requiere reemplazar `<columna_fecha>` antes de ejecutarse.
+
 ## Comandos de referencia
 
 ```powershell
