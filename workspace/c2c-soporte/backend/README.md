@@ -76,6 +76,9 @@ Este endpoint ejecuta solo `EXPLAIN (FORMAT JSON)` y bloquea comandos de escritu
 GET /api/support/companies
 GET /api/support/devices
 GET /api/support/company-devices
+GET /api/support/control/companies
 ```
 
 Estos endpoints leen vistas locales en `rr_gestion_soporte` y son el contrato inicial para el frontend.
+
+`GET /api/support/control/companies` lee `rr_gestion_soporte.empresa_control_resumen` y entrega la primera vista certificada por empresa.

@@ -3,10 +3,16 @@ import { ok } from "../../shared/apiResponse.js";
 import { AppError } from "../../shared/appError.js";
 import {
   companiesQuerySchema,
+  companyControlQuerySchema,
   companyDevicesQuerySchema,
   devicesQuerySchema
 } from "./support.schemas.js";
-import { listCompanies, listCompanyDevices, listDevices } from "./support.service.js";
+import {
+  listCompanies,
+  listCompanyControl,
+  listCompanyDevices,
+  listDevices
+} from "./support.service.js";
 
 export const supportRouter = Router();
 
@@ -63,6 +69,26 @@ supportRouter.get("/company-devices", async (req, res, next) => {
     }
 
     const data = await listCompanyDevices(parsedQuery.data);
+
+    res.json(ok({ data, requestId: req.requestId }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+supportRouter.get("/control/companies", async (req, res, next) => {
+  try {
+    const parsedQuery = companyControlQuerySchema.safeParse(req.query);
+
+    if (!parsedQuery.success) {
+      throw new AppError({
+        code: "VALIDATION_ERROR",
+        message: "Parametros de consulta invalidos",
+        statusCode: 400
+      });
+    }
+
+    const data = await listCompanyControl(parsedQuery.data);
 
     res.json(ok({ data, requestId: req.requestId }));
   } catch (error) {

@@ -598,6 +598,28 @@ GET /api/support/control/alerts
 
 El frontend debe consumir estas vistas por bloque y no mezclar todo en una sola tabla.
 
+## Endpoint implementado - control companies
+
+```txt
+GET /api/support/control/companies
+```
+
+Fuente:
+
+```txt
+rr_gestion_soporte.empresa_control_resumen
+```
+
+Filtros:
+
+- `limit`
+- `offset`
+- `search`
+- `status`
+- `tenantId`
+- `rut`
+- `alert`
+
 ## Vista implementada - empresa control
 
 Archivos:

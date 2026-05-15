@@ -1,5 +1,10 @@
 import { dbPool } from "../../config/database.js";
-import type { CompaniesQuery, CompanyDevicesQuery, DevicesQuery } from "./support.schemas.js";
+import type {
+  CompaniesQuery,
+  CompanyControlQuery,
+  CompanyDevicesQuery,
+  DevicesQuery
+} from "./support.schemas.js";
 
 export type PaginatedResult<TItem> = {
   items: TItem[];
@@ -126,6 +131,53 @@ export const listCompanyDevices = async (
      FROM rr_gestion_soporte.empresa_dispositivo_resumen
      ${whereSql}
      ORDER BY empresa_name ASC, device_name ASC NULLS LAST
+     ${paginationSql}`,
+    values
+  );
+
+  return {
+    items: result.rows,
+    pagination: {
+      limit: query.limit,
+      offset: query.offset
+    }
+  };
+};
+
+export const listCompanyControl = async (
+  query: CompanyControlQuery
+): Promise<PaginatedResult<Record<string, unknown>>> => {
+  const clauses: string[] = [];
+  const values: unknown[] = [];
+
+  addFilter(clauses, values, "tenant_id = ?", query.tenantId);
+  addFilter(clauses, values, "rut = ?", query.rut);
+  addFilter(clauses, values, "empresa_status = ?", query.status);
+  addFilter(clauses, values, "nivel_alerta_emision = ?", query.alert);
+
+  if (query.search) {
+    values.push(`%${query.search}%`, `%${query.search}%`, `%${query.search}%`);
+    clauses.push(
+      `(empresa_name ILIKE $${values.length - 2} OR rut::text ILIKE $${values.length - 1} OR tenant_name ILIKE $${values.length})`
+    );
+  }
+
+  const whereSql = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+  const paginationSql = appendPagination(values, query.limit, query.offset);
+
+  const result = await dbPool.query(
+    `SELECT *
+     FROM rr_gestion_soporte.empresa_control_resumen
+     ${whereSql}
+     ORDER BY
+       CASE nivel_alerta_emision
+         WHEN 'URGENTE' THEN 1
+         WHEN 'SIN_EMISION' THEN 2
+         WHEN 'WARNING' THEN 3
+         ELSE 4
+       END,
+       dias_sin_emitir DESC NULLS FIRST,
+       empresa_name ASC
      ${paginationSql}`,
     values
   );
