@@ -66,4 +66,8 @@ El conteo mensual previo fue 402915. La diferencia de 3 filas se atribuye a camb
 
 ## Siguiente paso
 
-Evaluar utilidad del lote mayo para consultas de soporte y decidir si se importan meses anteriores con el mismo patron.
+Importar meses anteriores de 2026 con el mismo patron, ya que se confirma que son necesarios.
+
+## Avance posterior
+
+Se agrega `database/scripts/generate-copy-documentos-window.ps1` para generar ventanas parametrizadas de `documentos`.

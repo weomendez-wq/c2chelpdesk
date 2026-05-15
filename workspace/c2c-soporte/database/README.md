@@ -116,6 +116,18 @@ El destino local es `staging_public.documentos_2026_05`.
 
 Los scripts generados quedan en `database/generated/copy-documentos-2026-05/` y no se versionan.
 
+## Generar ventana documentos
+
+```powershell
+.\database\scripts\generate-copy-documentos-window.ps1 `
+  -InventoryDir ".\database\inventory\source\YYYYMMDD-HHMMSS" `
+  -StartDate "2026-04-01" `
+  -EndDate "2026-05-01" `
+  -TargetTable "documentos_2026_04"
+```
+
+Los scripts generados quedan en `database/generated/copy-documentos-window/` y no se versionan.
+
 ## Copia local documentos mayo 2026
 
 El lote mayo 2026 fue ejecutado localmente desde origen `dte.public` hacia `soporte.staging_public`.

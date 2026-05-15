@@ -31,7 +31,7 @@ Consulta ejecutada en origen con sesion read-only el 2026-05-15.
 
 ## Decision
 
-No copiar todo 2026 de una vez.
+No copiar todo 2026 en una sola operacion.
 
 Primer lote recomendado:
 
@@ -68,6 +68,16 @@ Motivo:
   -InventoryDir ".\database\inventory\source\20260515-025144"
 ```
 
+Para los meses restantes se usa generador parametrizable:
+
+```powershell
+.\database\scripts\generate-copy-documentos-window.ps1 `
+  -InventoryDir ".\database\inventory\source\20260515-025144" `
+  -StartDate "2026-04-01" `
+  -EndDate "2026-05-01" `
+  -TargetTable "documentos_2026_04"
+```
+
 ## Ejecucion mayo 2026
 
 Ejecucion local completada el 2026-05-15 con artefactos en `database/generated/copy-documentos-2026-05/20260515-033145`.
@@ -80,6 +90,19 @@ Resultado:
 - Diferencias por conteo: 0.
 
 El conteo mensual previo habia mostrado 402915 filas. La diferencia de 3 filas se explica por cambio en origen entre consultas; la validacion final compara origen/local despues de la exportacion y quedo en 0 diferencias.
+
+## Meses requeridos
+
+Se confirma que tambien se necesitan los meses anteriores de 2026.
+
+Orden de importacion:
+
+1. `documentos_2026_04`
+2. `documentos_2026_03`
+3. `documentos_2026_02`
+4. `documentos_2026_01`
+
+Cada mes debe mantener tabla staging independiente y validacion origen/local.
 
 ## Regla
 
