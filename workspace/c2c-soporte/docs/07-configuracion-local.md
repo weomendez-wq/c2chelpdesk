@@ -36,6 +36,22 @@ LOG_LEVEL=debug
 - Usuario local: `postgres`.
 - Scripts SQL base ejecutados localmente.
 
+## Verificacion rapida de disponibilidad
+
+Antes de validar frontend/backend juntos:
+
+```powershell
+Test-NetConnection localhost -Port 5434
+```
+
+Resultado esperado:
+
+```txt
+TcpTestSucceeded: True
+```
+
+Si retorna `False`, el backend puede responder `/api/health`, pero endpoints como `/api/support/company-devices` fallaran con `500` al no poder conectar a la base local `soporte`.
+
 ## Pendientes
 
 - Crear `.env` local real a partir de `.env.example` si se requiere ejecutar el backend manualmente.

@@ -81,6 +81,20 @@ Resultado esperado:
 - Las vistas `rr_gestion_soporte` ya fueron creadas.
 - La vista `empresa_dispositivo_resumen` responde con datos.
 
+Validacion de puerto:
+
+```powershell
+Test-NetConnection localhost -Port 5434
+```
+
+Resultado esperado:
+
+```txt
+TcpTestSucceeded: True
+```
+
+Si el resultado es `False`, el backend puede levantar el healthcheck, pero los endpoints que consultan datos responderan `500` porque no pueden conectar a PostgreSQL local.
+
 ### 2. Levantar backend
 
 Ubicarse en:
@@ -252,6 +266,28 @@ Evidencia: Captura o texto exacto
 Impacto: No permite validar dispositivos de esa empresa
 Sugerencia o duda: Revisar si el RUT viene con puntos, guion o digito verificador
 ```
+
+## Observaciones conocidas
+
+### API responde 500 en `/api/support/company-devices`
+
+Causa probable:
+
+- El frontend llama a `/api/support/company-devices`.
+- Vite redirige correctamente hacia el backend.
+- El backend recibe la peticion.
+- El endpoint intenta leer `rr_gestion_soporte.empresa_dispositivo_resumen`.
+- PostgreSQL local `localhost:5434` no esta escuchando o la base `soporte` no esta disponible.
+
+Como verificar:
+
+```powershell
+Test-NetConnection localhost -Port 5434
+```
+
+Si retorna `TcpTestSucceeded: False`, primero hay que levantar o corregir la instancia local de PostgreSQL antes de revisar el frontend.
+
+No cambiar el backend a `localhost:5432` sin validar, porque ese puerto puede corresponder a la base origen `dte` y no a la base local controlada `soporte`.
 
 ## Criterios para continuar
 
