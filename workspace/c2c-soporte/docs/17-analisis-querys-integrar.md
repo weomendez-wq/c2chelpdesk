@@ -297,6 +297,31 @@ Quedan fuera de esta etapa:
 - `MATERIALIZED VIEW`.
 - Cualquier sentencia `DROP`, `UPDATE` o `ALTER`.
 
+## Validacion local de etapa inicial
+
+Fecha:
+
+```txt
+2026-05-15
+```
+
+Resultado:
+
+```txt
+rr_gestion_soporte.documentos_2026_normalizados = 3919488 filas
+rr_gestion_soporte.documentos_2026              = 3919488 filas
+fechas invalidas                               = 0
+rr_gestion_soporte.device_control_resumen       = 402 devices
+staging_public.device                           = 402 devices
+```
+
+Conclusiones:
+
+- La vista normalizada cuadra con la vista base de documentos.
+- No hay fechas invalidas bajo el patron actual `YYYY-MM-DD`.
+- La vista operacional por device cuadra con la cantidad de devices staging.
+- Ya existen datos suficientes para llevar al backend/frontend cards por periodo, status, alerta y consistencia.
+
 ## Pendiente antes de implementar
 
 - Definir si se crea una funcion oficial para parseo seguro de fechas posterior a la validacion de vistas.

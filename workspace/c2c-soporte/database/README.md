@@ -211,3 +211,18 @@ psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\13-inspect-ta
 ## Estado
 
 Scripts ejecutados localmente por Rodrigo. Conexion validada desde backend con `pg` y endpoint `POST /api/admin/sql/explain`.
+
+## Vistas operativas iniciales
+
+Ejecutadas localmente:
+
+- `rr_gestion_soporte.documentos_2026_normalizados`
+- `rr_gestion_soporte.documentos_2026_mensual`
+- `rr_gestion_soporte.documentos_2026_device_mensual`
+- `rr_gestion_soporte.device_control_resumen`
+
+Validacion:
+
+- Documentos base y normalizados: 3919488 filas.
+- Fechas invalidas: 0.
+- Devices staging y control: 402 filas.

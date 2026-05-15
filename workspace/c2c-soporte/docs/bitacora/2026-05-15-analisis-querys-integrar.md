@@ -52,3 +52,65 @@ public en database/integrar/*.sql: 0 coincidencias
 ```
 
 No se elimino ningun archivo.
+
+## Implementacion inicial validada
+
+Se crearon y ejecutaron localmente los scripts:
+
+```txt
+database/sql/26-create-documentos-operational-views.sql
+database/sql/27-verify-documentos-operational-views.sql
+database/sql/28-create-device-operational-views.sql
+database/sql/29-verify-device-operational-views.sql
+```
+
+Resultado documental:
+
+```txt
+documentos_2026_normalizados: 3919488
+documentos_2026 base:        3919488
+fechas invalidas:            0
+```
+
+Documentos por periodo:
+
+```txt
+2026-01: 888389
+2026-02: 857721
+2026-03: 912756
+2026-04: 857704
+2026-05: 402918
+```
+
+Resultado devices:
+
+```txt
+device_control_resumen: 402
+staging_public.device:  402
+```
+
+Devices por status:
+
+```txt
+active:    349
+disabled:   50
+suspended:   3
+```
+
+Alertas iniciales:
+
+```txt
+URGENTE:     55
+SIN_EMISION: 155
+WARNING:      6
+OK:         186
+```
+
+Consistencia inicial:
+
+```txt
+ACTIVO_SIN_EMISION:           106
+ACTIVO_SIN_EMISION_RECIENTE:   57
+NO_ACTIVO_CON_EMISION:          4
+OK:                           235
+```
