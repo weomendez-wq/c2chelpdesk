@@ -33,7 +33,8 @@ backend/
 ## Pendientes antes de implementar
 
 - Agregar endpoint SQL seguro.
-- Agregar pruebas automatizadas.
+- Probar endpoint SQL contra PostgreSQL local.
+- Agregar autenticacion/autorizacion para rutas administrativas.
 
 ## Decisiones tecnicas
 
@@ -62,3 +63,7 @@ El backend inicial incluye:
 ## Modulo SQL inicial
 
 El primer modulo administrativo sera `POST /api/admin/sql/explain`. Debe validar que la consulta sea de solo lectura, bloquear comandos peligrosos y ejecutar solo `EXPLAIN (FORMAT JSON)`.
+
+## Tests iniciales
+
+El backend usa `node:test` ejecutado con `tsx` para pruebas TypeScript. Los primeros casos cubren el validador SQL y la deteccion de `Seq Scan`.

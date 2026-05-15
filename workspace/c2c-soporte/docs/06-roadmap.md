@@ -24,6 +24,7 @@
 - Agregar logger estructurado y `requestId`.
 - Estandarizar formato de respuesta API.
 - Detectar `Seq Scan` en el plan JSON.
+- Agregar pruebas automatizadas del validador SQL.
 
 ## Fase 4 - Consolidacion backend
 
