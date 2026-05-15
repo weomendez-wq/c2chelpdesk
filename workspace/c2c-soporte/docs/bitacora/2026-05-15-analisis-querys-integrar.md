@@ -26,3 +26,16 @@ Se detectaron tres grupos:
 ## Decision
 
 No ejecutar scripts heredados directamente. Integrar la logica en scripts nuevos, no destructivos y adaptados a la base local actual.
+
+## Limpieza posterior
+
+Se quitaron todas las lineas con `DROP` de los scripts en `database/integrar/`.
+
+Validacion:
+
+```txt
+DROP en database/integrar/*.sql: 0 coincidencias
+public en database/integrar/*.sql: 0 coincidencias
+```
+
+No se elimino ningun archivo.

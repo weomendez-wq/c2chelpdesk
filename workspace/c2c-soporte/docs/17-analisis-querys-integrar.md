@@ -264,3 +264,30 @@ Orden recomendado:
 - Confirmar si `database/integrar/` debe quedar versionado como insumo historico o si se debe dejar fuera y solo versionar scripts adaptados.
 - Definir si se crea una funcion oficial para parseo seguro de fechas.
 - Decidir si la capa normalizada sera `VIEW`, `TABLE` o `MATERIALIZED VIEW`.
+
+## Limpieza preventiva aplicada
+
+Fecha:
+
+```txt
+2026-05-15
+```
+
+Accion:
+
+```txt
+Se quitaron todas las lineas que contenian DROP dentro de database/integrar/*.sql.
+```
+
+Validacion:
+
+```txt
+Sin coincidencias para DROP en database/integrar/*.sql.
+Sin referencias a public en database/integrar/*.sql.
+```
+
+Observacion:
+
+- Los scripts siguen siendo insumos de analisis, no scripts aprobados para ejecucion.
+- Aun quedan sentencias `UPDATE`, `ALTER` y `ON CONFLICT DO UPDATE`, que se revisaran en la siguiente etapa.
+- No se elimino ningun archivo.
