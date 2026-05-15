@@ -597,3 +597,43 @@ GET /api/support/control/alerts
 ```
 
 El frontend debe consumir estas vistas por bloque y no mezclar todo en una sola tabla.
+
+## Vista implementada - empresa control
+
+Archivos:
+
+```txt
+database/sql/24-create-empresa-control-resumen.sql
+database/sql/25-verify-empresa-control-resumen.sql
+```
+
+Objetivo:
+
+- Certificar empresas como primer dominio aislado.
+- Calcular actividad 2026 por empresa.
+- Generar alerta inicial por falta de emision o tiempo sin emitir.
+
+Campos principales:
+
+- `tenant_id`
+- `rut`
+- `empresa_name`
+- `empresa_status`
+- `documentos_emitidos_2026`
+- `primera_emision`
+- `ultima_emision`
+- `dias_desde_primera_emision`
+- `dias_sin_emitir`
+- `nivel_alerta_emision`
+
+Validacion local:
+
+```txt
+empresas: 86
+activas: 86
+no_activas: 0
+cuadratura_estado_ok: true
+OK: 60
+SIN_EMISION: 18
+URGENTE: 8
+```
