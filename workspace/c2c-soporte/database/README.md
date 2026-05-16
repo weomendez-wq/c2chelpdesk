@@ -8,6 +8,15 @@ Centralizar scripts SQL locales del proyecto C2C Soporte / DTE / Torre de Contro
 
 Estos scripts son para entorno local. No se deben ejecutar contra una base productiva sin revision explicita.
 
+Regla critica: no ejecutar contra `public` ninguna accion de escritura, eliminacion, actualizacion, bloqueo, permisos, DDL, mantenimiento destructivo o funcion con efectos laterales.
+
+Para informacion operacional de 2026, usar solo los objetos locales ya migrados:
+
+- `staging_public.*`
+- `rr_gestion_soporte.*`
+
+Las referencias historicas deben reinterpretarse sobre estos schemas locales, no ejecutarse ni adaptarse directamente contra `public`.
+
 ## Base local objetivo
 
 ```txt

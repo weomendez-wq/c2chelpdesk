@@ -24,6 +24,19 @@ docs/referencias-funciones/2026-05-16-FUNCIONES_C2C_SOPORTE/originales/
 
 No deben ejecutarse directamente.
 
+## Restriccion reforzada por usuario
+
+No ejecutar nada contra `public` que contenga acciones de eliminacion, actualizacion, insercion, bloqueo, permisos, DDL, mantenimiento destructivo o funciones con efectos laterales.
+
+Toda la informacion operacional de 2026 debe consultarse desde las tablas y vistas ya migradas al entorno local:
+
+```txt
+staging_public
+rr_gestion_soporte
+```
+
+Los archivos historicos de esta carpeta solo sirven para rescatar formulas, criterios de negocio y nombres de metricas. Si una logica se incorpora al producto, debe reescribirse como SQL nuevo sobre los schemas locales.
+
 Validacion de preservacion:
 
 ```txt

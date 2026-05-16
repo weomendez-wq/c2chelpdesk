@@ -4,6 +4,17 @@
 
 El esquema `public` productivo se considera solo lectura.
 
+## Regla critica reforzada 2026
+
+No se debe ejecutar nada contra `public` que contenga acciones de escritura, eliminacion, actualizacion, bloqueo, permisos, DDL, mantenimiento destructivo o funciones con efectos laterales.
+
+La informacion operacional de 2026 debe salir de las tablas y vistas locales ya migradas:
+
+- `staging_public.*`
+- `rr_gestion_soporte.*`
+
+Las funciones historicas y scripts reciclados solo pueden usarse como referencia de formulas o reglas de negocio. Cualquier logica util debe reescribirse como consulta o vista nueva sobre los objetos locales.
+
 ## Comandos prohibidos sobre public productivo
 
 - `INSERT`
@@ -15,6 +26,11 @@ El esquema `public` productivo se considera solo lectura.
 - `CREATE`
 - `GRANT`
 - `REVOKE`
+- `LOCK`
+- `VACUUM FULL`
+- `REFRESH MATERIALIZED VIEW`
+- `CALL`
+- `DO`
 
 ## Flujo para queries pesadas
 

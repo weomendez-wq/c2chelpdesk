@@ -104,3 +104,5 @@ Los scripts generados para copia controlada quedan en `database/generated/` y no
 ## Regla principal
 
 No ejecutar cambios sobre base productiva ni crear scripts SQL sin documentar antes el objetivo, el alcance y la forma de validacion.
+
+Regla critica para `public`: no ejecutar acciones de escritura, eliminacion, actualizacion, bloqueo, permisos, DDL, mantenimiento destructivo ni funciones con efectos laterales. La informacion operacional 2026 debe consultarse desde los objetos locales ya migrados en `staging_public` y `rr_gestion_soporte`.
