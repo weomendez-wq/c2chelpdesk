@@ -66,6 +66,15 @@ Avance:
 - Integrar cards compactas de folios en el detalle de empresa.
 - Mantener la normalizacion estructural como proyecto posterior.
 
+## Fase 8 - Historial anual y cajeros
+
+- Crear modelo local de resumen historico anual sin copiar documentos completos.
+- Incorporar metricas de cajeros/devices con ranking, actividad y primer/ultimo folio.
+- Estimar agotamiento de folios por empresa, tipo documento y consumo real.
+- Modelar rangos de folios caducados, actuales y por ocupar.
+- Definir ejecucion anual manual con auditoria y permisos.
+- Mantener cualquier extraccion desde `dte.public` como solo lectura agregada.
+
 ## Fase posterior - Normalizacion base de datos
 
 - Usar este proyecto como baseline operativo.

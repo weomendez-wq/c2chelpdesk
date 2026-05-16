@@ -93,6 +93,8 @@ Las funciones SQL historicas seleccionadas desde `layoutExample/FUNCIONES_C2C_SO
 
 El diseno del bloque folios/CAF esta en `docs/18-diseno-folios-caf.md`.
 
+El diseno de historial anual, cajeros y proyeccion de folios esta en `docs/19-diseno-historial-cajeros-folios.md`.
+
 La primera vista de control por empresa se crea con `database/sql/24-create-empresa-control-resumen.sql` y se verifica con `database/sql/25-verify-empresa-control-resumen.sql`.
 
 Las vistas operativas documentales y por device se crean con `database/sql/26-create-documentos-operational-views.sql` y `database/sql/28-create-device-operational-views.sql`; se verifican con `database/sql/27-verify-documentos-operational-views.sql` y `database/sql/29-verify-device-operational-views.sql`.
