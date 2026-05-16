@@ -156,4 +156,4 @@ Filtros adicionales de alertas:
 - `tenantId`: tenant seleccionado.
 - `rut`: RUT de empresa.
 
-`CAF_VENCIMIENTO` aplica inicialmente a facturas electronicas tipo `33`; usa fecha `FA` extraida desde `xml_caf` local y vencimiento operacional a 6 meses.
+`CAF_VENCIMIENTO` aplica inicialmente a facturas electronicas tipo `33`; usa fecha `FA` extraida desde `xml_caf` local. La vigencia y el umbral de aviso salen de `rr_gestion_soporte.caf_vencimiento_config` (`33`: 6 meses y warning 30 dias; `39` y `41`: `NO_APLICA` en esta etapa).

@@ -324,7 +324,11 @@ export const refreshLocalCaches = async (
          v.caf_fecha_autorizacion,
          v.caf_fecha_vencimiento,
          v.caf_dias_para_vencer,
-         v.nivel_alerta_caf_vencimiento
+         v.nivel_alerta_caf_vencimiento,
+         v.document_label,
+         v.vigencia_meses,
+         v.warning_dias,
+         v.aplica_vencimiento
        FROM rr_gestion_soporte.folios_rangos_clasificados_detalle r
        LEFT JOIN tmp_caf_vencimiento_cache v
          ON v.tenant_id = r.tenant_id

@@ -109,7 +109,7 @@ La primera optimizacion local de indices y caches quedo registrada en `docs/bita
 
 El refresco manual de caches locales y su modulo de procesos quedo registrado en `docs/bitacora/2026-05-16-refresco-caches.md`.
 
-El control de vencimiento CAF para facturas electronicas tipo `33` quedo registrado en `docs/bitacora/2026-05-16-vencimiento-caf-facturas.md`.
+El control de vencimiento CAF para facturas electronicas tipo `33` quedo registrado en `docs/bitacora/2026-05-16-vencimiento-caf-facturas.md`. La vigencia y umbral de aviso quedan parametrizados localmente en `rr_gestion_soporte.caf_vencimiento_config`.
 
 Los modulos frontend activos incluyen Torre de Control, Empresas, Cajeros/Devices, Documentos, Folios/CAF, Rangos SII y Alertas. Los endpoints principales estan documentados en `docs/08-api-estandar.md`.
 

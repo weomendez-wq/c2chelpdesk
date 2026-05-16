@@ -61,6 +61,7 @@ SIN_FECHA_CAF: CAF tipo 33 sin tag FA interpretable.
 ## Objetos locales planificados
 
 ```txt
+rr_gestion_soporte.caf_vencimiento_config
 rr_gestion_soporte.caf_vencimiento_resumen
 rr_gestion_soporte.caf_vencimiento_cache
 ```
@@ -76,9 +77,20 @@ database/sql/performance/47-create-caf-expiration-control.sql
 Objetos creados:
 
 ```txt
+rr_gestion_soporte.caf_vencimiento_config
 rr_gestion_soporte.caf_vencimiento_resumen
 rr_gestion_soporte.caf_vencimiento_cache
 ```
+
+Configuracion inicial:
+
+```txt
+33 Factura electronica: vigencia 6 meses, warning 30 dias, aplica vencimiento.
+39 Boleta electronica: no aplica vencimiento CAF operacional en esta etapa.
+41 Boleta exenta electronica: no aplica vencimiento CAF operacional en esta etapa.
+```
+
+La regla queda parametrizada en tabla local para futuro mantenedor. No se edita `public` y no se modifica `xml_caf`.
 
 Columnas agregadas a `rr_gestion_soporte.folios_rangos_clasificados_cache`:
 
@@ -87,6 +99,10 @@ caf_fecha_autorizacion
 caf_fecha_vencimiento
 caf_dias_para_vencer
 nivel_alerta_caf_vencimiento
+document_label
+vigencia_meses
+warning_dias
+aplica_vencimiento
 ```
 
 ## Integracion
@@ -109,6 +125,7 @@ Despues del refresh manual:
 ```txt
 caf_vencimiento_cache: 374
 alertas_operativas_cache: 305
+folios_rangos_clasificados_cache: 374
 ```
 
 Alerta detectada:
@@ -130,4 +147,23 @@ frontend typecheck OK
 frontend build OK
 GET /api/support/control/alerts?source=CAF_VENCIMIENTO OK
 GET /api/support/control/folio-ranges?documentType=33 OK
+```
+
+## Ajuste de configuracion local
+
+Se corrigio la vista para conservar el orden de columnas existente y agregar las columnas de configuracion al final. Causa del ajuste: PostgreSQL no permite insertar columnas nuevas en medio de una vista con `CREATE OR REPLACE VIEW`, porque lo interpreta como renombrar columnas existentes.
+
+Resultado validado:
+
+```txt
+33 Factura electronica: 11 CAF, vigencia_meses 6, warning_dias 30, aplica true
+39 Boleta electronica: 359 CAF, aplica false
+41 Boleta exenta electronica: 4 CAF, aplica false
+```
+
+Refresh manual validado:
+
+```txt
+status: SUCCESS
+durationMs: 165192
 ```

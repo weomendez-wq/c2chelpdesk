@@ -174,6 +174,10 @@ export type FolioRange = {
   caf_resultado: string;
   lost_folios: number;
   estado_operativo_rango: FolioRangeOperationalState;
+  document_label: string | null;
+  vigencia_meses: number | null;
+  warning_dias: number | null;
+  aplica_vencimiento: boolean | null;
   caf_fecha_autorizacion: string | null;
   caf_fecha_vencimiento: string | null;
   caf_dias_para_vencer: number | null;

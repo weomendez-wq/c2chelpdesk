@@ -115,6 +115,20 @@ const formatDuration = (value: number | null) => {
   return `${Math.round(value / 1000).toLocaleString("es-CL")} s`;
 };
 
+const documentTypeLabel = (documentType: number, label?: string | null) => {
+  if (label) {
+    return `${documentType} ${label}`;
+  }
+
+  const labels: Record<number, string> = {
+    33: "Factura electronica",
+    39: "Boleta electronica",
+    41: "Boleta exenta electronica"
+  };
+
+  return `${documentType} ${labels[documentType] ?? "DTE"}`;
+};
+
 const formatDays = (value: number | null) => {
   if (value === null) {
     return "-";
@@ -782,7 +796,7 @@ export const App = () => {
             <div className="doc-type-list">
               {documentsState.data.byDocumentType.map((item) => (
                 <div className="doc-type-row" key={item.documentType}>
-                  <span>Tipo {item.documentType}</span>
+                  <span>{documentTypeLabel(item.documentType)}</span>
                   <strong>{formatNumber(item.documents)}</strong>
                 </div>
               ))}
@@ -860,7 +874,7 @@ export const App = () => {
                       RUT {item.rut ?? "-"} | Tenant {item.tenant_id}
                     </span>
                   </td>
-                  <td>{item.document_type}</td>
+                  <td>{documentTypeLabel(item.document_type)}</td>
                   <td>
                     <span className={`badge alert-${item.nivel_alerta_folios.toLowerCase()}`}>
                       {item.nivel_alerta_folios}
@@ -1144,7 +1158,7 @@ export const App = () => {
                           RUT {item.rut ?? "-"} | Tenant {item.tenant_id}
                         </span>
                       </td>
-                      <td>{item.document_type}</td>
+                      <td>{documentTypeLabel(item.document_type, item.document_label)}</td>
                       <td>
                         <span className={`badge range-${item.estado_operativo_rango.toLowerCase()}`}>
                           {item.estado_operativo_rango}

@@ -248,7 +248,7 @@ Debe responder:
 - Que rangos son futuros.
 - Que rangos anteriores tienen folios no utilizados.
 - Que rangos son candidatos a revision o baja posterior.
-- Que CAF tipo `33` estan vencidos o por vencer segun fecha `FA` del XML CAF.
+- Que CAF tipo `33` estan vencidos o por vencer segun fecha `FA` del XML CAF y reglas locales de `rr_gestion_soporte.caf_vencimiento_config`.
 
 Vistas actuales:
 
@@ -279,7 +279,7 @@ Estado implementacion:
 - Filtro por empresa seleccionada.
 - Filtro por estado operativo.
 - Cards de rangos visibles, candidatos, anteriores y lost folios.
-- Indicadores de vencimiento CAF para facturas electronicas tipo `33`.
+- Indicadores de vencimiento CAF para facturas electronicas tipo `33`, con vigencia y warning parametrizados localmente.
 - Tabla paginada de rangos.
 - Exportacion queda pendiente.
 
