@@ -24,7 +24,7 @@ export type AlertSeverity =
   | "WARNING"
   | "SIN_EMISION"
   | "SIN_BASE_ESTIMACION";
-export type AlertSource = "EMPRESA" | "DEVICE" | "FOLIOS" | "AGOTAMIENTO";
+export type AlertSource = "EMPRESA" | "DEVICE" | "FOLIOS" | "AGOTAMIENTO" | "CAF_VENCIMIENTO";
 export type FolioRangeOperationalState =
   | "POR_OCUPAR"
   | "EN_USO"
@@ -174,6 +174,10 @@ export type FolioRange = {
   caf_resultado: string;
   lost_folios: number;
   estado_operativo_rango: FolioRangeOperationalState;
+  caf_fecha_autorizacion: string | null;
+  caf_fecha_vencimiento: string | null;
+  caf_dias_para_vencer: number | null;
+  nivel_alerta_caf_vencimiento: string | null;
 };
 
 export type FolioRangeQuery = {

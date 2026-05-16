@@ -680,6 +680,16 @@ tbody tr {
   color: #991b1b;
 }
 
+.badge.alert-no_aplica {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.badge.alert-sin_fecha_caf {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 .badge.alert-sin_base_estimacion {
   background: #e5e7eb;
   color: #374151;

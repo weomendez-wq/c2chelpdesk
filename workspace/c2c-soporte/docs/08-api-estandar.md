@@ -152,6 +152,8 @@ Filtros adicionales de rangos:
 Filtros adicionales de alertas:
 
 - `severity`: `REVISION_DATOS`, `SIN_FOLIOS`, `URGENTE`, `WARNING`, `SIN_EMISION`, `SIN_BASE_ESTIMACION`.
-- `source`: `EMPRESA`, `DEVICE`, `FOLIOS`, `AGOTAMIENTO`.
+- `source`: `EMPRESA`, `DEVICE`, `FOLIOS`, `AGOTAMIENTO`, `CAF_VENCIMIENTO`.
 - `tenantId`: tenant seleccionado.
 - `rut`: RUT de empresa.
+
+`CAF_VENCIMIENTO` aplica inicialmente a facturas electronicas tipo `33`; usa fecha `FA` extraida desde `xml_caf` local y vencimiento operacional a 6 meses.

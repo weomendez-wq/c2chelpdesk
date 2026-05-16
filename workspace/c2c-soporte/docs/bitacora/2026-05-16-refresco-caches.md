@@ -54,6 +54,16 @@ Se agrego el modulo visual `Procesos` en frontend con:
 - conteos de alertas y rangos cache
 - boton manual `Refrescar caches`
 
+## Ampliacion CAF 33
+
+El proceso de refresh tambien recalcula:
+
+```txt
+rr_gestion_soporte.caf_vencimiento_cache
+```
+
+Y reconstruye alertas `CAF_VENCIMIENTO` para facturas electronicas tipo `33`.
+
 ## Validacion
 
 ```txt

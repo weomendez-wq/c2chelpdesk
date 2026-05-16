@@ -98,6 +98,9 @@ const cacheCountSql = `
     SELECT 'folios_rangos_clasificados_cache', count(*)::bigint
     FROM rr_gestion_soporte.folios_rangos_clasificados_cache
     UNION ALL
+    SELECT 'caf_vencimiento_cache', count(*)::bigint
+    FROM rr_gestion_soporte.caf_vencimiento_cache
+    UNION ALL
     SELECT 'alertas_operativas_cache', count(*)::bigint
     FROM rr_gestion_soporte.alertas_operativas_cache
   ) counts
@@ -208,6 +211,35 @@ const alertCacheSelectSql = `
       now() AS generated_at
     FROM tmp_folios_proyeccion_agotamiento_cache
     WHERE nivel_alerta_agotamiento <> 'OK'
+
+    UNION ALL
+
+    SELECT
+      tenant_id,
+      tenant_name,
+      rut,
+      empresa_name,
+      'CAF_VENCIMIENTO'::text AS source,
+      CASE
+        WHEN nivel_alerta_caf_vencimiento = 'SIN_FECHA_CAF' THEN 'REVISION_DATOS'
+        ELSE nivel_alerta_caf_vencimiento
+      END AS severity,
+      'CAF factura electronica por vencer' AS title,
+      concat(
+        'Tipo DTE: ', document_type::text,
+        '. CAF: ', coalesce(cafserial::text, 'sin serial'),
+        '. FA: ', coalesce(caf_fecha_autorizacion::text, 'sin fecha'),
+        '. Vence: ', coalesce(caf_fecha_vencimiento::text, 'sin fecha')
+      ) AS detail,
+      cafserial::text AS entity_id,
+      document_type::integer AS document_type,
+      caf_dias_para_vencer::numeric AS metric_value,
+      NULL::numeric AS metric_secondary,
+      caf_fecha_vencimiento::text AS reference_date,
+      now() AS generated_at
+    FROM tmp_caf_vencimiento_cache
+    WHERE document_type = 33
+      AND nivel_alerta_caf_vencimiento IN ('URGENTE', 'WARNING', 'SIN_FECHA_CAF')
   )
   SELECT *
   FROM alerts
@@ -284,7 +316,24 @@ export const refreshLocalCaches = async (
     await client.query("CREATE TEMP TABLE tmp_device_control_resumen_cache AS SELECT * FROM rr_gestion_soporte.device_control_resumen");
     await client.query("CREATE TEMP TABLE tmp_folios_control_resumen_cache AS SELECT * FROM rr_gestion_soporte.folios_control_resumen");
     await client.query("CREATE TEMP TABLE tmp_folios_proyeccion_agotamiento_cache AS SELECT * FROM rr_gestion_soporte.folios_proyeccion_agotamiento");
-    await client.query("CREATE TEMP TABLE tmp_folios_rangos_clasificados_cache AS SELECT * FROM rr_gestion_soporte.folios_rangos_clasificados_detalle");
+    await client.query("CREATE TEMP TABLE tmp_caf_vencimiento_cache AS SELECT * FROM rr_gestion_soporte.caf_vencimiento_resumen");
+    await client.query(
+      `CREATE TEMP TABLE tmp_folios_rangos_clasificados_cache AS
+       SELECT
+         r.*,
+         v.caf_fecha_autorizacion,
+         v.caf_fecha_vencimiento,
+         v.caf_dias_para_vencer,
+         v.nivel_alerta_caf_vencimiento
+       FROM rr_gestion_soporte.folios_rangos_clasificados_detalle r
+       LEFT JOIN tmp_caf_vencimiento_cache v
+         ON v.tenant_id = r.tenant_id
+        AND v.rut = r.rut
+        AND v.document_type = r.document_type
+        AND v.cafserial IS NOT DISTINCT FROM r.cafserial
+        AND v.folio_ini = r.folio_ini
+        AND v.folio_fin = r.folio_fin`
+    );
     await client.query(`CREATE TEMP TABLE tmp_alertas_operativas_cache AS ${alertCacheSelectSql}`);
 
     await client.query(
@@ -296,6 +345,7 @@ export const refreshLocalCaches = async (
          rr_gestion_soporte.folios_control_resumen_cache,
          rr_gestion_soporte.folios_proyeccion_agotamiento_cache,
          rr_gestion_soporte.folios_rangos_clasificados_cache,
+         rr_gestion_soporte.caf_vencimiento_cache,
          rr_gestion_soporte.alertas_operativas_cache`
     );
 
@@ -306,6 +356,7 @@ export const refreshLocalCaches = async (
     await client.query("INSERT INTO rr_gestion_soporte.folios_control_resumen_cache SELECT * FROM tmp_folios_control_resumen_cache");
     await client.query("INSERT INTO rr_gestion_soporte.folios_proyeccion_agotamiento_cache SELECT * FROM tmp_folios_proyeccion_agotamiento_cache");
     await client.query("INSERT INTO rr_gestion_soporte.folios_rangos_clasificados_cache SELECT * FROM tmp_folios_rangos_clasificados_cache");
+    await client.query("INSERT INTO rr_gestion_soporte.caf_vencimiento_cache SELECT * FROM tmp_caf_vencimiento_cache");
     await client.query("INSERT INTO rr_gestion_soporte.alertas_operativas_cache SELECT * FROM tmp_alertas_operativas_cache");
 
     const countsResult = await client.query(cacheCountSql);
@@ -765,7 +816,8 @@ export const listFolioRanges = async (
     "primer_folio_emitido",
     "folio_mayor",
     "folio_mayor_global",
-    "lost_folios"
+    "lost_folios",
+    "caf_dias_para_vencer"
   ];
 
   const items = result.rows.map((row) => {

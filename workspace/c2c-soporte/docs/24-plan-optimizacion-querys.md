@@ -463,6 +463,29 @@ Objetivo:
 - Permitir que el backend ejecute refrescos manuales de caches.
 - Mantener trazabilidad de inicio, termino, duracion, estado y conteos.
 
+## Avance adicional: vencimiento CAF 33
+
+Se agrego control local de vencimiento CAF para facturas electronicas tipo `33`.
+
+Script:
+
+```txt
+database/sql/performance/47-create-caf-expiration-control.sql
+```
+
+Regla inicial:
+
+- `FA` se extrae desde `xml_caf`.
+- `caf_fecha_vencimiento = FA + 6 meses`.
+- `WARNING` si vence dentro de 30 dias.
+- `URGENTE` si esta vencido o vence hoy.
+
+La cache de alertas incorpora fuente:
+
+```txt
+CAF_VENCIMIENTO
+```
+
 Regla:
 
 - El refresco debe requerir confirmacion explicita.

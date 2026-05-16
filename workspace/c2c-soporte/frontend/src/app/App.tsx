@@ -79,7 +79,8 @@ const alertSourceOptions: Array<{ value: "" | AlertSource; label: string }> = [
   { value: "EMPRESA", label: "Empresa" },
   { value: "DEVICE", label: "Device" },
   { value: "FOLIOS", label: "Folios" },
-  { value: "AGOTAMIENTO", label: "Agotamiento" }
+  { value: "AGOTAMIENTO", label: "Agotamiento" },
+  { value: "CAF_VENCIMIENTO", label: "Vencimiento CAF" }
 ];
 
 const navigationItems = [
@@ -95,7 +96,13 @@ const navigationItems = [
   { id: "configuracion", label: "Configuracion", status: "Plan" }
 ];
 
-const formatDate = (value: string | null) => value ?? "-";
+const formatDate = (value: string | null) => {
+  if (!value) {
+    return "-";
+  }
+
+  return value.slice(0, 10);
+};
 const formatNumber = (value: number) => value.toLocaleString("es-CL");
 const formatMaybeNumber = (value: number | null) => (value === null ? "-" : formatNumber(value));
 const formatDateTime = (value: string | null) =>
@@ -602,18 +609,30 @@ export const App = () => {
           accumulator.anteriores + (item.clasificacion_temporal === "RANGOANTERIOR" ? 1 : 0),
         candidatos:
           accumulator.candidatos + (item.estado_operativo_rango === "CADUCADO_CANDIDATO" ? 1 : 0),
+        cafPorVencer:
+          accumulator.cafPorVencer +
+          (item.nivel_alerta_caf_vencimiento === "WARNING" ||
+          item.nivel_alerta_caf_vencimiento === "URGENTE"
+            ? 1
+            : 0),
         lostFolios: accumulator.lostFolios + item.lost_folios,
         rangos: accumulator.rangos + 1,
         sinUso: accumulator.sinUso + (item.estado_rango === "RANGOSINUSO" ? 1 : 0)
       }),
-      { anteriores: 0, candidatos: 0, lostFolios: 0, rangos: 0, sinUso: 0 }
+      { anteriores: 0, cafPorVencer: 0, candidatos: 0, lostFolios: 0, rangos: 0, sinUso: 0 }
     );
   }, [rangesState.data]);
 
   const alertsSummary = useMemo(() => {
     return alertsState.data.reduce(
       (accumulator, item) => ({
-        folios: accumulator.folios + (item.source === "FOLIOS" || item.source === "AGOTAMIENTO" ? 1 : 0),
+        folios:
+          accumulator.folios +
+          (item.source === "FOLIOS" ||
+          item.source === "AGOTAMIENTO" ||
+          item.source === "CAF_VENCIMIENTO"
+            ? 1
+            : 0),
         revision: accumulator.revision + (item.severity === "REVISION_DATOS" ? 1 : 0),
         sinBase: accumulator.sinBase + (item.severity === "SIN_BASE_ESTIMACION" ? 1 : 0),
         total: accumulator.total + 1,
@@ -1089,10 +1108,10 @@ export const App = () => {
                 tone="info"
               />
               <MetricCard
-                label="Lost folios"
-                value={formatNumber(rangesSummary.lostFolios)}
-                helper={`${formatNumber(rangesSummary.sinUso)} rangos sin uso visibles`}
-                tone={rangesSummary.lostFolios > 0 ? "urgent" : "success"}
+                label="CAF 33 alerta"
+                value={formatNumber(rangesSummary.cafPorVencer)}
+                helper={`${formatNumber(rangesSummary.lostFolios)} lost folios`}
+                tone={rangesSummary.cafPorVencer > 0 ? "urgent" : "success"}
               />
             </div>
 
@@ -1110,6 +1129,7 @@ export const App = () => {
                     <th>Ocupado</th>
                     <th>Desocupado</th>
                     <th>Lost</th>
+                    <th>Vence CAF</th>
                     <th>Ultima emision</th>
                   </tr>
                 </thead>
@@ -1139,6 +1159,25 @@ export const App = () => {
                       <td>{formatNumber(item.total_ocupado)}</td>
                       <td>{formatNumber(item.total_documentos_desocupados)}</td>
                       <td>{formatNumber(item.lost_folios)}</td>
+                      <td>
+                        {item.nivel_alerta_caf_vencimiento ? (
+                          <>
+                            <span
+                              className={`badge alert-${item.nivel_alerta_caf_vencimiento.toLowerCase()}`}
+                            >
+                              {item.nivel_alerta_caf_vencimiento}
+                            </span>
+                            <span className="table-subtitle">
+                              {formatDate(item.caf_fecha_vencimiento)}
+                              {item.caf_dias_para_vencer !== null
+                                ? ` | ${item.caf_dias_para_vencer} dias`
+                                : ""}
+                            </span>
+                          </>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
                       <td>{formatDate(item.fecha_ultima_emision)}</td>
                     </tr>
                   ))}

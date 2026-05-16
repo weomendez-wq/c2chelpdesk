@@ -248,6 +248,7 @@ Debe responder:
 - Que rangos son futuros.
 - Que rangos anteriores tienen folios no utilizados.
 - Que rangos son candidatos a revision o baja posterior.
+- Que CAF tipo `33` estan vencidos o por vencer segun fecha `FA` del XML CAF.
 
 Vistas actuales:
 
@@ -278,6 +279,7 @@ Estado implementacion:
 - Filtro por empresa seleccionada.
 - Filtro por estado operativo.
 - Cards de rangos visibles, candidatos, anteriores y lost folios.
+- Indicadores de vencimiento CAF para facturas electronicas tipo `33`.
 - Tabla paginada de rangos.
 - Exportacion queda pendiente.
 
@@ -307,6 +309,7 @@ rr_gestion_soporte.empresa_control_resumen
 rr_gestion_soporte.folios_control_resumen
 rr_gestion_soporte.folios_proyeccion_agotamiento
 rr_gestion_soporte.device_control_resumen
+rr_gestion_soporte.caf_vencimiento_resumen
 ```
 
 Endpoint:
@@ -320,6 +323,7 @@ Alcance inicial:
 - Solo lectura sobre objetos locales `rr_gestion_soporte`.
 - No consulta `rr_gestion_soporte.folios_rangos_clasificados_detalle` en la primera version, porque esa vista puede tardar varios segundos y ya queda cubierta por el modulo Rangos SII.
 - Consolidar alertas de empresas sin emision, devices con problemas de emision/consistencia, folios con diferencias o falta de stock, y proyeccion de agotamiento.
+- Incluir vencimiento CAF tipo `33` como alerta `CAF_VENCIMIENTO`.
 - Filtros por severidad, fuente, tenant, RUT y busqueda.
 
 Componentes:

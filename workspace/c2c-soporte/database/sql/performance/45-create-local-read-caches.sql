@@ -37,8 +37,24 @@ SELECT *
 FROM rr_gestion_soporte.folios_proyeccion_agotamiento;
 
 CREATE TABLE IF NOT EXISTS rr_gestion_soporte.folios_rangos_clasificados_cache AS
+SELECT
+  r.*,
+  v.caf_fecha_autorizacion,
+  v.caf_fecha_vencimiento,
+  v.caf_dias_para_vencer,
+  v.nivel_alerta_caf_vencimiento
+FROM rr_gestion_soporte.folios_rangos_clasificados_detalle r
+LEFT JOIN rr_gestion_soporte.caf_vencimiento_resumen v
+  ON v.tenant_id = r.tenant_id
+ AND v.rut = r.rut
+ AND v.document_type = r.document_type
+ AND v.cafserial IS NOT DISTINCT FROM r.cafserial
+ AND v.folio_ini = r.folio_ini
+ AND v.folio_fin = r.folio_fin;
+
+CREATE TABLE IF NOT EXISTS rr_gestion_soporte.caf_vencimiento_cache AS
 SELECT *
-FROM rr_gestion_soporte.folios_rangos_clasificados_detalle;
+FROM rr_gestion_soporte.caf_vencimiento_resumen;
 
 \echo 'creating_alerts_cache'
 
@@ -147,6 +163,35 @@ WITH alerts AS (
     now() AS generated_at
   FROM rr_gestion_soporte.folios_proyeccion_agotamiento_cache
   WHERE nivel_alerta_agotamiento <> 'OK'
+
+  UNION ALL
+
+  SELECT
+    tenant_id,
+    tenant_name,
+    rut,
+    empresa_name,
+    'CAF_VENCIMIENTO'::text AS source,
+    CASE
+      WHEN nivel_alerta_caf_vencimiento = 'SIN_FECHA_CAF' THEN 'REVISION_DATOS'
+      ELSE nivel_alerta_caf_vencimiento
+    END AS severity,
+    'CAF factura electronica por vencer' AS title,
+    concat(
+      'Tipo DTE: ', document_type::text,
+      '. CAF: ', coalesce(cafserial::text, 'sin serial'),
+      '. FA: ', coalesce(caf_fecha_autorizacion::text, 'sin fecha'),
+      '. Vence: ', coalesce(caf_fecha_vencimiento::text, 'sin fecha')
+    ) AS detail,
+    cafserial::text AS entity_id,
+    document_type::integer AS document_type,
+    caf_dias_para_vencer::numeric AS metric_value,
+    NULL::numeric AS metric_secondary,
+    caf_fecha_vencimiento::text AS reference_date,
+    now() AS generated_at
+  FROM rr_gestion_soporte.caf_vencimiento_cache
+  WHERE document_type = 33
+    AND nivel_alerta_caf_vencimiento IN ('URGENTE', 'WARNING', 'SIN_FECHA_CAF')
 )
 SELECT *
 FROM alerts;
@@ -183,6 +228,12 @@ CREATE INDEX IF NOT EXISTS idx_folios_rangos_cache_estado
 CREATE INDEX IF NOT EXISTS idx_folios_rangos_cache_tenant_rut
   ON rr_gestion_soporte.folios_rangos_clasificados_cache (tenant_id, rut, document_type);
 
+CREATE INDEX IF NOT EXISTS idx_folios_rangos_cache_caf_vencimiento
+  ON rr_gestion_soporte.folios_rangos_clasificados_cache (nivel_alerta_caf_vencimiento, caf_fecha_vencimiento);
+
+CREATE INDEX IF NOT EXISTS idx_caf_vencimiento_cache_alert
+  ON rr_gestion_soporte.caf_vencimiento_cache (nivel_alerta_caf_vencimiento, document_type, tenant_id, rut);
+
 CREATE INDEX IF NOT EXISTS idx_alertas_operativas_cache_main
   ON rr_gestion_soporte.alertas_operativas_cache (severity, source, tenant_id, rut);
 
@@ -198,6 +249,7 @@ ANALYZE rr_gestion_soporte.device_control_resumen_cache;
 ANALYZE rr_gestion_soporte.folios_control_resumen_cache;
 ANALYZE rr_gestion_soporte.folios_proyeccion_agotamiento_cache;
 ANALYZE rr_gestion_soporte.folios_rangos_clasificados_cache;
+ANALYZE rr_gestion_soporte.caf_vencimiento_cache;
 ANALYZE rr_gestion_soporte.alertas_operativas_cache;
 
 \echo 'cache_counts'
@@ -221,6 +273,9 @@ FROM rr_gestion_soporte.folios_proyeccion_agotamiento_cache
 UNION ALL
 SELECT 'folios_rangos_clasificados_cache', count(*)::bigint
 FROM rr_gestion_soporte.folios_rangos_clasificados_cache
+UNION ALL
+SELECT 'caf_vencimiento_cache', count(*)::bigint
+FROM rr_gestion_soporte.caf_vencimiento_cache
 UNION ALL
 SELECT 'alertas_operativas_cache', count(*)::bigint
 FROM rr_gestion_soporte.alertas_operativas_cache;

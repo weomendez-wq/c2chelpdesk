@@ -71,7 +71,7 @@ export const alertsQuerySchema = paginationQuerySchema.extend({
       "SIN_BASE_ESTIMACION"
     ])
     .optional(),
-  source: z.enum(["EMPRESA", "DEVICE", "FOLIOS", "AGOTAMIENTO"]).optional(),
+  source: z.enum(["EMPRESA", "DEVICE", "FOLIOS", "AGOTAMIENTO", "CAF_VENCIMIENTO"]).optional(),
   tenantId: z.string().uuid().optional()
 });
 
