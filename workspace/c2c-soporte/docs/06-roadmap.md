@@ -75,6 +75,14 @@ Avance:
 - Definir ejecucion anual manual con auditoria y permisos.
 - Mantener cualquier extraccion desde `dte.public` como solo lectura agregada.
 
+## Fase 9 - Normalizacion de querys historicas
+
+- Consolidar lo rescatado desde `layoutExample` sin ejecutar scripts historicos.
+- Crear vistas locales para documentos sin CAF, rangos clasificados y resumen extendido.
+- Mapear contratos historicos de frontend a endpoints `/api/support/control/*`.
+- Reutilizar componentes utiles: `TenantSelector`, `MetricCard`, `PaginationBar`, `DataTable`, loaders y exportacion.
+- Mantener CSV historicos como referencia externa, no como fuente versionada.
+
 ## Fase posterior - Normalizacion base de datos
 
 - Usar este proyecto como baseline operativo.
