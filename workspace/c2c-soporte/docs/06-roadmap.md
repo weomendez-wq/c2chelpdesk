@@ -83,6 +83,14 @@ Avance:
 - Reutilizar componentes utiles: `TenantSelector`, `MetricCard`, `PaginationBar`, `DataTable`, loaders y exportacion.
 - Mantener CSV historicos como referencia externa, no como fuente versionada.
 
+## Fase 10 - Producto C2C Helpdesk
+
+- Definir shell final con header, sidebar y area de modulo.
+- Centralizar navegacion por modulos: Torre de Control, Empresas, Cajeros, Documentos, Folios, Rangos, Alertas, Procesos, Mantenedores y Configuracion.
+- Construir mantenedores inicialmente en modo solo lectura para datos importados.
+- Habilitar edicion solo para tablas locales controladas, partiendo por umbrales de alerta.
+- Ejecutar pruebas funcionales por modulo antes de ampliar interacciones.
+
 ## Fase posterior - Normalizacion base de datos
 
 - Usar este proyecto como baseline operativo.
