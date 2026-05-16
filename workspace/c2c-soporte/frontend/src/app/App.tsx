@@ -45,6 +45,19 @@ const alertOptions: Array<{ value: "" | CompanyControlAlert; label: string }> = 
   { value: "SIN_EMISION", label: "Sin emision" }
 ];
 
+const navigationItems = [
+  { id: "torre-control", label: "Torre de Control", status: "Activo" },
+  { id: "empresas", label: "Empresas", status: "Activo" },
+  { id: "cajeros", label: "Cajeros / Devices", status: "Activo" },
+  { id: "documentos", label: "Documentos", status: "Activo" },
+  { id: "folios", label: "Folios / CAF", status: "Activo" },
+  { id: "rangos", label: "Rangos SII", status: "Plan" },
+  { id: "alertas", label: "Alertas", status: "Plan" },
+  { id: "procesos", label: "Procesos", status: "Plan" },
+  { id: "mantenedores", label: "Mantenedores", status: "Plan" },
+  { id: "configuracion", label: "Configuracion", status: "Plan" }
+];
+
 const formatDate = (value: string | null) => value ?? "-";
 const formatNumber = (value: number) => value.toLocaleString("es-CL");
 
@@ -342,54 +355,74 @@ export const App = () => {
   }, [foliosState.data]);
 
   return (
-    <main className="app-shell">
-      <section className="toolbar" aria-label="Filtros principales">
-        <div>
-          <p className="eyebrow">C2C Soporte</p>
-          <h1>Control certificado de empresas</h1>
+    <div className="product-shell">
+      <aside className="sidebar" aria-label="Modulos C2C Helpdesk">
+        <div className="brand-block">
+          <span className="brand-mark">C2C</span>
+          <div>
+            <p className="eyebrow">Helpdesk</p>
+            <strong>Soporte DTE</strong>
+          </div>
         </div>
-        <TenantSelector
-          companies={companyState.data}
-          loading={companyState.status === "loading"}
-          selectedCompany={selectedCompany}
-          onSelect={setSelectedCompany}
-        />
-        <div className="filters">
-          <label className="field">
-            <span>Buscar</span>
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Empresa, RUT o tenant"
-            />
-          </label>
-          <label className="field">
-            <span>Estado</span>
-            <select value={status} onChange={(event) => setStatus(event.target.value)}>
-              {statusOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            <span>Alerta</span>
-            <select
-              value={alert}
-              onChange={(event) => setAlert(event.target.value as "" | CompanyControlAlert)}
-            >
-              {alertOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      </section>
+        <nav className="module-nav" aria-label="Navegacion principal">
+          {navigationItems.map((item) => (
+            <a className="module-link" href={`#${item.id}`} key={item.id}>
+              <span>{item.label}</span>
+              <small className={item.status === "Activo" ? "is-active" : ""}>{item.status}</small>
+            </a>
+          ))}
+        </nav>
+      </aside>
 
-      <section className="metrics" aria-label="Resumen empresas">
+      <main className="app-shell">
+        <section className="toolbar" aria-label="Filtros principales">
+          <div>
+            <p className="eyebrow">C2C Soporte</p>
+            <h1>Control operativo helpdesk</h1>
+            <p className="compact-id">Vista centralizada por empresa, tenant, folios y cajeros</p>
+          </div>
+          <TenantSelector
+            companies={companyState.data}
+            loading={companyState.status === "loading"}
+            selectedCompany={selectedCompany}
+            onSelect={setSelectedCompany}
+          />
+          <div className="filters">
+            <label className="field">
+              <span>Buscar</span>
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Empresa, RUT o tenant"
+              />
+            </label>
+            <label className="field">
+              <span>Estado</span>
+              <select value={status} onChange={(event) => setStatus(event.target.value)}>
+                {statusOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              <span>Alerta</span>
+              <select
+                value={alert}
+                onChange={(event) => setAlert(event.target.value as "" | CompanyControlAlert)}
+              >
+                {alertOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </section>
+
+      <section className="metrics" id="torre-control" aria-label="Torre de control">
         <MetricCard
           label="Empresas"
           value={formatNumber(companyTotal ?? companySummary.total)}
@@ -404,7 +437,7 @@ export const App = () => {
         <MetricCard label="Urgentes" value={formatNumber(companySummary.urgent)} tone="urgent" />
       </section>
 
-      <section className="detail-panel" aria-label="Resumen documental">
+      <section className="detail-panel" id="documentos" aria-label="Resumen documental">
         <div className="detail-heading">
           <div>
             <p className="eyebrow">Documentos 2026</p>
@@ -468,7 +501,7 @@ export const App = () => {
         </div>
       </section>
 
-      <section className="detail-panel" aria-label="Control folios y CAF">
+      <section className="detail-panel" id="folios" aria-label="Control folios y CAF">
         <div className="detail-heading">
           <div>
             <p className="eyebrow">Folios y CAF</p>
@@ -572,7 +605,7 @@ export const App = () => {
         </div>
       </section>
 
-      <section className="detail-panel" aria-label="Control devices">
+      <section className="detail-panel" id="cajeros" aria-label="Control devices">
         <div className="detail-heading">
           <div>
             <p className="eyebrow">Devices operativos</p>
@@ -664,7 +697,7 @@ export const App = () => {
         <LoadingIndicator label="Cargando datos certificados..." />
       ) : null}
 
-      <section className="table-wrap" aria-label="Control empresas">
+      <section className="table-wrap" id="empresas" aria-label="Control empresas">
         <table>
           <thead>
             <tr>
@@ -729,6 +762,46 @@ export const App = () => {
           onOffsetChange={setCompanyOffset}
         />
       </section>
-    </main>
+
+        <section className="module-planning-grid" aria-label="Modulos planificados">
+          <article className="planning-card" id="rangos">
+            <p className="eyebrow">Rangos SII</p>
+            <h2>Rangos clasificados</h2>
+            <p>
+              Modulo preparado para exponer rangos anteriores, actuales, futuros y candidatos desde
+              `folios_rangos_clasificados_detalle`.
+            </p>
+          </article>
+          <article className="planning-card" id="alertas">
+            <p className="eyebrow">Alertas</p>
+            <h2>Bandeja operacional</h2>
+            <p>
+              Consolidara revision de datos, warnings, urgencias y casos sin base de estimacion.
+            </p>
+          </article>
+          <article className="planning-card" id="procesos">
+            <p className="eyebrow">Procesos</p>
+            <h2>Ejecuciones manuales</h2>
+            <p>
+              Mostrara logs locales de cargas historicas y procesos controlados con auditoria.
+            </p>
+          </article>
+          <article className="planning-card" id="mantenedores">
+            <p className="eyebrow">Mantenedores</p>
+            <h2>Datos locales controlados</h2>
+            <p>
+              Partira con tipos DTE y umbrales de alerta, escribiendo solo en `rr_gestion_soporte`.
+            </p>
+          </article>
+          <article className="planning-card" id="configuracion">
+            <p className="eyebrow">Configuracion</p>
+            <h2>Estado del sistema</h2>
+            <p>
+              Concentrara version, conexion, seguridad SQL y parametros operativos del helpdesk.
+            </p>
+          </article>
+        </section>
+      </main>
+    </div>
   );
 };
