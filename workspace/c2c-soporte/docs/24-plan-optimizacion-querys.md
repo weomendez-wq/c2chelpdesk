@@ -61,6 +61,26 @@ database/sql/performance/41-inspect-local-indexes.sql
 database/sql/performance/42-explain-local-heavy-views.sql
 ```
 
+Scripts creados:
+
+```txt
+database/sql/performance/40-measure-current-objects.sql
+database/sql/performance/41-inspect-local-indexes.sql
+database/sql/performance/42-explain-local-heavy-views.sql
+database/sql/performance/43-explain-local-heavy-views-analyze-template.sql
+```
+
+Comando local sugerido:
+
+```powershell
+cd C:\RODPROJECTSCODEX\workspace\c2c-soporte
+$env:Path += ";C:\Program Files\PostgreSQL\18\bin"
+$env:PGPASSWORD = "postgres"
+psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\performance\40-measure-current-objects.sql
+psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\performance\41-inspect-local-indexes.sql
+psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\performance\42-explain-local-heavy-views.sql
+```
+
 Medir:
 
 - Cantidad de filas por tabla staging/local.
@@ -82,6 +102,21 @@ Resultado esperado:
 ## Fase 2 - Indices locales base
 
 Crear indices solo sobre tablas locales `staging_public` y tablas propias `rr_gestion_soporte`.
+
+Script creado:
+
+```txt
+database/sql/performance/44-create-local-performance-indexes.sql
+```
+
+Comando local sugerido:
+
+```powershell
+cd C:\RODPROJECTSCODEX\workspace\c2c-soporte
+$env:Path += ";C:\Program Files\PostgreSQL\18\bin"
+$env:PGPASSWORD = "postgres"
+psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\performance\44-create-local-performance-indexes.sql
+```
 
 Indices candidatos:
 
@@ -168,6 +203,23 @@ Estas tablas deben cubrir:
 - primer/ultimo folio por empresa/device/tipo
 
 Los endpoints `documents-summary`, `companies` y `devices` deben leer estos resumenes en vez de agrupar millones de filas.
+
+Script inicial de caches creado:
+
+```txt
+database/sql/performance/45-create-local-read-caches.sql
+```
+
+Este script crea caches locales de lectura para:
+
+- resumen mensual documental
+- resumen mensual por device
+- control empresas
+- control devices
+- control folios
+- proyeccion de agotamiento
+- rangos SII clasificados
+- alertas operativas
 
 ## Fase 5 - Optimizar Folios/CAF
 
@@ -373,6 +425,29 @@ Cambios recomendados:
 - Folios/CAF: menos de 3 segundos.
 - Alertas: menos de 2 segundos.
 - Rangos SII listado: menos de 5 segundos.
+
+## Avance 2026-05-16
+
+Se implemento una primera optimizacion local:
+
+- indices locales en tablas migradas `staging_public`
+- caches locales de lectura en `rr_gestion_soporte`
+- backend leyendo caches para documentos, folios, rangos y alertas
+
+Resultado medido:
+
+```txt
+alerts             22,30 s -> 0,06 s
+folio-ranges       56,66 s -> 0,06 s
+folios             43,88 s -> 0,06 s
+documents-summary  21,68 s -> 0,07 s
+```
+
+Bitacora:
+
+```txt
+docs/bitacora/2026-05-16-optimizacion-querys-local.md
+```
 
 ## Decisiones pendientes
 

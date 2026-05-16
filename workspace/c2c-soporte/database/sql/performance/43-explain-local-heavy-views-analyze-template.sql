@@ -1,0 +1,16 @@
+-- C2C Soporte - plantilla EXPLAIN ANALYZE local
+-- No ejecutar automaticamente.
+-- Usar solo despues de revisar 42-explain-local-heavy-views.sql.
+-- Ejecutar conectado a la base local soporte, nunca contra origen productivo.
+--
+-- Para medir una consulta concreta:
+-- 1. Copiar solo el bloque requerido.
+-- 2. Ejecutar en una ventana controlada.
+-- 3. Guardar el resultado en database/inventory/performance/<fecha>/.
+--
+-- Ejemplo:
+--
+-- EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)
+-- SELECT *
+-- FROM rr_gestion_soporte.folios_control_resumen
+-- LIMIT 50;

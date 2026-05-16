@@ -41,110 +41,6 @@ export type DocumentsSummaryResult = {
   }>;
 };
 
-const alertsBaseSql = `
-  WITH alerts AS (
-    SELECT
-      tenant_id,
-      tenant_name,
-      rut,
-      empresa_name,
-      'EMPRESA'::text AS source,
-      nivel_alerta_emision::text AS severity,
-      CASE
-        WHEN nivel_alerta_emision = 'SIN_EMISION' THEN 'Empresa sin emision'
-        ELSE 'Empresa con alerta de emision'
-      END AS title,
-      concat(
-        'Docs 2026: ', documentos_emitidos_2026::text,
-        '. Dias sin emitir: ', coalesce(dias_sin_emitir::text, 'sin dato')
-      ) AS detail,
-      NULL::text AS entity_id,
-      NULL::integer AS document_type,
-      documentos_emitidos_2026::numeric AS metric_value,
-      dias_sin_emitir::numeric AS metric_secondary,
-      ultima_emision::text AS reference_date
-    FROM rr_gestion_soporte.empresa_control_resumen
-    WHERE nivel_alerta_emision <> 'OK'
-
-    UNION ALL
-
-    SELECT
-      tenant_id,
-      tenant_name,
-      rut,
-      empresa_name,
-      'DEVICE'::text AS source,
-      CASE
-        WHEN nivel_alerta_emision <> 'OK' THEN nivel_alerta_emision::text
-        ELSE 'WARNING'
-      END AS severity,
-      CASE
-        WHEN nivel_alerta_emision <> 'OK' THEN 'Device con alerta de emision'
-        ELSE 'Device con alerta de consistencia'
-      END AS title,
-      concat(
-        'Device: ', coalesce(device_name, device_id),
-        '. Consistencia: ', alerta_consistencia,
-        '. Docs 2026: ', documentos_emitidos_2026::text
-      ) AS detail,
-      device_id::text AS entity_id,
-      NULL::integer AS document_type,
-      documentos_emitidos_2026::numeric AS metric_value,
-      dias_sin_emitir::numeric AS metric_secondary,
-      ultima_emision::text AS reference_date
-    FROM rr_gestion_soporte.device_control_resumen
-    WHERE nivel_alerta_emision <> 'OK'
-       OR alerta_consistencia <> 'OK'
-
-    UNION ALL
-
-    SELECT
-      tenant_id,
-      tenant_name,
-      rut,
-      empresa_name,
-      'FOLIOS'::text AS source,
-      nivel_alerta_folios::text AS severity,
-      'Folios requieren revision' AS title,
-      concat(
-        'Tipo DTE: ', document_type::text,
-        '. Disponibles: ', folios_disponibles::text,
-        '. Diferencia solicitados/rango: ', diferencia_solicitado_rango::text
-      ) AS detail,
-      NULL::text AS entity_id,
-      document_type::integer AS document_type,
-      folios_disponibles::numeric AS metric_value,
-      diferencia_solicitado_rango::numeric AS metric_secondary,
-      ultima_emision::text AS reference_date
-    FROM rr_gestion_soporte.folios_control_resumen
-    WHERE nivel_alerta_folios <> 'OK'
-
-    UNION ALL
-
-    SELECT
-      tenant_id,
-      tenant_name,
-      rut,
-      empresa_name,
-      'AGOTAMIENTO'::text AS source,
-      nivel_alerta_agotamiento::text AS severity,
-      'Proyeccion de agotamiento' AS title,
-      concat(
-        'Tipo DTE: ', document_type::text,
-        '. Disponibles: ', folios_disponibles::text,
-        '. Dias 30d: ', coalesce(dias_hasta_agotar_30d::text, 'sin base'),
-        '. Dias 90d: ', coalesce(dias_hasta_agotar_90d::text, 'sin base')
-      ) AS detail,
-      NULL::text AS entity_id,
-      document_type::integer AS document_type,
-      folios_disponibles::numeric AS metric_value,
-      coalesce(dias_hasta_agotar_30d, dias_hasta_agotar_90d)::numeric AS metric_secondary,
-      NULL::text AS reference_date
-    FROM rr_gestion_soporte.folios_proyeccion_agotamiento
-    WHERE nivel_alerta_agotamiento <> 'OK'
-  )
-`;
-
 const addFilter = (clauses: string[], values: unknown[], sql: string, value: unknown) => {
   if (value === undefined) {
     return;
@@ -311,7 +207,7 @@ export const listCompanyControl = async (
   const [result, countResult] = await Promise.all([
     dbPool.query(
       `SELECT *
-       FROM rr_gestion_soporte.empresa_control_resumen
+       FROM rr_gestion_soporte.empresa_control_resumen_cache
        ${whereSql}
        ORDER BY
          CASE nivel_alerta_emision
@@ -327,7 +223,7 @@ export const listCompanyControl = async (
     ),
     dbPool.query(
       `SELECT count(*)::bigint AS total
-       FROM rr_gestion_soporte.empresa_control_resumen
+       FROM rr_gestion_soporte.empresa_control_resumen_cache
        ${whereSql}`,
       countValues
     )
@@ -375,7 +271,7 @@ export const listDeviceControl = async (
   const [result, countResult] = await Promise.all([
     dbPool.query(
       `SELECT *
-       FROM rr_gestion_soporte.device_control_resumen
+       FROM rr_gestion_soporte.device_control_resumen_cache
        ${whereSql}
        ORDER BY
          CASE nivel_alerta_emision
@@ -398,7 +294,7 @@ export const listDeviceControl = async (
     ),
     dbPool.query(
       `SELECT count(*)::bigint AS total
-       FROM rr_gestion_soporte.device_control_resumen
+       FROM rr_gestion_soporte.device_control_resumen_cache
        ${whereSql}`,
       countValues
     )
@@ -439,7 +335,7 @@ export const listFoliosControl = async (
   const [result, countResult] = await Promise.all([
     dbPool.query(
       `SELECT *
-       FROM rr_gestion_soporte.folios_control_resumen
+       FROM rr_gestion_soporte.folios_control_resumen_cache
        ${whereSql}
        ORDER BY
          CASE nivel_alerta_folios
@@ -458,7 +354,7 @@ export const listFoliosControl = async (
     ),
     dbPool.query(
       `SELECT count(*)::bigint AS total
-       FROM rr_gestion_soporte.folios_control_resumen
+       FROM rr_gestion_soporte.folios_control_resumen_cache
        ${whereSql}`,
       countValues
     )
@@ -534,7 +430,7 @@ export const listFolioRanges = async (
   const [result, countResult] = await Promise.all([
     dbPool.query(
       `SELECT *
-       FROM rr_gestion_soporte.folios_rangos_clasificados_detalle
+       FROM rr_gestion_soporte.folios_rangos_clasificados_cache
        ${whereSql}
        ORDER BY
          CASE estado_operativo_rango
@@ -561,7 +457,7 @@ export const listFolioRanges = async (
     ),
     dbPool.query(
       `SELECT count(*)::bigint AS total
-       FROM rr_gestion_soporte.folios_rangos_clasificados_detalle
+       FROM rr_gestion_soporte.folios_rangos_clasificados_cache
        ${whereSql}`,
       countValues
     )
@@ -651,18 +547,16 @@ export const listAlerts = async (
 
   const [result, countResult] = await Promise.all([
     dbPool.query(
-      `${alertsBaseSql}
-       SELECT *
-       FROM alerts
+      `SELECT *
+       FROM rr_gestion_soporte.alertas_operativas_cache
        ${whereSql}
        ${orderSql}
        ${paginationSql}`,
       values
     ),
     dbPool.query(
-      `${alertsBaseSql}
-       SELECT count(*)::bigint AS total
-       FROM alerts
+      `SELECT count(*)::bigint AS total
+       FROM rr_gestion_soporte.alertas_operativas_cache
        ${whereSql}`,
       countValues
     )
@@ -707,22 +601,30 @@ export const getDocumentsSummary = async (
   const totalWhereSql = buildDocumentsWhere(query, totalValues);
   const totalsResult = await dbPool.query(
     `SELECT
-       count(*)::bigint AS documents,
+       coalesce(sum(documentos), 0)::bigint AS documents,
        count(DISTINCT tenant_id || '-' || rut::text)::bigint AS companies,
-       count(DISTINCT device_id)::bigint AS devices,
        count(DISTINCT tipodocumento)::bigint AS document_types
-     FROM rr_gestion_soporte.documentos_2026
+     FROM rr_gestion_soporte.documentos_2026_mensual_cache
      ${totalWhereSql}`,
     totalValues
+  );
+
+  const deviceTotalValues: unknown[] = [];
+  const deviceTotalWhereSql = buildDocumentsWhere(query, deviceTotalValues);
+  const deviceTotalsResult = await dbPool.query(
+    `SELECT count(DISTINCT device_id)::bigint AS devices
+     FROM rr_gestion_soporte.documentos_2026_device_mensual_cache
+     ${deviceTotalWhereSql}`,
+    deviceTotalValues
   );
 
   const monthlyValues: unknown[] = [];
   const monthlyWhereSql = buildDocumentsWhere(query, monthlyValues);
   const monthlyResult = await dbPool.query(
     `SELECT
-       periodo,
-       count(*)::bigint AS documents
-     FROM rr_gestion_soporte.documentos_2026
+       periodo AS period,
+       sum(documentos)::bigint AS documents
+     FROM rr_gestion_soporte.documentos_2026_mensual_cache
      ${monthlyWhereSql}
      GROUP BY periodo
      ORDER BY periodo`,
@@ -734,8 +636,8 @@ export const getDocumentsSummary = async (
   const typeResult = await dbPool.query(
     `SELECT
        tipodocumento,
-       count(*)::bigint AS documents
-     FROM rr_gestion_soporte.documentos_2026
+       sum(documentos)::bigint AS documents
+     FROM rr_gestion_soporte.documentos_2026_mensual_cache
      ${typeWhereSql}
      GROUP BY tipodocumento
      ORDER BY tipodocumento`,
@@ -744,9 +646,11 @@ export const getDocumentsSummary = async (
 
   const totals = totalsResult.rows[0] as {
     companies: string;
-    devices: string;
     documents: string;
     document_types: string;
+  };
+  const deviceTotals = deviceTotalsResult.rows[0] as {
+    devices: string;
   };
 
   return {
@@ -756,7 +660,7 @@ export const getDocumentsSummary = async (
     },
     totals: {
       companies: Number(totals.companies),
-      devices: Number(totals.devices),
+      devices: Number(deviceTotals.devices),
       documents: Number(totals.documents),
       documentTypes: Number(totals.document_types)
     },
