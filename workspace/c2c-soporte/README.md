@@ -103,6 +103,8 @@ El plan de mantenedores esta en `docs/22-plan-mantenedores-c2c-helpdesk.md`.
 
 El plan de diseno y pruebas esta en `docs/23-plan-diseno-pruebas-c2c-helpdesk.md`.
 
+El plan de optimizacion de querys para evitar timeouts y esperas excesivas esta en `docs/24-plan-optimizacion-querys.md`.
+
 Los modulos frontend activos incluyen Torre de Control, Empresas, Cajeros/Devices, Documentos, Folios/CAF, Rangos SII y Alertas. Los endpoints principales estan documentados en `docs/08-api-estandar.md`.
 
 La primera vista de control por empresa se crea con `database/sql/24-create-empresa-control-resumen.sql` y se verifica con `database/sql/25-verify-empresa-control-resumen.sql`.
