@@ -236,6 +236,74 @@ rr_gestion_soporte.folios_proyeccion_agotamiento
 rr_gestion_soporte.folios_rangos_estado
 ```
 
+## Implementacion local inicial
+
+Scripts:
+
+```txt
+database/sql/32-create-history-cashier-folio-foundation.sql
+database/sql/33-verify-history-cashier-folio-foundation.sql
+database/sql/source-readonly/40-annual-documents-summary-template.sql
+```
+
+Objetos creados localmente:
+
+```txt
+rr_gestion_soporte.documentos_historial_anual_resumen
+rr_gestion_soporte.folios_alerta_config
+rr_gestion_soporte.proceso_historial_anual_log
+rr_gestion_soporte.cajero_emision_mensual
+rr_gestion_soporte.cajero_control_resumen
+rr_gestion_soporte.folios_proyeccion_agotamiento
+rr_gestion_soporte.folios_rangos_estado
+```
+
+Validacion local inicial:
+
+```txt
+resumenes_historicos: 0
+configuraciones_activas: 1
+filas_cajero_control: 405
+tenants cajero_control: 82
+devices cajero_control: 398
+documentos_emitidos_2026 asociados a cajeros: 3.915.188
+documentos_2026 total: 3.919.488
+documentos_2026 sin match contra staging_public.device: 4.300
+```
+
+Estados cajero:
+
+```txt
+OBSERVACION: 180
+SIN_EMISION: 155
+PELIGRO: 39
+WARNING: 12
+CRITICO: 10
+ALERTA: 9
+```
+
+Proyeccion agotamiento:
+
+```txt
+URGENTE: 1
+WARNING: 7
+SIN_BASE_ESTIMACION: 16
+OK: 63
+```
+
+Rangos CAF:
+
+```txt
+CADUCADO_CANDIDATO: 50 rangos / 7.085.000 folios
+POR_OCUPAR: 183 rangos / 24.964.999 folios
+EN_USO: 103 rangos / 17.885.100 folios
+AGOTADO: 38 rangos / 3.673.660 folios
+```
+
+Observacion:
+
+`CADUCADO_CANDIDATO` no significa caducidad final certificada ante SII. Es una clasificacion operativa inicial basada en antiguedad y ausencia de uso 2026. La caducidad final requiere validar fecha o regla dentro de `xml_caf` o criterio oficial.
+
 Endpoints:
 
 ```txt

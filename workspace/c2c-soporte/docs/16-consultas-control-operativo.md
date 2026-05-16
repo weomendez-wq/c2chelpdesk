@@ -818,3 +818,48 @@ primeros registros: WARNING
 Observacion de rendimiento:
 
 La consulta inicial puede tardar varios segundos porque `folios_control_resumen` compara CAF, disponibles, historial y documentos 2026. Antes de convertir esto en vista principal de uso intensivo, evaluar una agregacion local optimizada o materializada en `rr_gestion_soporte`, nunca en `public`.
+
+## Vistas implementadas - cajeros, proyeccion y rangos
+
+Archivos:
+
+```txt
+database/sql/32-create-history-cashier-folio-foundation.sql
+database/sql/33-verify-history-cashier-folio-foundation.sql
+```
+
+Objetos principales:
+
+- `rr_gestion_soporte.cajero_control_resumen`
+- `rr_gestion_soporte.cajero_emision_mensual`
+- `rr_gestion_soporte.folios_proyeccion_agotamiento`
+- `rr_gestion_soporte.folios_rangos_estado`
+
+Validacion local:
+
+```txt
+cajero_control_resumen: 405 filas
+devices con control: 398
+documentos asociados a cajeros: 3.915.188
+documentos sin match device: 4.300
+
+folios_proyeccion_agotamiento:
+URGENTE: 1
+WARNING: 7
+SIN_BASE_ESTIMACION: 16
+OK: 63
+
+folios_rangos_estado:
+CADUCADO_CANDIDATO: 50
+POR_OCUPAR: 183
+EN_USO: 103
+AGOTADO: 38
+```
+
+La extraccion anual historica queda definida como plantilla read-only en:
+
+```txt
+database/sql/source-readonly/40-annual-documents-summary-template.sql
+```
+
+Esa plantilla no debe ejecutarse sin elegir ano, revisar plan y confirmar ventana operacional.

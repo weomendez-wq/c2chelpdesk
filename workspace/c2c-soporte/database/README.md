@@ -68,6 +68,8 @@ Estos scripts son de solo lectura:
 - `sql/29-verify-device-operational-views.sql`: verifica vista operacional por device.
 - `sql/30-create-folios-operational-views.sql`: crea vistas operativas locales de CAF, folios disponibles, historial y control de folios.
 - `sql/31-verify-folios-operational-views.sql`: verifica totales y alertas de las vistas de folios.
+- `sql/32-create-history-cashier-folio-foundation.sql`: crea tablas locales de resumen historico, configuracion de umbrales y vistas de cajeros/proyeccion/rangos.
+- `sql/33-verify-history-cashier-folio-foundation.sql`: verifica cajeros, proyeccion de folios y rangos CAF.
 
 ## Scripts de inventario de origen
 
@@ -235,6 +237,13 @@ Ejecutadas localmente:
 - `rr_gestion_soporte.folios_disponibles_resumen`
 - `rr_gestion_soporte.folios_historial_resumen`
 - `rr_gestion_soporte.folios_control_resumen`
+- `rr_gestion_soporte.documentos_historial_anual_resumen`
+- `rr_gestion_soporte.folios_alerta_config`
+- `rr_gestion_soporte.proceso_historial_anual_log`
+- `rr_gestion_soporte.cajero_emision_mensual`
+- `rr_gestion_soporte.cajero_control_resumen`
+- `rr_gestion_soporte.folios_proyeccion_agotamiento`
+- `rr_gestion_soporte.folios_rangos_estado`
 
 Validacion:
 
@@ -249,3 +258,12 @@ Validacion:
   - Cargas historial: 17253.
   - Diferencia historial solicitada/rango: 59175.
   - Alertas control: 21 `REVISION_DATOS`, 8 `WARNING`, 58 `OK`.
+- Historial/cajeros/proyeccion:
+  - Resumenes historicos cargados: 0.
+  - Configuracion global de folios: 1.
+  - Filas control cajero: 405.
+  - Devices con control cajero: 398.
+  - Documentos 2026 asociados a cajeros: 3915188.
+  - Documentos 2026 sin match contra `staging_public.device`: 4300.
+  - Proyeccion agotamiento: 1 `URGENTE`, 7 `WARNING`, 16 `SIN_BASE_ESTIMACION`, 63 `OK`.
+  - Rangos CAF: 50 `CADUCADO_CANDIDATO`, 183 `POR_OCUPAR`, 103 `EN_USO`, 38 `AGOTADO`.
