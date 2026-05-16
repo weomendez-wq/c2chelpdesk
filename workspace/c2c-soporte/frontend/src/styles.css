@@ -325,6 +325,10 @@ h1 {
   padding: 8px 10px;
 }
 
+.inline-field {
+  min-width: 220px;
+}
+
 .metrics {
   display: grid;
   gap: 12px;
@@ -660,6 +664,31 @@ tbody tr {
   color: #991b1b;
 }
 
+.badge.range-caducado_candidato {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge.range-por_ocupar {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.badge.range-en_uso {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badge.range-agotado {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.badge.range-revision_datos {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 .table-title,
 .table-subtitle {
   display: block;
@@ -736,6 +765,12 @@ tbody tr {
   min-height: 170px;
   padding: 16px;
   scroll-margin-top: 18px;
+}
+
+.planning-card.ranges-card {
+  display: grid;
+  gap: 16px;
+  grid-column: 1 / -1;
 }
 
 .planning-card h2 {

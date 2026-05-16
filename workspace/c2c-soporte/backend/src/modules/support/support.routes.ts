@@ -8,6 +8,7 @@ import {
   deviceControlQuerySchema,
   documentsSummaryQuerySchema,
   devicesQuerySchema,
+  folioRangesQuerySchema,
   foliosControlQuerySchema
 } from "./support.schemas.js";
 import {
@@ -17,6 +18,7 @@ import {
   listCompanyDevices,
   listDeviceControl,
   listDevices,
+  listFolioRanges,
   listFoliosControl
 } from "./support.service.js";
 
@@ -155,6 +157,26 @@ supportRouter.get("/control/folios", async (req, res, next) => {
     }
 
     const data = await listFoliosControl(parsedQuery.data);
+
+    res.json(ok({ data, requestId: req.requestId }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+supportRouter.get("/control/folio-ranges", async (req, res, next) => {
+  try {
+    const parsedQuery = folioRangesQuerySchema.safeParse(req.query);
+
+    if (!parsedQuery.success) {
+      throw new AppError({
+        code: "VALIDATION_ERROR",
+        message: "Parametros de consulta invalidos",
+        statusCode: 400
+      });
+    }
+
+    const data = await listFolioRanges(parsedQuery.data);
 
     res.json(ok({ data, requestId: req.requestId }));
   } catch (error) {

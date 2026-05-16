@@ -46,6 +46,19 @@ export const foliosControlQuerySchema = paginationQuerySchema.extend({
   tenantId: z.string().uuid().optional()
 });
 
+export const folioRangesQuerySchema = paginationQuerySchema.extend({
+  clasificacionTemporal: z
+    .enum(["RANGOFUTURO", "RANGOACTUAL", "RANGOANTERIOR", "SINCLASIFICACION"])
+    .optional(),
+  documentType: z.coerce.number().int().positive().optional(),
+  estadoOperativo: z
+    .enum(["POR_OCUPAR", "EN_USO", "AGOTADO", "CADUCADO_CANDIDATO", "REVISION_DATOS"])
+    .optional(),
+  estadoRango: z.enum(["RANGOSINUSO", "RANGOOCUPADO", "RANGOCARGAPARCIAL"]).optional(),
+  rut: z.coerce.number().int().positive().optional(),
+  tenantId: z.string().uuid().optional()
+});
+
 export const documentsSummaryQuerySchema = z.object({
   tenantId: z.string().uuid().optional(),
   rut: z.coerce.number().int().positive().optional()
@@ -57,4 +70,5 @@ export type CompanyDevicesQuery = z.infer<typeof companyDevicesQuerySchema>;
 export type CompanyControlQuery = z.infer<typeof companyControlQuerySchema>;
 export type DeviceControlQuery = z.infer<typeof deviceControlQuerySchema>;
 export type FoliosControlQuery = z.infer<typeof foliosControlQuerySchema>;
+export type FolioRangesQuery = z.infer<typeof folioRangesQuerySchema>;
 export type DocumentsSummaryQuery = z.infer<typeof documentsSummaryQuerySchema>;

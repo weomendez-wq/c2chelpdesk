@@ -256,7 +256,7 @@ rr_gestion_soporte.folios_rangos_estado
 rr_gestion_soporte.folios_rangos_clasificados_detalle
 ```
 
-Endpoint propuesto:
+Endpoint implementado:
 
 ```txt
 GET /api/support/control/folio-ranges
@@ -271,6 +271,15 @@ Componentes:
 Nota:
 
 `CADUCADO_CANDIDATO` es una clasificacion operacional. No debe presentarse como caducidad SII confirmada.
+
+Estado implementacion:
+
+- Endpoint backend de solo lectura.
+- Filtro por empresa seleccionada.
+- Filtro por estado operativo.
+- Cards de rangos visibles, candidatos, anteriores y lost folios.
+- Tabla paginada de rangos.
+- Exportacion queda pendiente.
 
 ### 7. Alertas
 
@@ -394,4 +403,3 @@ Un modulo esta listo cuando:
 - Tiene loading, error y empty state.
 - Tiene filtros esperados.
 - Tiene validacion documentada.
-

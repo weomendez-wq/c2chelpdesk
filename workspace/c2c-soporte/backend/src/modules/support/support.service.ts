@@ -6,6 +6,7 @@ import type {
   DeviceControlQuery,
   DocumentsSummaryQuery,
   DevicesQuery,
+  FolioRangesQuery,
   FoliosControlQuery
 } from "./support.schemas.js";
 
@@ -377,6 +378,103 @@ export const listFoliosControl = async (
     "documentos_emitidos_2026",
     "devices_con_emision",
     "dias_sin_emitir"
+  ];
+
+  const items = result.rows.map((row) => {
+    const item = { ...row };
+
+    numericFields.forEach((field) => {
+      if (item[field] !== null && item[field] !== undefined) {
+        item[field] = Number(item[field]);
+      }
+    });
+
+    return item;
+  });
+
+  return {
+    items,
+    pagination: {
+      limit: query.limit,
+      offset: query.offset,
+      total: Number(countResult.rows[0]?.total ?? 0)
+    }
+  };
+};
+
+export const listFolioRanges = async (
+  query: FolioRangesQuery
+): Promise<PaginatedResult<Record<string, unknown>>> => {
+  const clauses: string[] = [];
+  const values: unknown[] = [];
+
+  addFilter(clauses, values, "tenant_id = ?", query.tenantId);
+  addFilter(clauses, values, "rut = ?", query.rut);
+  addFilter(clauses, values, "document_type = ?", query.documentType);
+  addFilter(clauses, values, "estado_operativo_rango = ?", query.estadoOperativo);
+  addFilter(clauses, values, "estado_rango = ?", query.estadoRango);
+  addFilter(clauses, values, "clasificacion_temporal = ?", query.clasificacionTemporal);
+
+  if (query.search) {
+    values.push(`%${query.search}%`, `%${query.search}%`, `%${query.search}%`);
+    clauses.push(
+      `(empresa_name ILIKE $${values.length - 2} OR rut::text ILIKE $${values.length - 1} OR tenant_name ILIKE $${values.length})`
+    );
+  }
+
+  const whereSql = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+  const countValues = [...values];
+  const paginationSql = appendPagination(values, query.limit, query.offset);
+
+  const [result, countResult] = await Promise.all([
+    dbPool.query(
+      `SELECT *
+       FROM rr_gestion_soporte.folios_rangos_clasificados_detalle
+       ${whereSql}
+       ORDER BY
+         CASE estado_operativo_rango
+           WHEN 'CADUCADO_CANDIDATO' THEN 1
+           WHEN 'POR_OCUPAR' THEN 2
+           WHEN 'EN_USO' THEN 3
+           WHEN 'REVISION_DATOS' THEN 4
+           WHEN 'AGOTADO' THEN 5
+           ELSE 9
+         END,
+         CASE clasificacion_temporal
+           WHEN 'RANGOANTERIOR' THEN 1
+           WHEN 'RANGOACTUAL' THEN 2
+           WHEN 'RANGOFUTURO' THEN 3
+           ELSE 9
+         END,
+         lost_folios DESC,
+         total_documentos_desocupados DESC,
+         empresa_name ASC NULLS LAST,
+         document_type ASC,
+         folio_ini ASC
+       ${paginationSql}`,
+      values
+    ),
+    dbPool.query(
+      `SELECT count(*)::bigint AS total
+       FROM rr_gestion_soporte.folios_rangos_clasificados_detalle
+       ${whereSql}`,
+      countValues
+    )
+  ]);
+
+  const numericFields = [
+    "rut",
+    "document_type",
+    "cafserial",
+    "folio_ini",
+    "folio_fin",
+    "total_rango",
+    "total_ocupado",
+    "total_documentos_desocupados",
+    "primer_folio_emitido",
+    "folio_mayor",
+    "folio_mayor_global",
+    "lost_folios"
   ];
 
   const items = result.rows.map((row) => {

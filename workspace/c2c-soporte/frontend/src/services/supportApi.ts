@@ -17,6 +17,18 @@ export type PaginatedResponse<TItem> = {
 
 export type CompanyControlAlert = "OK" | "WARNING" | "URGENTE" | "SIN_EMISION";
 export type FoliosControlAlert = "OK" | "WARNING" | "URGENTE" | "SIN_FOLIOS" | "REVISION_DATOS";
+export type FolioRangeOperationalState =
+  | "POR_OCUPAR"
+  | "EN_USO"
+  | "AGOTADO"
+  | "CADUCADO_CANDIDATO"
+  | "REVISION_DATOS";
+export type FolioRangeState = "RANGOSINUSO" | "RANGOOCUPADO" | "RANGOCARGAPARCIAL";
+export type FolioRangeTemporalState =
+  | "RANGOFUTURO"
+  | "RANGOACTUAL"
+  | "RANGOANTERIOR"
+  | "SINCLASIFICACION";
 export type DeviceConsistencyAlert =
   | "OK"
   | "ACTIVO_SIN_EMISION"
@@ -132,6 +144,42 @@ export type FoliosControlQuery = {
   alert?: FoliosControlAlert;
 };
 
+export type FolioRange = {
+  tenant_id: string;
+  tenant_name: string | null;
+  rut: number | null;
+  empresa_name: string | null;
+  document_type: number;
+  cafserial: number | null;
+  folio_ini: number;
+  folio_fin: number;
+  total_rango: number;
+  caf_created_at: string | null;
+  total_ocupado: number;
+  total_documentos_desocupados: number;
+  primer_folio_emitido: number | null;
+  folio_mayor: number | null;
+  folio_mayor_global: number | null;
+  fecha_ultima_emision: string | null;
+  estado_rango: FolioRangeState;
+  clasificacion_temporal: FolioRangeTemporalState;
+  caf_resultado: string;
+  lost_folios: number;
+  estado_operativo_rango: FolioRangeOperationalState;
+};
+
+export type FolioRangeQuery = {
+  clasificacionTemporal?: FolioRangeTemporalState;
+  documentType?: number;
+  estadoOperativo?: FolioRangeOperationalState;
+  estadoRango?: FolioRangeState;
+  limit?: number;
+  offset?: number;
+  rut?: number;
+  search?: string;
+  tenantId?: string;
+};
+
 export type DocumentsSummary = {
   filters: {
     tenantId?: string;
@@ -242,6 +290,27 @@ export const getFoliosControl = async (
   }
 
   const payload = (await response.json()) as ApiSuccess<PaginatedResponse<FoliosControl>>;
+
+  if (!payload.ok) {
+    throw new Error("Respuesta API invalida");
+  }
+
+  return payload.data;
+};
+
+export const getFolioRanges = async (
+  query: FolioRangeQuery,
+  signal?: AbortSignal
+): Promise<PaginatedResponse<FolioRange>> => {
+  const response = await fetch(`/api/support/control/folio-ranges${buildQueryString(query)}`, {
+    signal
+  });
+
+  if (!response.ok) {
+    throw new Error("No se pudo consultar rangos SII");
+  }
+
+  const payload = (await response.json()) as ApiSuccess<PaginatedResponse<FolioRange>>;
 
   if (!payload.ok) {
     throw new Error("Respuesta API invalida");

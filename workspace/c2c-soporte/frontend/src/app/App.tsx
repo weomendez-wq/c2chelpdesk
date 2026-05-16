@@ -6,12 +6,15 @@ import {
   getCompanyControl,
   getDeviceControl,
   getDocumentsSummary,
+  getFolioRanges,
   getFoliosControl,
   type CompanyControl,
   type CompanyControlAlert,
   type CompanyControlQuery,
   type DeviceControl,
   type DocumentsSummary,
+  type FolioRange,
+  type FolioRangeOperationalState,
   type FoliosControl
 } from "../services/supportApi";
 
@@ -43,6 +46,15 @@ const alertOptions: Array<{ value: "" | CompanyControlAlert; label: string }> = 
   { value: "WARNING", label: "Warning" },
   { value: "URGENTE", label: "Urgente" },
   { value: "SIN_EMISION", label: "Sin emision" }
+];
+
+const rangeStateOptions: Array<{ value: "" | FolioRangeOperationalState; label: string }> = [
+  { value: "", label: "Todos" },
+  { value: "CADUCADO_CANDIDATO", label: "Caducado candidato" },
+  { value: "POR_OCUPAR", label: "Por ocupar" },
+  { value: "EN_USO", label: "En uso" },
+  { value: "AGOTADO", label: "Agotado" },
+  { value: "REVISION_DATOS", label: "Revision datos" }
 ];
 
 const navigationItems = [
@@ -90,6 +102,10 @@ export const App = () => {
   const [foliosLimit, setFoliosLimit] = useState(100);
   const [foliosOffset, setFoliosOffset] = useState(0);
   const [foliosTotal, setFoliosTotal] = useState<number | undefined>();
+  const [rangesLimit, setRangesLimit] = useState(50);
+  const [rangesOffset, setRangesOffset] = useState(0);
+  const [rangesTotal, setRangesTotal] = useState<number | undefined>();
+  const [rangeState, setRangeState] = useState<"" | FolioRangeOperationalState>("");
   const [companyState, setCompanyState] = useState<LoadState<CompanyControl[]>>({
     status: "idle",
     data: [],
@@ -106,6 +122,11 @@ export const App = () => {
     error: null
   });
   const [foliosState, setFoliosState] = useState<LoadState<FoliosControl[]>>({
+    status: "idle",
+    data: [],
+    error: null
+  });
+  const [rangesState, setRangesState] = useState<LoadState<FolioRange[]>>({
     status: "idle",
     data: [],
     error: null
@@ -297,6 +318,58 @@ export const App = () => {
     setFoliosOffset(0);
   }, [search, selectedCompany]);
 
+  useEffect(() => {
+    const abortController = new AbortController();
+    const query =
+      selectedCompany?.tenant_id && selectedCompany.rut
+        ? {
+            estadoOperativo: rangeState || undefined,
+            limit: rangesLimit,
+            offset: rangesOffset,
+            rut: selectedCompany.rut,
+            tenantId: selectedCompany.tenant_id
+          }
+        : {
+            estadoOperativo: rangeState || undefined,
+            limit: rangesLimit,
+            offset: rangesOffset,
+            search: search.trim() || undefined
+          };
+
+    setRangesState((current) => ({
+      status: "loading",
+      data: current.data,
+      error: null
+    }));
+
+    getFolioRanges(query, abortController.signal)
+      .then((response) => {
+        setRangesState({
+          status: "success",
+          data: response.items,
+          error: null
+        });
+        setRangesTotal(response.pagination.total);
+      })
+      .catch((error: unknown) => {
+        if (abortController.signal.aborted) {
+          return;
+        }
+
+        setRangesState({
+          status: "error",
+          data: [],
+          error: error instanceof Error ? error.message : "No se pudo cargar rangos SII"
+        });
+      });
+
+    return () => abortController.abort();
+  }, [rangeState, rangesLimit, rangesOffset, search, selectedCompany]);
+
+  useEffect(() => {
+    setRangesOffset(0);
+  }, [rangeState, search, selectedCompany]);
+
   const companySummary = useMemo(() => {
     const total = companyState.data.length;
     const active = companyState.data.filter((item) => item.empresa_status === "active").length;
@@ -353,6 +426,21 @@ export const App = () => {
 
     return totals;
   }, [foliosState.data]);
+
+  const rangesSummary = useMemo(() => {
+    return rangesState.data.reduce(
+      (accumulator, item) => ({
+        anteriores:
+          accumulator.anteriores + (item.clasificacion_temporal === "RANGOANTERIOR" ? 1 : 0),
+        candidatos:
+          accumulator.candidatos + (item.estado_operativo_rango === "CADUCADO_CANDIDATO" ? 1 : 0),
+        lostFolios: accumulator.lostFolios + item.lost_folios,
+        rangos: accumulator.rangos + 1,
+        sinUso: accumulator.sinUso + (item.estado_rango === "RANGOSINUSO" ? 1 : 0)
+      }),
+      { anteriores: 0, candidatos: 0, lostFolios: 0, rangos: 0, sinUso: 0 }
+    );
+  }, [rangesState.data]);
 
   return (
     <div className="product-shell">
@@ -764,13 +852,131 @@ export const App = () => {
       </section>
 
         <section className="module-planning-grid" aria-label="Modulos planificados">
-          <article className="planning-card" id="rangos">
-            <p className="eyebrow">Rangos SII</p>
-            <h2>Rangos clasificados</h2>
-            <p>
-              Modulo preparado para exponer rangos anteriores, actuales, futuros y candidatos desde
-              `folios_rangos_clasificados_detalle`.
-            </p>
+          <article className="planning-card ranges-card" id="rangos">
+            <div className="detail-heading">
+              <div>
+                <p className="eyebrow">Rangos SII</p>
+                <h2>Rangos clasificados</h2>
+                <p className="compact-id">
+                  {selectedCompany
+                    ? `Tenant ${selectedCompany.tenant_id} | RUT ${selectedCompany.rut ?? "-"}`
+                    : "Rangos CAF clasificados para revision operativa"}
+                </p>
+              </div>
+              <label className="field inline-field">
+                <span>Estado</span>
+                <select
+                  value={rangeState}
+                  onChange={(event) =>
+                    setRangeState(event.target.value as "" | FolioRangeOperationalState)
+                  }
+                >
+                  {rangeStateOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            {rangesState.status === "error" ? (
+              <p className="status error">{rangesState.error}</p>
+            ) : null}
+            {rangesState.status === "loading" ? (
+              <LoadingIndicator label="Cargando rangos SII..." />
+            ) : null}
+
+            <div className="metrics documents">
+              <MetricCard
+                label="Rangos"
+                value={formatNumber(rangesTotal ?? rangesSummary.rangos)}
+                helper={`${formatNumber(rangesSummary.rangos)} visibles`}
+              />
+              <MetricCard
+                label="Candidatos"
+                value={formatNumber(rangesSummary.candidatos)}
+                helper="Caducado candidato"
+                tone="warning"
+              />
+              <MetricCard
+                label="Anteriores"
+                value={formatNumber(rangesSummary.anteriores)}
+                helper="Clasificacion temporal"
+                tone="info"
+              />
+              <MetricCard
+                label="Lost folios"
+                value={formatNumber(rangesSummary.lostFolios)}
+                helper={`${formatNumber(rangesSummary.sinUso)} rangos sin uso visibles`}
+                tone={rangesSummary.lostFolios > 0 ? "urgent" : "success"}
+              />
+            </div>
+
+            <div className="table-wrap compact-table" aria-label="Tabla rangos SII">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Empresa</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th>Temporal</th>
+                    <th>CAF</th>
+                    <th>Rango</th>
+                    <th>Total</th>
+                    <th>Ocupado</th>
+                    <th>Desocupado</th>
+                    <th>Lost</th>
+                    <th>Ultima emision</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rangesState.data.map((item) => (
+                    <tr
+                      key={`${item.tenant_id}-${item.rut}-${item.document_type}-${item.cafserial}-${item.folio_ini}-${item.folio_fin}`}
+                    >
+                      <td>
+                        <strong className="table-title">{item.empresa_name ?? item.tenant_name}</strong>
+                        <span className="table-subtitle">
+                          RUT {item.rut ?? "-"} | Tenant {item.tenant_id}
+                        </span>
+                      </td>
+                      <td>{item.document_type}</td>
+                      <td>
+                        <span className={`badge range-${item.estado_operativo_rango.toLowerCase()}`}>
+                          {item.estado_operativo_rango}
+                        </span>
+                      </td>
+                      <td>{item.clasificacion_temporal}</td>
+                      <td>{item.cafserial ?? "-"}</td>
+                      <td>
+                        {formatNumber(item.folio_ini)} - {formatNumber(item.folio_fin)}
+                      </td>
+                      <td>{formatNumber(item.total_rango)}</td>
+                      <td>{formatNumber(item.total_ocupado)}</td>
+                      <td>{formatNumber(item.total_documentos_desocupados)}</td>
+                      <td>{formatNumber(item.lost_folios)}</td>
+                      <td>{formatDate(item.fecha_ultima_emision)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {rangesState.status === "success" && rangesState.data.length === 0 ? (
+                <p className="empty">No hay rangos SII para los filtros seleccionados.</p>
+              ) : null}
+              <PaginationBar
+                itemCount={rangesState.data.length}
+                limit={rangesLimit}
+                offset={rangesOffset}
+                total={rangesTotal}
+                onLimitChange={(nextLimit) => {
+                  setRangesLimit(nextLimit);
+                  setRangesOffset(0);
+                }}
+                onOffsetChange={setRangesOffset}
+              />
+            </div>
           </article>
           <article className="planning-card" id="alertas">
             <p className="eyebrow">Alertas</p>

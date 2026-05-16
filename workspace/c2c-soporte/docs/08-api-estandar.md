@@ -86,6 +86,8 @@ GET /api/support/company-devices
 GET /api/support/control/companies
 GET /api/support/control/documents-summary
 GET /api/support/control/devices
+GET /api/support/control/folios
+GET /api/support/control/folio-ranges
 ```
 
 Query params comunes:
@@ -119,3 +121,12 @@ Respuesta:
 ```
 
 `GET /api/support/control/devices` lee `rr_gestion_soporte.device_control_resumen` y permite revisar estado, garantia, documentos emitidos, dias sin emitir y alertas por device.
+
+`GET /api/support/control/folio-ranges` lee `rr_gestion_soporte.folios_rangos_clasificados_detalle` y permite revisar rangos CAF clasificados para fase SII. Es solo lectura y no ejecuta acciones SII.
+
+Filtros adicionales de rangos:
+
+- `estadoOperativo`: `POR_OCUPAR`, `EN_USO`, `AGOTADO`, `CADUCADO_CANDIDATO`, `REVISION_DATOS`.
+- `estadoRango`: `RANGOSINUSO`, `RANGOOCUPADO`, `RANGOCARGAPARCIAL`.
+- `clasificacionTemporal`: `RANGOFUTURO`, `RANGOACTUAL`, `RANGOANTERIOR`, `SINCLASIFICACION`.
+- `documentType`: tipo de documento.
