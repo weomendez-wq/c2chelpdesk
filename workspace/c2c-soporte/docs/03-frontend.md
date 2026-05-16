@@ -107,6 +107,31 @@ DataTable.tsx
 SkeletonTable.tsx
 ```
 
+## Avance layout v1
+
+Implementado:
+
+```txt
+frontend/src/components/TenantSelector.tsx
+frontend/src/components/MetricCard.tsx
+frontend/src/components/PaginationBar.tsx
+```
+
+Cambios aplicados:
+
+- Selector principal de empresa/tenant en la cabecera.
+- Cards reutilizables para resumen de empresas, documentos y devices.
+- Paginacion real para tablas de empresas y devices.
+- Backend entrega `pagination.total` en endpoints de control de empresas y devices.
+
+Pendiente:
+
+```txt
+DataTable.tsx
+SkeletonTable.tsx
+Reorganizacion completa maestro/detalle de App.tsx
+```
+
 ## Ejecucion local
 
 ```powershell

@@ -88,3 +88,5 @@ Estos endpoints leen vistas locales en `rr_gestion_soporte` y son el contrato in
 `GET /api/support/control/documents-summary` entrega resumen anual, mensual y por tipo de documento desde `rr_gestion_soporte.documentos_2026`, con filtros opcionales por `tenantId` y `rut`.
 
 `GET /api/support/control/devices` lee `rr_gestion_soporte.device_control_resumen` y entrega control operativo por device con filtros por `tenantId`, `rut`, `status`, `alert` y `consistency`.
+
+Los endpoints `GET /api/support/control/companies` y `GET /api/support/control/devices` entregan `pagination.total` para soportar paginacion real en frontend.

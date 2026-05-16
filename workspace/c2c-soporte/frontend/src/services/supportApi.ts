@@ -11,6 +11,7 @@ export type PaginatedResponse<TItem> = {
   pagination: {
     limit: number;
     offset: number;
+    total?: number;
   };
 };
 

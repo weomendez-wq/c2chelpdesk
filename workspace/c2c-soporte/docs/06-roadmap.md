@@ -53,6 +53,11 @@
 - Conectar paginacion real contra endpoints `control/companies` y `control/devices`.
 - Mantener folios/CAF como siguiente dominio certificado, no mezclarlo antes de estabilizar layout.
 
+Avance:
+
+- `TenantSelector`, `MetricCard` y `PaginationBar` implementados.
+- Paginacion real conectada a endpoints de empresas y devices.
+
 ## Fase posterior - Normalizacion base de datos
 
 - Usar este proyecto como baseline operativo.

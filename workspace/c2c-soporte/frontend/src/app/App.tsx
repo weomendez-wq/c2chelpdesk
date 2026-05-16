@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import { MetricCard } from "../components/MetricCard";
+import { PaginationBar } from "../components/PaginationBar";
+import { TenantSelector } from "../components/TenantSelector";
 import {
   getCompanyControl,
   getDeviceControl,
@@ -63,6 +66,12 @@ export const App = () => {
   const [status, setStatus] = useState("");
   const [alert, setAlert] = useState<"" | CompanyControlAlert>("");
   const [selectedCompany, setSelectedCompany] = useState<CompanyControl | null>(null);
+  const [companyLimit, setCompanyLimit] = useState(25);
+  const [companyOffset, setCompanyOffset] = useState(0);
+  const [companyTotal, setCompanyTotal] = useState<number | undefined>();
+  const [deviceLimit, setDeviceLimit] = useState(25);
+  const [deviceOffset, setDeviceOffset] = useState(0);
+  const [deviceTotal, setDeviceTotal] = useState<number | undefined>();
   const [companyState, setCompanyState] = useState<LoadState<CompanyControl[]>>({
     status: "idle",
     data: [],
@@ -82,8 +91,8 @@ export const App = () => {
   useEffect(() => {
     const abortController = new AbortController();
     const query: CompanyControlQuery = {
-      limit: 100,
-      offset: 0,
+      limit: companyLimit,
+      offset: companyOffset,
       search: search.trim() || undefined,
       status: status || undefined,
       alert: alert || undefined
@@ -102,6 +111,7 @@ export const App = () => {
           data: response.items,
           error: null
         });
+        setCompanyTotal(response.pagination.total);
       })
       .catch((error: unknown) => {
         if (abortController.signal.aborted) {
@@ -116,6 +126,11 @@ export const App = () => {
       });
 
     return () => abortController.abort();
+  }, [alert, companyLimit, companyOffset, search, status]);
+
+  useEffect(() => {
+    setCompanyOffset(0);
+    setDeviceOffset(0);
   }, [alert, search, status]);
 
   useEffect(() => {
@@ -162,14 +177,14 @@ export const App = () => {
     const query =
       selectedCompany?.tenant_id && selectedCompany.rut
         ? {
-            limit: 100,
-            offset: 0,
+            limit: deviceLimit,
+            offset: deviceOffset,
             rut: selectedCompany.rut,
             tenantId: selectedCompany.tenant_id
           }
         : {
-            limit: 100,
-            offset: 0,
+            limit: deviceLimit,
+            offset: deviceOffset,
             alert: alert || undefined,
             search: search.trim() || undefined,
             status: status || undefined
@@ -188,6 +203,7 @@ export const App = () => {
           data: response.items,
           error: null
         });
+        setDeviceTotal(response.pagination.total);
       })
       .catch((error: unknown) => {
         if (abortController.signal.aborted) {
@@ -202,7 +218,11 @@ export const App = () => {
       });
 
     return () => abortController.abort();
-  }, [alert, search, selectedCompany, status]);
+  }, [alert, deviceLimit, deviceOffset, search, selectedCompany, status]);
+
+  useEffect(() => {
+    setDeviceOffset(0);
+  }, [selectedCompany]);
 
   const companySummary = useMemo(() => {
     const total = companyState.data.length;
@@ -248,6 +268,12 @@ export const App = () => {
           <p className="eyebrow">C2C Soporte</p>
           <h1>Control certificado de empresas</h1>
         </div>
+        <TenantSelector
+          companies={companyState.data}
+          loading={companyState.status === "loading"}
+          selectedCompany={selectedCompany}
+          onSelect={setSelectedCompany}
+        />
         <div className="filters">
           <label className="field">
             <span>Buscar</span>
@@ -284,22 +310,18 @@ export const App = () => {
       </section>
 
       <section className="metrics" aria-label="Resumen empresas">
-        <div className="metric">
-          <span>Empresas</span>
-          <strong>{formatNumber(companySummary.total)}</strong>
-        </div>
-        <div className="metric">
-          <span>Activas</span>
-          <strong>{formatNumber(companySummary.active)}</strong>
-        </div>
-        <div className="metric warning">
-          <span>Sin emision</span>
-          <strong>{formatNumber(companySummary.withoutEmission)}</strong>
-        </div>
-        <div className="metric urgent">
-          <span>Urgentes</span>
-          <strong>{formatNumber(companySummary.urgent)}</strong>
-        </div>
+        <MetricCard
+          label="Empresas"
+          value={formatNumber(companyTotal ?? companySummary.total)}
+          helper={`${formatNumber(companySummary.total)} visibles`}
+        />
+        <MetricCard label="Activas" value={formatNumber(companySummary.active)} tone="success" />
+        <MetricCard
+          label="Sin emision"
+          value={formatNumber(companySummary.withoutEmission)}
+          tone="warning"
+        />
+        <MetricCard label="Urgentes" value={formatNumber(companySummary.urgent)} tone="urgent" />
       </section>
 
       <section className="detail-panel" aria-label="Resumen documental">
@@ -328,22 +350,10 @@ export const App = () => {
         ) : null}
 
         <div className="metrics documents">
-          <div className="metric">
-            <span>Total emitidos</span>
-            <strong>{formatNumber(documentsState.data.totals.documents)}</strong>
-          </div>
-          <div className="metric">
-            <span>Empresas con docs</span>
-            <strong>{formatNumber(documentsState.data.totals.companies)}</strong>
-          </div>
-          <div className="metric">
-            <span>Devices con docs</span>
-            <strong>{formatNumber(documentsState.data.totals.devices)}</strong>
-          </div>
-          <div className="metric">
-            <span>Tipos DTE</span>
-            <strong>{formatNumber(documentsState.data.totals.documentTypes)}</strong>
-          </div>
+          <MetricCard label="Total emitidos" value={formatNumber(documentsState.data.totals.documents)} />
+          <MetricCard label="Empresas con docs" value={formatNumber(documentsState.data.totals.companies)} />
+          <MetricCard label="Devices con docs" value={formatNumber(documentsState.data.totals.devices)} />
+          <MetricCard label="Tipos DTE" value={formatNumber(documentsState.data.totals.documentTypes)} />
         </div>
 
         <div className="analytics-grid">
@@ -397,22 +407,14 @@ export const App = () => {
         ) : null}
 
         <div className="metrics documents">
-          <div className="metric">
-            <span>Devices</span>
-            <strong>{formatNumber(deviceSummary.total)}</strong>
-          </div>
-          <div className="metric">
-            <span>Activos</span>
-            <strong>{formatNumber(deviceSummary.active)}</strong>
-          </div>
-          <div className="metric warning">
-            <span>Sin emision</span>
-            <strong>{formatNumber(deviceSummary.withoutEmission)}</strong>
-          </div>
-          <div className="metric urgent">
-            <span>Urgentes</span>
-            <strong>{formatNumber(deviceSummary.urgent)}</strong>
-          </div>
+          <MetricCard
+            label="Devices"
+            value={formatNumber(deviceTotal ?? deviceSummary.total)}
+            helper={`${formatNumber(deviceSummary.total)} visibles`}
+          />
+          <MetricCard label="Activos" value={formatNumber(deviceSummary.active)} tone="success" />
+          <MetricCard label="Sin emision" value={formatNumber(deviceSummary.withoutEmission)} tone="warning" />
+          <MetricCard label="Urgentes" value={formatNumber(deviceSummary.urgent)} tone="urgent" />
         </div>
 
         <div className="table-wrap compact-table" aria-label="Tabla control devices">
@@ -459,6 +461,17 @@ export const App = () => {
           {deviceState.status === "success" && deviceState.data.length === 0 ? (
             <p className="empty">No hay devices para los filtros seleccionados.</p>
           ) : null}
+          <PaginationBar
+            itemCount={deviceState.data.length}
+            limit={deviceLimit}
+            offset={deviceOffset}
+            total={deviceTotal}
+            onLimitChange={(nextLimit) => {
+              setDeviceLimit(nextLimit);
+              setDeviceOffset(0);
+            }}
+            onOffsetChange={setDeviceOffset}
+          />
         </div>
       </section>
 
@@ -520,6 +533,17 @@ export const App = () => {
         {companyState.status === "success" && companyState.data.length === 0 ? (
           <p className="empty">No hay empresas para los filtros seleccionados.</p>
         ) : null}
+        <PaginationBar
+          itemCount={companyState.data.length}
+          limit={companyLimit}
+          offset={companyOffset}
+          total={companyTotal}
+          onLimitChange={(nextLimit) => {
+            setCompanyLimit(nextLimit);
+            setCompanyOffset(0);
+          }}
+          onOffsetChange={setCompanyOffset}
+        />
       </section>
     </main>
   );

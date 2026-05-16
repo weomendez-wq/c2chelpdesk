@@ -13,6 +13,7 @@ export type PaginatedResult<TItem> = {
   pagination: {
     limit: number;
     offset: number;
+    total?: number;
   };
 };
 
@@ -197,30 +198,40 @@ export const listCompanyControl = async (
   }
 
   const whereSql = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+  const countValues = [...values];
   const paginationSql = appendPagination(values, query.limit, query.offset);
 
-  const result = await dbPool.query(
-    `SELECT *
-     FROM rr_gestion_soporte.empresa_control_resumen
-     ${whereSql}
-     ORDER BY
-       CASE nivel_alerta_emision
-         WHEN 'URGENTE' THEN 1
-         WHEN 'SIN_EMISION' THEN 2
-         WHEN 'WARNING' THEN 3
-         ELSE 4
-       END,
-       dias_sin_emitir DESC NULLS FIRST,
-       empresa_name ASC
-     ${paginationSql}`,
-    values
-  );
+  const [result, countResult] = await Promise.all([
+    dbPool.query(
+      `SELECT *
+       FROM rr_gestion_soporte.empresa_control_resumen
+       ${whereSql}
+       ORDER BY
+         CASE nivel_alerta_emision
+           WHEN 'URGENTE' THEN 1
+           WHEN 'SIN_EMISION' THEN 2
+           WHEN 'WARNING' THEN 3
+           ELSE 4
+         END,
+         dias_sin_emitir DESC NULLS FIRST,
+         empresa_name ASC
+       ${paginationSql}`,
+      values
+    ),
+    dbPool.query(
+      `SELECT count(*)::bigint AS total
+       FROM rr_gestion_soporte.empresa_control_resumen
+       ${whereSql}`,
+      countValues
+    )
+  ]);
 
   return {
     items: result.rows,
     pagination: {
       limit: query.limit,
-      offset: query.offset
+      offset: query.offset,
+      total: Number(countResult.rows[0]?.total ?? 0)
     }
   };
 };
@@ -251,37 +262,47 @@ export const listDeviceControl = async (
   }
 
   const whereSql = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+  const countValues = [...values];
   const paginationSql = appendPagination(values, query.limit, query.offset);
 
-  const result = await dbPool.query(
-    `SELECT *
-     FROM rr_gestion_soporte.device_control_resumen
-     ${whereSql}
-     ORDER BY
-       CASE nivel_alerta_emision
-         WHEN 'URGENTE' THEN 1
-         WHEN 'SIN_EMISION' THEN 2
-         WHEN 'WARNING' THEN 3
-         ELSE 4
-       END,
-       CASE alerta_consistencia
-         WHEN 'ACTIVO_SIN_EMISION' THEN 1
-         WHEN 'ACTIVO_SIN_EMISION_RECIENTE' THEN 2
-         WHEN 'NO_ACTIVO_CON_EMISION' THEN 3
-         ELSE 4
-       END,
-       dias_sin_emitir DESC NULLS FIRST,
-       empresa_name ASC NULLS LAST,
-       device_name ASC NULLS LAST
-     ${paginationSql}`,
-    values
-  );
+  const [result, countResult] = await Promise.all([
+    dbPool.query(
+      `SELECT *
+       FROM rr_gestion_soporte.device_control_resumen
+       ${whereSql}
+       ORDER BY
+         CASE nivel_alerta_emision
+           WHEN 'URGENTE' THEN 1
+           WHEN 'SIN_EMISION' THEN 2
+           WHEN 'WARNING' THEN 3
+           ELSE 4
+         END,
+         CASE alerta_consistencia
+           WHEN 'ACTIVO_SIN_EMISION' THEN 1
+           WHEN 'ACTIVO_SIN_EMISION_RECIENTE' THEN 2
+           WHEN 'NO_ACTIVO_CON_EMISION' THEN 3
+           ELSE 4
+         END,
+         dias_sin_emitir DESC NULLS FIRST,
+         empresa_name ASC NULLS LAST,
+         device_name ASC NULLS LAST
+       ${paginationSql}`,
+      values
+    ),
+    dbPool.query(
+      `SELECT count(*)::bigint AS total
+       FROM rr_gestion_soporte.device_control_resumen
+       ${whereSql}`,
+      countValues
+    )
+  ]);
 
   return {
     items: result.rows,
     pagination: {
       limit: query.limit,
-      offset: query.offset
+      offset: query.offset,
+      total: Number(countResult.rows[0]?.total ?? 0)
     }
   };
 };
