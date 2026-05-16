@@ -79,6 +79,34 @@ Objetivo:
 - Graficos: Recharts queda reservado para dashboards posteriores.
 - Cliente HTTP: `fetch` encapsulado en services/adapters.
 
+## Decision de producto y layout
+
+La interfaz debe tratarse como producto de soporte, no solo como una tabla de datos.
+
+Documento rector:
+
+```txt
+docs/decisiones/2026-05-15-diseno-producto-layout-soporte-v1.md
+```
+
+Direccion acordada:
+
+- Evolucionar a consola maestro/detalle.
+- Usar empresa/tenant como seleccion principal.
+- Implementar componentes propios antes de agregar dependencias visuales.
+- Priorizar informacion certificada, compacta y accionable.
+- Reutilizar como referencia el snapshot preservado en `docs/referencias-layout/2026-05-15-layoutExample/`.
+
+Componentes base a crear:
+
+```txt
+TenantSelector.tsx
+MetricCard.tsx
+PaginationBar.tsx
+DataTable.tsx
+SkeletonTable.tsx
+```
+
 ## Ejecucion local
 
 ```powershell

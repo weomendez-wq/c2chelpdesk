@@ -95,6 +95,8 @@ Las vistas operativas documentales y por device se crean con `database/sql/26-cr
 
 La decision de dejar un branch/proyecto posterior de normalizacion de base de datos esta en `docs/decisiones/2026-05-15-branch-normalizacion-base-datos.md`.
 
+La decision de producto para el layout de soporte v1 esta en `docs/decisiones/2026-05-15-diseno-producto-layout-soporte-v1.md`.
+
 Los scripts generados para copia controlada quedan en `database/generated/` y no se versionan.
 
 ## Regla principal

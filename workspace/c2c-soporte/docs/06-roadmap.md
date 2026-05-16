@@ -45,6 +45,14 @@
 - Crear ranking de empresas y dispositivos.
 - Preparar alertas criticas.
 
+## Fase 6 - Producto soporte y layout v1
+
+- Documentar layout maestro/detalle para soporte.
+- Crear componentes base propios: `TenantSelector`, `MetricCard`, `PaginationBar`, `DataTable`, `SkeletonTable`.
+- Reorganizar frontend para vista global y empresa seleccionada.
+- Conectar paginacion real contra endpoints `control/companies` y `control/devices`.
+- Mantener folios/CAF como siguiente dominio certificado, no mezclarlo antes de estabilizar layout.
+
 ## Fase posterior - Normalizacion base de datos
 
 - Usar este proyecto como baseline operativo.
