@@ -7,7 +7,8 @@ import {
   companyDevicesQuerySchema,
   deviceControlQuerySchema,
   documentsSummaryQuerySchema,
-  devicesQuerySchema
+  devicesQuerySchema,
+  foliosControlQuerySchema
 } from "./support.schemas.js";
 import {
   getDocumentsSummary,
@@ -15,7 +16,8 @@ import {
   listCompanyControl,
   listCompanyDevices,
   listDeviceControl,
-  listDevices
+  listDevices,
+  listFoliosControl
 } from "./support.service.js";
 
 export const supportRouter = Router();
@@ -133,6 +135,26 @@ supportRouter.get("/control/devices", async (req, res, next) => {
     }
 
     const data = await listDeviceControl(parsedQuery.data);
+
+    res.json(ok({ data, requestId: req.requestId }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+supportRouter.get("/control/folios", async (req, res, next) => {
+  try {
+    const parsedQuery = foliosControlQuerySchema.safeParse(req.query);
+
+    if (!parsedQuery.success) {
+      throw new AppError({
+        code: "VALIDATION_ERROR",
+        message: "Parametros de consulta invalidos",
+        statusCode: 400
+      });
+    }
+
+    const data = await listFoliosControl(parsedQuery.data);
 
     res.json(ok({ data, requestId: req.requestId }));
   } catch (error) {

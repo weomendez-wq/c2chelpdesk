@@ -5,7 +5,8 @@ import type {
   CompanyDevicesQuery,
   DeviceControlQuery,
   DocumentsSummaryQuery,
-  DevicesQuery
+  DevicesQuery,
+  FoliosControlQuery
 } from "./support.schemas.js";
 
 export type PaginatedResult<TItem> = {
@@ -299,6 +300,99 @@ export const listDeviceControl = async (
 
   return {
     items: result.rows,
+    pagination: {
+      limit: query.limit,
+      offset: query.offset,
+      total: Number(countResult.rows[0]?.total ?? 0)
+    }
+  };
+};
+
+export const listFoliosControl = async (
+  query: FoliosControlQuery
+): Promise<PaginatedResult<Record<string, unknown>>> => {
+  const clauses: string[] = [];
+  const values: unknown[] = [];
+
+  addFilter(clauses, values, "tenant_id = ?", query.tenantId);
+  addFilter(clauses, values, "rut = ?", query.rut);
+  addFilter(clauses, values, "document_type = ?", query.documentType);
+  addFilter(clauses, values, "nivel_alerta_folios = ?", query.alert);
+
+  if (query.search) {
+    values.push(`%${query.search}%`, `%${query.search}%`, `%${query.search}%`);
+    clauses.push(
+      `(empresa_name ILIKE $${values.length - 2} OR rut::text ILIKE $${values.length - 1} OR tenant_name ILIKE $${values.length})`
+    );
+  }
+
+  const whereSql = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+  const countValues = [...values];
+  const paginationSql = appendPagination(values, query.limit, query.offset);
+
+  const [result, countResult] = await Promise.all([
+    dbPool.query(
+      `SELECT *
+       FROM rr_gestion_soporte.folios_control_resumen
+       ${whereSql}
+       ORDER BY
+         CASE nivel_alerta_folios
+           WHEN 'REVISION_DATOS' THEN 1
+           WHEN 'SIN_FOLIOS' THEN 2
+           WHEN 'URGENTE' THEN 3
+           WHEN 'WARNING' THEN 4
+           ELSE 5
+         END,
+         abs(diferencia_solicitado_rango) DESC,
+         folios_disponibles ASC,
+         empresa_name ASC NULLS LAST,
+         document_type ASC
+       ${paginationSql}`,
+      values
+    ),
+    dbPool.query(
+      `SELECT count(*)::bigint AS total
+       FROM rr_gestion_soporte.folios_control_resumen
+       ${whereSql}`,
+      countValues
+    )
+  ]);
+
+  const numericFields = [
+    "rut",
+    "document_type",
+    "caf_count",
+    "folios_otorgados",
+    "folio_min",
+    "folio_max",
+    "rangos_disponibles",
+    "folios_disponibles",
+    "folio_disponible_min",
+    "folio_disponible_max",
+    "cargas_historial",
+    "folios_entregados_por_rango",
+    "folios_solicitados",
+    "diferencia_solicitado_rango",
+    "devices_con_revision_historial",
+    "documentos_emitidos_2026",
+    "devices_con_emision",
+    "dias_sin_emitir"
+  ];
+
+  const items = result.rows.map((row) => {
+    const item = { ...row };
+
+    numericFields.forEach((field) => {
+      if (item[field] !== null && item[field] !== undefined) {
+        item[field] = Number(item[field]);
+      }
+    });
+
+    return item;
+  });
+
+  return {
+    items,
     pagination: {
       limit: query.limit,
       offset: query.offset,

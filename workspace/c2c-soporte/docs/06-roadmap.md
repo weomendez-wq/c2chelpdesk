@@ -58,6 +58,14 @@ Avance:
 - `TenantSelector`, `MetricCard` y `PaginationBar` implementados.
 - Paginacion real conectada a endpoints de empresas y devices.
 
+## Fase 7 - Folios y CAF certificados
+
+- Crear vistas locales de lectura para CAF, folios disponibles e historial.
+- Certificar cuadraturas antes de exponer indicadores.
+- Exponer endpoint `GET /api/support/control/folios`.
+- Integrar cards compactas de folios en el detalle de empresa.
+- Mantener la normalizacion estructural como proyecto posterior.
+
 ## Fase posterior - Normalizacion base de datos
 
 - Usar este proyecto como baseline operativo.

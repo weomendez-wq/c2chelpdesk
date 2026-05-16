@@ -6,11 +6,13 @@ import {
   getCompanyControl,
   getDeviceControl,
   getDocumentsSummary,
+  getFoliosControl,
   type CompanyControl,
   type CompanyControlAlert,
   type CompanyControlQuery,
   type DeviceControl,
-  type DocumentsSummary
+  type DocumentsSummary,
+  type FoliosControl
 } from "../services/supportApi";
 
 type LoadState<TData> =
@@ -72,6 +74,9 @@ export const App = () => {
   const [deviceLimit, setDeviceLimit] = useState(25);
   const [deviceOffset, setDeviceOffset] = useState(0);
   const [deviceTotal, setDeviceTotal] = useState<number | undefined>();
+  const [foliosLimit, setFoliosLimit] = useState(100);
+  const [foliosOffset, setFoliosOffset] = useState(0);
+  const [foliosTotal, setFoliosTotal] = useState<number | undefined>();
   const [companyState, setCompanyState] = useState<LoadState<CompanyControl[]>>({
     status: "idle",
     data: [],
@@ -83,6 +88,11 @@ export const App = () => {
     error: null
   });
   const [deviceState, setDeviceState] = useState<LoadState<DeviceControl[]>>({
+    status: "idle",
+    data: [],
+    error: null
+  });
+  const [foliosState, setFoliosState] = useState<LoadState<FoliosControl[]>>({
     status: "idle",
     data: [],
     error: null
@@ -224,6 +234,56 @@ export const App = () => {
     setDeviceOffset(0);
   }, [selectedCompany]);
 
+  useEffect(() => {
+    const abortController = new AbortController();
+    const query =
+      selectedCompany?.tenant_id && selectedCompany.rut
+        ? {
+            limit: foliosLimit,
+            offset: foliosOffset,
+            rut: selectedCompany.rut,
+            tenantId: selectedCompany.tenant_id
+          }
+        : {
+            limit: foliosLimit,
+            offset: foliosOffset,
+            search: search.trim() || undefined
+          };
+
+    setFoliosState((current) => ({
+      status: "loading",
+      data: current.data,
+      error: null
+    }));
+
+    getFoliosControl(query, abortController.signal)
+      .then((response) => {
+        setFoliosState({
+          status: "success",
+          data: response.items,
+          error: null
+        });
+        setFoliosTotal(response.pagination.total);
+      })
+      .catch((error: unknown) => {
+        if (abortController.signal.aborted) {
+          return;
+        }
+
+        setFoliosState({
+          status: "error",
+          data: [],
+          error: error instanceof Error ? error.message : "No se pudo cargar folios"
+        });
+      });
+
+    return () => abortController.abort();
+  }, [foliosLimit, foliosOffset, search, selectedCompany]);
+
+  useEffect(() => {
+    setFoliosOffset(0);
+  }, [search, selectedCompany]);
+
   const companySummary = useMemo(() => {
     const total = companyState.data.length;
     const active = companyState.data.filter((item) => item.empresa_status === "active").length;
@@ -260,6 +320,26 @@ export const App = () => {
       withoutEmission
     };
   }, [deviceState.data]);
+
+  const foliosSummary = useMemo(() => {
+    const totals = foliosState.data.reduce(
+      (accumulator, item) => ({
+        caf: accumulator.caf + item.caf_count,
+        disponibles: accumulator.disponibles + item.folios_disponibles,
+        otorgados: accumulator.otorgados + item.folios_otorgados,
+        revision:
+          accumulator.revision + (item.nivel_alerta_folios === "REVISION_DATOS" ? 1 : 0),
+        warning:
+          accumulator.warning +
+          (item.nivel_alerta_folios === "WARNING" || item.nivel_alerta_folios === "URGENTE"
+            ? 1
+            : 0)
+      }),
+      { caf: 0, disponibles: 0, otorgados: 0, revision: 0, warning: 0 }
+    );
+
+    return totals;
+  }, [foliosState.data]);
 
   return (
     <main className="app-shell">
@@ -385,6 +465,110 @@ export const App = () => {
               ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="detail-panel" aria-label="Control folios y CAF">
+        <div className="detail-heading">
+          <div>
+            <p className="eyebrow">Folios y CAF</p>
+            <h2>{selectedCompany?.empresa_name ?? "Control global por prioridad"}</h2>
+            <p className="compact-id">
+              {selectedCompany
+                ? `Tenant ${selectedCompany.tenant_id} | RUT ${selectedCompany.rut ?? "-"}`
+                : "CAF, folios disponibles, historial y documentos emitidos 2026"}
+            </p>
+          </div>
+        </div>
+
+        {foliosState.status === "error" ? <p className="status error">{foliosState.error}</p> : null}
+        {foliosState.status === "loading" ? (
+          <LoadingIndicator label="Cargando control de folios..." />
+        ) : null}
+
+        <div className="metrics documents">
+          <MetricCard
+            label="CAF"
+            value={formatNumber(foliosSummary.caf)}
+            helper={`${formatNumber(foliosTotal ?? foliosState.data.length)} combinaciones`}
+          />
+          <MetricCard
+            label="Otorgados"
+            value={formatNumber(foliosSummary.otorgados)}
+            helper="Segun filas visibles"
+            tone="info"
+          />
+          <MetricCard
+            label="Disponibles"
+            value={formatNumber(foliosSummary.disponibles)}
+            helper="Segun filas visibles"
+            tone="success"
+          />
+          <MetricCard
+            label="Revision"
+            value={formatNumber(foliosSummary.revision)}
+            helper={`${formatNumber(foliosSummary.warning)} warning/urgente visibles`}
+            tone={foliosSummary.revision > 0 ? "urgent" : "success"}
+          />
+        </div>
+
+        <div className="table-wrap compact-table" aria-label="Tabla control folios">
+          <table>
+            <thead>
+              <tr>
+                <th>Empresa</th>
+                <th>Tipo</th>
+                <th>Alerta</th>
+                <th>CAF</th>
+                <th>Otorgados</th>
+                <th>Disponibles</th>
+                <th>Solicitados</th>
+                <th>Entregados</th>
+                <th>Diferencia</th>
+                <th>Docs 2026</th>
+              </tr>
+            </thead>
+            <tbody>
+              {foliosState.data.map((item) => (
+                <tr key={`${item.tenant_id}-${item.rut}-${item.document_type}`}>
+                  <td>
+                    <strong className="table-title">{item.empresa_name ?? item.tenant_name}</strong>
+                    <span className="table-subtitle">
+                      RUT {item.rut ?? "-"} | Tenant {item.tenant_id}
+                    </span>
+                  </td>
+                  <td>{item.document_type}</td>
+                  <td>
+                    <span className={`badge alert-${item.nivel_alerta_folios.toLowerCase()}`}>
+                      {item.nivel_alerta_folios}
+                    </span>
+                  </td>
+                  <td>{formatNumber(item.caf_count)}</td>
+                  <td>{formatNumber(item.folios_otorgados)}</td>
+                  <td>{formatNumber(item.folios_disponibles)}</td>
+                  <td>{formatNumber(item.folios_solicitados)}</td>
+                  <td>{formatNumber(item.folios_entregados_por_rango)}</td>
+                  <td>{formatNumber(item.diferencia_solicitado_rango)}</td>
+                  <td>{formatNumber(item.documentos_emitidos_2026)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {foliosState.status === "success" && foliosState.data.length === 0 ? (
+            <p className="empty">No hay folios para los filtros seleccionados.</p>
+          ) : null}
+          <PaginationBar
+            itemCount={foliosState.data.length}
+            limit={foliosLimit}
+            offset={foliosOffset}
+            total={foliosTotal}
+            onLimitChange={(nextLimit) => {
+              setFoliosLimit(nextLimit);
+              setFoliosOffset(0);
+            }}
+            onOffsetChange={setFoliosOffset}
+          />
         </div>
       </section>
 

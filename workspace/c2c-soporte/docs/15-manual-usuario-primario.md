@@ -27,7 +27,7 @@ Motivo:
 La primera version cubre el flujo:
 
 ```txt
-Empresa -> Dispositivos
+Empresa -> Documentos -> Folios/CAF -> Dispositivos
 ```
 
 Pantalla:
@@ -39,13 +39,19 @@ Frontend: Vista Empresa / Dispositivos
 API usada:
 
 ```txt
-GET /api/support/company-devices
+GET /api/support/control/companies
+GET /api/support/control/documents-summary
+GET /api/support/control/folios
+GET /api/support/control/devices
 ```
 
 Fuente local:
 
 ```txt
-rr_gestion_soporte.empresa_dispositivo_resumen
+rr_gestion_soporte.empresa_control_resumen
+rr_gestion_soporte.documentos_2026_normalizados
+rr_gestion_soporte.folios_control_resumen
+rr_gestion_soporte.device_control_resumen
 ```
 
 ## Flujo general
@@ -211,6 +217,21 @@ Resultado esperado:
 - Los dispositivos aparecen asociados a la empresa correcta.
 - Si la empresa no tiene dispositivos, debe poder identificarse sin romper la pantalla.
 
+### Caso 5 - Revision de folios y CAF
+
+Accion:
+
+- Seleccionar una empresa desde el selector.
+- Revisar el bloque `Folios y CAF`.
+- Comparar CAF, folios otorgados, folios disponibles, historial y documentos emitidos.
+
+Resultado esperado:
+
+- El bloque se filtra por `tenantId` y `rut`.
+- Los numeros se muestran formateados.
+- Las filas `REVISION_DATOS` quedan visibles para indagar diferencias de historial.
+- Las filas `WARNING` o `URGENTE` permiten detectar bajo stock de folios.
+
 ## Matriz de comportamiento esperado
 
 | Elemento | Accion del usuario | Resultado esperado | Observacion |
@@ -218,6 +239,7 @@ Resultado esperado:
 | Carga inicial | Abrir frontend | Muestra datos reales desde backend | Registrar si hay error de conexion |
 | Busqueda | Escribir empresa o RUT | Filtra resultados | Registrar busquedas que no coincidan con datos esperados |
 | Estado | Seleccionar estado | Filtra dispositivos | Confirmar nombres de estados reales |
+| Folios/CAF | Seleccionar empresa | Muestra control por tipo documento | Registrar diferencias `REVISION_DATOS` |
 | Tabla/listado | Revisar filas | Datos legibles y sin cortes visuales | Registrar columnas faltantes |
 | Backend | Consultar healthcheck | `ok: true` | Si falla, revisar `.env` y base local |
 

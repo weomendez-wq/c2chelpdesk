@@ -599,6 +599,61 @@ GET /api/support/control/documents-summary
 
 El frontend debe consumir estas vistas por bloque y no mezclar todo en una sola tabla.
 
+## Vistas implementadas - folios y CAF
+
+Archivos:
+
+```txt
+database/sql/30-create-folios-operational-views.sql
+database/sql/31-verify-folios-operational-views.sql
+```
+
+Vistas:
+
+- `rr_gestion_soporte.folios_caf_resumen`
+- `rr_gestion_soporte.folios_disponibles_resumen`
+- `rr_gestion_soporte.folios_historial_resumen`
+- `rr_gestion_soporte.folios_control_resumen`
+
+Fuentes locales:
+
+- `staging_public.caf`
+- `staging_public.foliosdisponibles`
+- `staging_public.historialasignacionfolios`
+- `rr_gestion_soporte.documentos_2026_normalizados`
+
+Alertas iniciales:
+
+```txt
+REVISION_DATOS
+SIN_FOLIOS
+URGENTE
+WARNING
+OK
+```
+
+Validacion local:
+
+```txt
+CAF: 374
+folios_otorgados: 53.608.759
+rangos_disponibles: 102
+folios_disponibles: 10.738.125
+cargas_historial: 17.253
+folios_entregados_por_rango: 22.933.100
+folios_solicitados: 22.992.275
+diferencia_solicitado_rango: 59.175
+
+alertas:
+REVISION_DATOS: 21 combinaciones
+WARNING: 8 combinaciones
+OK: 58 combinaciones
+```
+
+Observacion:
+
+`REVISION_DATOS` nace principalmente por diferencias entre `cantidad_solicitada` y rango entregado en historial. Estos casos deben ser indagados antes de usarlos como alerta operacional final para usuarios.
+
 ## Endpoint implementado - control companies
 
 ```txt
@@ -709,3 +764,57 @@ OK: 60
 SIN_EMISION: 18
 URGENTE: 8
 ```
+
+## Endpoint implementado - control folios
+
+```txt
+GET /api/support/control/folios
+```
+
+Fuente:
+
+```txt
+rr_gestion_soporte.folios_control_resumen
+```
+
+Filtros:
+
+- `limit`
+- `offset`
+- `search`
+- `tenantId`
+- `rut`
+- `documentType`
+- `alert`
+
+Orden:
+
+```txt
+REVISION_DATOS
+SIN_FOLIOS
+URGENTE
+WARNING
+OK
+```
+
+Uso inicial:
+
+- Mostrar cards compactas de CAF, folios otorgados, disponibles y alertas.
+- Al seleccionar empresa, acotar por `tenantId` y `rut`.
+- Indagar primero las combinaciones `REVISION_DATOS` antes de convertirlas en alarma final de usuario.
+
+Validacion API local:
+
+```txt
+GET /api/support/control/folios?limit=3&offset=0
+total: 87
+primeros registros: REVISION_DATOS
+
+GET /api/support/control/folios?limit=2&offset=0&alert=WARNING
+total: 8
+primeros registros: WARNING
+```
+
+Observacion de rendimiento:
+
+La consulta inicial puede tardar varios segundos porque `folios_control_resumen` compara CAF, disponibles, historial y documentos 2026. Antes de convertir esto en vista principal de uso intensivo, evaluar una agregacion local optimizada o materializada en `rr_gestion_soporte`, nunca en `public`.

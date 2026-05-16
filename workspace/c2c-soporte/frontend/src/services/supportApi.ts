@@ -16,6 +16,7 @@ export type PaginatedResponse<TItem> = {
 };
 
 export type CompanyControlAlert = "OK" | "WARNING" | "URGENTE" | "SIN_EMISION";
+export type FoliosControlAlert = "OK" | "WARNING" | "URGENTE" | "SIN_FOLIOS" | "REVISION_DATOS";
 export type DeviceConsistencyAlert =
   | "OK"
   | "ACTIVO_SIN_EMISION"
@@ -91,6 +92,44 @@ export type DeviceControlQuery = {
   rut?: number;
   alert?: CompanyControlAlert;
   consistency?: DeviceConsistencyAlert;
+};
+
+export type FoliosControl = {
+  tenant_id: string;
+  tenant_name: string | null;
+  tenant_status: string | null;
+  rut: number | null;
+  empresa_name: string | null;
+  empresa_status: string | null;
+  document_type: number;
+  caf_count: number;
+  folios_otorgados: number;
+  primer_caf: string | null;
+  ultimo_caf: string | null;
+  folio_min: number | null;
+  folio_max: number | null;
+  rangos_disponibles: number;
+  folios_disponibles: number;
+  folios_entregados_por_rango: number;
+  folios_solicitados: number;
+  diferencia_solicitado_rango: number;
+  devices_con_revision_historial: number;
+  documentos_emitidos_2026: number;
+  devices_con_emision: number;
+  primera_emision: string | null;
+  ultima_emision: string | null;
+  dias_sin_emitir: number | null;
+  nivel_alerta_folios: FoliosControlAlert;
+};
+
+export type FoliosControlQuery = {
+  limit?: number;
+  offset?: number;
+  search?: string;
+  tenantId?: string;
+  rut?: number;
+  documentType?: number;
+  alert?: FoliosControlAlert;
 };
 
 export type DocumentsSummary = {
@@ -182,6 +221,27 @@ export const getDeviceControl = async (
   }
 
   const payload = (await response.json()) as ApiSuccess<PaginatedResponse<DeviceControl>>;
+
+  if (!payload.ok) {
+    throw new Error("Respuesta API invalida");
+  }
+
+  return payload.data;
+};
+
+export const getFoliosControl = async (
+  query: FoliosControlQuery,
+  signal?: AbortSignal
+): Promise<PaginatedResponse<FoliosControl>> => {
+  const response = await fetch(`/api/support/control/folios${buildQueryString(query)}`, {
+    signal
+  });
+
+  if (!response.ok) {
+    throw new Error("No se pudo consultar el control de folios");
+  }
+
+  const payload = (await response.json()) as ApiSuccess<PaginatedResponse<FoliosControl>>;
 
   if (!payload.ok) {
     throw new Error("Respuesta API invalida");

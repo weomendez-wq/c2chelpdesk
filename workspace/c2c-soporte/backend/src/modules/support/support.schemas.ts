@@ -39,6 +39,13 @@ export const deviceControlQuerySchema = paginationQuerySchema.extend({
     .optional()
 });
 
+export const foliosControlQuerySchema = paginationQuerySchema.extend({
+  alert: z.enum(["OK", "WARNING", "URGENTE", "SIN_FOLIOS", "REVISION_DATOS"]).optional(),
+  documentType: z.coerce.number().int().positive().optional(),
+  rut: z.coerce.number().int().positive().optional(),
+  tenantId: z.string().uuid().optional()
+});
+
 export const documentsSummaryQuerySchema = z.object({
   tenantId: z.string().uuid().optional(),
   rut: z.coerce.number().int().positive().optional()
@@ -49,4 +56,5 @@ export type DevicesQuery = z.infer<typeof devicesQuerySchema>;
 export type CompanyDevicesQuery = z.infer<typeof companyDevicesQuerySchema>;
 export type CompanyControlQuery = z.infer<typeof companyControlQuerySchema>;
 export type DeviceControlQuery = z.infer<typeof deviceControlQuerySchema>;
+export type FoliosControlQuery = z.infer<typeof foliosControlQuerySchema>;
 export type DocumentsSummaryQuery = z.infer<typeof documentsSummaryQuerySchema>;

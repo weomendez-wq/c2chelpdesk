@@ -560,6 +560,16 @@ tbody tr {
   color: #3730a3;
 }
 
+.badge.alert-sin_folios {
+  background: #fde68a;
+  color: #854d0e;
+}
+
+.badge.alert-revision_datos {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 .table-title,
 .table-subtitle {
   display: block;

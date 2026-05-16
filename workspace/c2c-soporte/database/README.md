@@ -66,6 +66,8 @@ Estos scripts son de solo lectura:
 - `sql/27-verify-documentos-operational-views.sql`: verifica vistas documentales operativas.
 - `sql/28-create-device-operational-views.sql`: crea vista operacional por device.
 - `sql/29-verify-device-operational-views.sql`: verifica vista operacional por device.
+- `sql/30-create-folios-operational-views.sql`: crea vistas operativas locales de CAF, folios disponibles, historial y control de folios.
+- `sql/31-verify-folios-operational-views.sql`: verifica totales y alertas de las vistas de folios.
 
 ## Scripts de inventario de origen
 
@@ -229,9 +231,21 @@ Ejecutadas localmente:
 - `rr_gestion_soporte.documentos_2026_mensual`
 - `rr_gestion_soporte.documentos_2026_device_mensual`
 - `rr_gestion_soporte.device_control_resumen`
+- `rr_gestion_soporte.folios_caf_resumen`
+- `rr_gestion_soporte.folios_disponibles_resumen`
+- `rr_gestion_soporte.folios_historial_resumen`
+- `rr_gestion_soporte.folios_control_resumen`
 
 Validacion:
 
 - Documentos base y normalizados: 3919488 filas.
 - Fechas invalidas: 0.
 - Devices staging y control: 402 filas.
+- Folios/CAF:
+  - CAF: 374.
+  - Folios otorgados: 53608759.
+  - Rangos disponibles: 102.
+  - Folios disponibles: 10738125.
+  - Cargas historial: 17253.
+  - Diferencia historial solicitada/rango: 59175.
+  - Alertas control: 21 `REVISION_DATOS`, 8 `WARNING`, 58 `OK`.
