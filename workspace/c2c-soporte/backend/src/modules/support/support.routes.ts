@@ -15,6 +15,7 @@ import {
 } from "./support.schemas.js";
 import {
   getCacheStatus,
+  listDteConfig,
   getDocumentsSummary,
   listAlerts,
   listCompanies,
@@ -212,6 +213,16 @@ supportRouter.get("/control/alerts", async (req, res, next) => {
 supportRouter.get("/control/cache-status", async (req, res, next) => {
   try {
     const data = await getCacheStatus();
+
+    res.json(ok({ data, requestId: req.requestId }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+supportRouter.get("/control/maintainers/dte-config", async (req, res, next) => {
+  try {
+    const data = await listDteConfig();
 
     res.json(ok({ data, requestId: req.requestId }));
   } catch (error) {

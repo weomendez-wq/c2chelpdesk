@@ -145,22 +145,23 @@ Sin edicion inicial.
 Tipo:
 
 ```txt
-Editable local
+Solo lectura inicial; editable local futuro
 ```
 
-Tabla sugerida:
+Tabla actual:
 
 ```txt
-rr_gestion_soporte.tipodte_catalogo
+rr_gestion_soporte.caf_vencimiento_config
 ```
 
-Campos sugeridos:
+Campos actuales:
 
 - `document_type`
-- `nombre`
-- `descripcion`
+- `document_label`
+- `vigencia_meses`
+- `warning_dias`
+- `aplica_vencimiento`
 - `activo`
-- `orden`
 - `created_at`
 - `updated_at`
 
@@ -169,12 +170,13 @@ Uso:
 - Mostrar nombres legibles.
 - Poblar filtros.
 - Evitar codigos sueltos en frontend.
+- Mostrar reglas de vencimiento CAF por tipo DTE.
 
 Acciones:
 
-- Crear.
-- Editar nombre/descripcion.
-- Activar/desactivar.
+- Ver configuracion.
+- Filtrar por estado.
+- Preparar edicion posterior con auditoria.
 
 No debe cambiar documentos ni CAF.
 
@@ -354,4 +356,3 @@ Motivo:
 - No toca datos importados.
 - Tiene alto valor operativo.
 - Permite ajustar warnings sin cambiar SQL.
-

@@ -226,6 +226,18 @@ export type CacheStatus = {
   } | null;
 };
 
+export type DteConfig = {
+  activo: boolean;
+  aplica_vencimiento: boolean;
+  config_id: number;
+  created_at: string;
+  document_label: string;
+  document_type: number;
+  updated_at: string;
+  vigencia_meses: number | null;
+  warning_dias: number;
+};
+
 export type AlertsQuery = {
   limit?: number;
   offset?: number;
@@ -406,6 +418,24 @@ export const getCacheStatus = async (signal?: AbortSignal): Promise<CacheStatus>
   }
 
   const payload = (await response.json()) as ApiSuccess<CacheStatus>;
+
+  if (!payload.ok) {
+    throw new Error("Respuesta API invalida");
+  }
+
+  return payload.data;
+};
+
+export const getDteConfig = async (signal?: AbortSignal): Promise<DteConfig[]> => {
+  const response = await fetch("/api/support/control/maintainers/dte-config", {
+    signal
+  });
+
+  if (!response.ok) {
+    throw new Error("No se pudo consultar la configuracion DTE");
+  }
+
+  const payload = (await response.json()) as ApiSuccess<DteConfig[]>;
 
   if (!payload.ok) {
     throw new Error("Respuesta API invalida");

@@ -9,6 +9,7 @@ import {
   getFolioRanges,
   getFoliosControl,
   getCacheStatus,
+  getDteConfig,
   getOperationalAlerts,
   refreshLocalCaches,
   type AlertSeverity,
@@ -19,6 +20,7 @@ import {
   type CompanyControlQuery,
   type DeviceControl,
   type DocumentsSummary,
+  type DteConfig,
   type FolioRange,
   type FolioRangeOperationalState,
   type FoliosControl,
@@ -92,7 +94,7 @@ const navigationItems = [
   { id: "rangos", label: "Rangos SII", status: "Activo" },
   { id: "alertas", label: "Alertas", status: "Activo" },
   { id: "procesos", label: "Procesos", status: "Activo" },
-  { id: "mantenedores", label: "Mantenedores", status: "Plan" },
+  { id: "mantenedores", label: "Mantenedores", status: "Activo" },
   { id: "configuracion", label: "Configuracion", status: "Plan" }
 ];
 
@@ -205,6 +207,11 @@ export const App = () => {
   const [cacheState, setCacheState] = useState<LoadState<CacheStatus>>({
     status: "idle",
     data: emptyCacheStatus,
+    error: null
+  });
+  const [dteConfigState, setDteConfigState] = useState<LoadState<DteConfig[]>>({
+    status: "idle",
+    data: [],
     error: null
   });
   const [cacheRefreshRunning, setCacheRefreshRunning] = useState(false);
@@ -527,6 +534,38 @@ export const App = () => {
           status: "error",
           data: emptyCacheStatus,
           error: error instanceof Error ? error.message : "No se pudo cargar estado de caches"
+        });
+      });
+
+    return () => abortController.abort();
+  }, []);
+
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    setDteConfigState((current) => ({
+      status: "loading",
+      data: current.data,
+      error: null
+    }));
+
+    getDteConfig(abortController.signal)
+      .then((response) => {
+        setDteConfigState({
+          status: "success",
+          data: response,
+          error: null
+        });
+      })
+      .catch((error: unknown) => {
+        if (abortController.signal.aborted) {
+          return;
+        }
+
+        setDteConfigState({
+          status: "error",
+          data: [],
+          error: error instanceof Error ? error.message : "No se pudo cargar configuracion DTE"
         });
       });
 
@@ -1429,12 +1468,70 @@ export const App = () => {
               </div>
             </div>
           </article>
-          <article className="planning-card" id="mantenedores">
-            <p className="eyebrow">Mantenedores</p>
-            <h2>Datos locales controlados</h2>
-            <p>
-              Partira con tipos DTE y umbrales de alerta, escribiendo solo en `rr_gestion_soporte`.
-            </p>
+          <article className="planning-card maintainers-card" id="mantenedores">
+            <div className="detail-heading">
+              <div>
+                <p className="eyebrow">Mantenedores</p>
+                <h2>Configuracion DTE / CAF</h2>
+                <p className="compact-id">
+                  Reglas locales de vencimiento y avisos, sin modificar documentos ni CAF origen
+                </p>
+              </div>
+              <span className="badge alert-ok">Solo lectura</span>
+            </div>
+
+            {dteConfigState.status === "error" ? (
+              <p className="status error">{dteConfigState.error}</p>
+            ) : null}
+            {dteConfigState.status === "loading" ? (
+              <LoadingIndicator label="Cargando configuracion local..." />
+            ) : null}
+
+            <div className="table-wrap compact-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tipo DTE</th>
+                    <th>Vigencia</th>
+                    <th>Warning</th>
+                    <th>Vencimiento</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dteConfigState.data.map((item) => (
+                    <tr key={item.config_id}>
+                      <td>
+                        <strong>{documentTypeLabel(item.document_type, item.document_label)}</strong>
+                      </td>
+                      <td>
+                        {item.vigencia_meses === null
+                          ? "No aplica"
+                          : `${item.vigencia_meses} meses`}
+                      </td>
+                      <td>{item.warning_dias} dias</td>
+                      <td>
+                        <span
+                          className={`badge ${
+                            item.aplica_vencimiento ? "alert-warning" : "alert-ok"
+                          }`}
+                        >
+                          {item.aplica_vencimiento ? "Controlado" : "No aplica"}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`badge ${item.activo ? "alert-ok" : "alert-warning"}`}>
+                          {item.activo ? "Activo" : "Inactivo"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {dteConfigState.status !== "loading" && dteConfigState.data.length === 0 ? (
+                <p className="status">Sin configuracion local registrada.</p>
+              ) : null}
+            </div>
           </article>
           <article className="planning-card" id="configuracion">
             <p className="eyebrow">Configuracion</p>

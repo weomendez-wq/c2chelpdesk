@@ -293,6 +293,25 @@ export const getCacheStatus = async (): Promise<CacheStatusResult> => {
   };
 };
 
+export const listDteConfig = async (): Promise<Record<string, unknown>[]> => {
+  const result = await dbPool.query(
+    `SELECT
+       config_id::integer AS config_id,
+       document_type,
+       document_label,
+       vigencia_meses,
+       warning_dias,
+       aplica_vencimiento,
+       activo,
+       created_at,
+       updated_at
+     FROM rr_gestion_soporte.caf_vencimiento_config
+     ORDER BY document_type`
+  );
+
+  return result.rows;
+};
+
 export const refreshLocalCaches = async (
   request: CacheRefreshRequest
 ): Promise<CacheStatusResult> => {

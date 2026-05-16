@@ -91,6 +91,7 @@ GET /api/support/control/folio-ranges
 GET /api/support/control/alerts
 GET /api/support/control/cache-status
 POST /api/support/control/cache-refresh
+GET /api/support/control/maintainers/dte-config
 ```
 
 Query params comunes:
@@ -141,6 +142,8 @@ Respuesta:
 ```
 
 Este proceso no toca `public`; reemplaza solo caches locales del proyecto y registra auditoria en `rr_gestion_soporte.cache_refresh_log`.
+
+`GET /api/support/control/maintainers/dte-config` devuelve la configuracion local de tipos DTE y vencimiento CAF desde `rr_gestion_soporte.caf_vencimiento_config`. Es solo lectura en esta etapa y sirve como primera base del modulo Mantenedores.
 
 Filtros adicionales de rangos:
 
