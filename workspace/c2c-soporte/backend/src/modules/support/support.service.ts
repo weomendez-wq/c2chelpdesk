@@ -83,8 +83,19 @@ export const listCompanies = async (
     values
   );
 
+  const items = result.rows.map((row) => ({
+    ...row,
+    dias_desde_creacion:
+      row.dias_desde_creacion === null ? null : Number(row.dias_desde_creacion),
+    dias_sin_emitir: row.dias_sin_emitir === null ? null : Number(row.dias_sin_emitir),
+    documentos_emitidos_2026: Number(row.documentos_emitidos_2026),
+    periodos_con_emision: Number(row.periodos_con_emision),
+    promedio_documentos_periodo: Number(row.promedio_documentos_periodo),
+    total_valor_documentos: Number(row.total_valor_documentos)
+  }));
+
   return {
-    items: result.rows,
+    items,
     pagination: {
       limit: query.limit,
       offset: query.offset
