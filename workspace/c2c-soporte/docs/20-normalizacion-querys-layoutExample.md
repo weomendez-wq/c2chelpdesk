@@ -518,9 +518,9 @@ Recomendacion:
 7. Integrar componentes frontend reutilizables.
 8. Agregar exportacion y logs operativos.
 
-## Siguiente implementacion SQL propuesta
+## Implementacion SQL inicial
 
-Scripts sugeridos:
+Scripts creados:
 
 ```txt
 database/sql/34-create-folios-normalized-detail-views.sql
@@ -536,5 +536,13 @@ rr_gestion_soporte.folios_resumen_empresa_extendido
 rr_gestion_soporte.folios_resumen_device_extendido
 ```
 
-Estos objetos deben ser `CREATE OR REPLACE VIEW` sobre datos locales. No deben escribir registros ni modificar origen.
+Estos objetos son `CREATE OR REPLACE VIEW` sobre datos locales. No escriben registros ni modifican origen.
 
+La primera normalizacion se implemento como vistas locales de solo lectura:
+
+- `documentos_sin_caf_resumen`: identifica documentos 2026 que no calzan con CAF local.
+- `folios_rangos_clasificados_detalle`: adapta `estado_rango`, `clasificacion_temporal`, `folio_mayor`, `lost_folios` y estado operativo del rango.
+- `folios_resumen_empresa_extendido`: consolida por empresa documentos, CAF, rangos, documentos sin CAF y alertas.
+- `folios_resumen_device_extendido`: consolida por cajero/device emision, historial de folios y estado operacional.
+
+La validacion queda separada en `35-verify-folios-normalized-detail-views.sql` para revisar totales antes de exponer esto en backend/frontend.

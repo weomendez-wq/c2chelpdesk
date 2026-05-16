@@ -15,6 +15,8 @@ La informacion operacional de 2026 debe salir de las tablas y vistas locales ya 
 
 Las funciones historicas y scripts reciclados solo pueden usarse como referencia de formulas o reglas de negocio. Cualquier logica util debe reescribirse como consulta o vista nueva sobre los objetos locales.
 
+Las vistas normalizadas rescatadas desde codigo historico deben quedar como consultas locales de solo lectura, no como funciones que escriben tablas intermedias.
+
 ## Comandos prohibidos sobre public productivo
 
 - `INSERT`

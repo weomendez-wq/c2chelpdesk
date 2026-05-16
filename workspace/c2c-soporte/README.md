@@ -101,6 +101,8 @@ La primera vista de control por empresa se crea con `database/sql/24-create-empr
 
 Las vistas operativas documentales y por device se crean con `database/sql/26-create-documentos-operational-views.sql` y `database/sql/28-create-device-operational-views.sql`; se verifican con `database/sql/27-verify-documentos-operational-views.sql` y `database/sql/29-verify-device-operational-views.sql`.
 
+Las vistas normalizadas de detalle para documentos sin CAF, rangos clasificados y resumen extendido se crean con `database/sql/34-create-folios-normalized-detail-views.sql` y se verifican con `database/sql/35-verify-folios-normalized-detail-views.sql`.
+
 La decision de dejar un branch/proyecto posterior de normalizacion de base de datos esta en `docs/decisiones/2026-05-15-branch-normalizacion-base-datos.md`.
 
 La decision de producto para el layout de soporte v1 esta en `docs/decisiones/2026-05-15-diseno-producto-layout-soporte-v1.md`.
