@@ -5,6 +5,7 @@ import {
   companiesQuerySchema,
   companyControlQuerySchema,
   companyDevicesQuerySchema,
+  deviceControlQuerySchema,
   documentsSummaryQuerySchema,
   devicesQuerySchema
 } from "./support.schemas.js";
@@ -13,6 +14,7 @@ import {
   listCompanies,
   listCompanyControl,
   listCompanyDevices,
+  listDeviceControl,
   listDevices
 } from "./support.service.js";
 
@@ -111,6 +113,26 @@ supportRouter.get("/control/documents-summary", async (req, res, next) => {
     }
 
     const data = await getDocumentsSummary(parsedQuery.data);
+
+    res.json(ok({ data, requestId: req.requestId }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+supportRouter.get("/control/devices", async (req, res, next) => {
+  try {
+    const parsedQuery = deviceControlQuerySchema.safeParse(req.query);
+
+    if (!parsedQuery.success) {
+      throw new AppError({
+        code: "VALIDATION_ERROR",
+        message: "Parametros de consulta invalidos",
+        statusCode: 400
+      });
+    }
+
+    const data = await listDeviceControl(parsedQuery.data);
 
     res.json(ok({ data, requestId: req.requestId }));
   } catch (error) {

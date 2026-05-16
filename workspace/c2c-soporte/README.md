@@ -89,6 +89,8 @@ El analisis de scripts SQL pendientes de integrar esta en `docs/17-analisis-quer
 
 La primera vista de control por empresa se crea con `database/sql/24-create-empresa-control-resumen.sql` y se verifica con `database/sql/25-verify-empresa-control-resumen.sql`.
 
+Las vistas operativas documentales y por device se crean con `database/sql/26-create-documentos-operational-views.sql` y `database/sql/28-create-device-operational-views.sql`; se verifican con `database/sql/27-verify-documentos-operational-views.sql` y `database/sql/29-verify-device-operational-views.sql`.
+
 La decision de dejar un branch/proyecto posterior de normalizacion de base de datos esta en `docs/decisiones/2026-05-15-branch-normalizacion-base-datos.md`.
 
 Los scripts generados para copia controlada quedan en `database/generated/` y no se versionan.

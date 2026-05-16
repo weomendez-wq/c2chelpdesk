@@ -78,6 +78,7 @@ GET /api/support/devices
 GET /api/support/company-devices
 GET /api/support/control/companies
 GET /api/support/control/documents-summary
+GET /api/support/control/devices
 ```
 
 Estos endpoints leen vistas locales en `rr_gestion_soporte` y son el contrato inicial para el frontend.
@@ -85,3 +86,5 @@ Estos endpoints leen vistas locales en `rr_gestion_soporte` y son el contrato in
 `GET /api/support/control/companies` lee `rr_gestion_soporte.empresa_control_resumen` y entrega la primera vista certificada por empresa.
 
 `GET /api/support/control/documents-summary` entrega resumen anual, mensual y por tipo de documento desde `rr_gestion_soporte.documentos_2026`, con filtros opcionales por `tenantId` y `rut`.
+
+`GET /api/support/control/devices` lee `rr_gestion_soporte.device_control_resumen` y entrega control operativo por device con filtros por `tenantId`, `rut`, `status`, `alert` y `consistency`.

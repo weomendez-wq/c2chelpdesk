@@ -29,6 +29,16 @@ export const companyControlQuerySchema = paginationQuerySchema.extend({
   alert: z.enum(["OK", "WARNING", "URGENTE", "SIN_EMISION"]).optional()
 });
 
+export const deviceControlQuerySchema = paginationQuerySchema.extend({
+  status: z.string().trim().min(1).max(60).optional(),
+  tenantId: z.string().uuid().optional(),
+  rut: z.coerce.number().int().positive().optional(),
+  alert: z.enum(["OK", "WARNING", "URGENTE", "SIN_EMISION"]).optional(),
+  consistency: z
+    .enum(["OK", "ACTIVO_SIN_EMISION", "ACTIVO_SIN_EMISION_RECIENTE", "NO_ACTIVO_CON_EMISION"])
+    .optional()
+});
+
 export const documentsSummaryQuerySchema = z.object({
   tenantId: z.string().uuid().optional(),
   rut: z.coerce.number().int().positive().optional()
@@ -38,4 +48,5 @@ export type CompaniesQuery = z.infer<typeof companiesQuerySchema>;
 export type DevicesQuery = z.infer<typeof devicesQuerySchema>;
 export type CompanyDevicesQuery = z.infer<typeof companyDevicesQuerySchema>;
 export type CompanyControlQuery = z.infer<typeof companyControlQuerySchema>;
+export type DeviceControlQuery = z.infer<typeof deviceControlQuerySchema>;
 export type DocumentsSummaryQuery = z.infer<typeof documentsSummaryQuerySchema>;

@@ -15,6 +15,11 @@ export type PaginatedResponse<TItem> = {
 };
 
 export type CompanyControlAlert = "OK" | "WARNING" | "URGENTE" | "SIN_EMISION";
+export type DeviceConsistencyAlert =
+  | "OK"
+  | "ACTIVO_SIN_EMISION"
+  | "ACTIVO_SIN_EMISION_RECIENTE"
+  | "NO_ACTIVO_CON_EMISION";
 
 export type CompanyControl = {
   tenant_id: string;
@@ -45,6 +50,46 @@ export type CompanyControlQuery = {
 export type DocumentsSummaryQuery = {
   tenantId?: string;
   rut?: number;
+};
+
+export type DeviceControl = {
+  tenant_id: string;
+  tenant_name: string | null;
+  tenant_status: string | null;
+  rut: number | null;
+  empresa_name: string | null;
+  empresa_status: string | null;
+  device_id: string;
+  device_name: string | null;
+  device_status: string | null;
+  local: string | null;
+  comuna: string | null;
+  ciudad: string | null;
+  config_group_name: string | null;
+  config_group_status: string | null;
+  created_at: string | null;
+  dias_desde_creacion: number | null;
+  estado_garantia: string;
+  documentos_emitidos_2026: number;
+  periodos_con_emision: number;
+  primera_emision: string | null;
+  ultima_emision: string | null;
+  dias_sin_emitir: number | null;
+  promedio_documentos_periodo: number;
+  total_valor_documentos: number;
+  nivel_alerta_emision: CompanyControlAlert;
+  alerta_consistencia: DeviceConsistencyAlert;
+};
+
+export type DeviceControlQuery = {
+  limit?: number;
+  offset?: number;
+  search?: string;
+  status?: string;
+  tenantId?: string;
+  rut?: number;
+  alert?: CompanyControlAlert;
+  consistency?: DeviceConsistencyAlert;
 };
 
 export type DocumentsSummary = {
@@ -115,6 +160,27 @@ export const getDocumentsSummary = async (
   }
 
   const payload = (await response.json()) as ApiSuccess<DocumentsSummary>;
+
+  if (!payload.ok) {
+    throw new Error("Respuesta API invalida");
+  }
+
+  return payload.data;
+};
+
+export const getDeviceControl = async (
+  query: DeviceControlQuery,
+  signal?: AbortSignal
+): Promise<PaginatedResponse<DeviceControl>> => {
+  const response = await fetch(`/api/support/control/devices${buildQueryString(query)}`, {
+    signal
+  });
+
+  if (!response.ok) {
+    throw new Error("No se pudo consultar el control de devices");
+  }
+
+  const payload = (await response.json()) as ApiSuccess<PaginatedResponse<DeviceControl>>;
 
   if (!payload.ok) {
     throw new Error("Respuesta API invalida");

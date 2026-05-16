@@ -3,6 +3,7 @@ import type {
   CompaniesQuery,
   CompanyControlQuery,
   CompanyDevicesQuery,
+  DeviceControlQuery,
   DocumentsSummaryQuery,
   DevicesQuery
 } from "./support.schemas.js";
@@ -200,6 +201,67 @@ export const listCompanyControl = async (
        END,
        dias_sin_emitir DESC NULLS FIRST,
        empresa_name ASC
+     ${paginationSql}`,
+    values
+  );
+
+  return {
+    items: result.rows,
+    pagination: {
+      limit: query.limit,
+      offset: query.offset
+    }
+  };
+};
+
+export const listDeviceControl = async (
+  query: DeviceControlQuery
+): Promise<PaginatedResult<Record<string, unknown>>> => {
+  const clauses: string[] = [];
+  const values: unknown[] = [];
+
+  addFilter(clauses, values, "tenant_id = ?", query.tenantId);
+  addFilter(clauses, values, "rut = ?", query.rut);
+  addFilter(clauses, values, "device_status = ?", query.status);
+  addFilter(clauses, values, "nivel_alerta_emision = ?", query.alert);
+  addFilter(clauses, values, "alerta_consistencia = ?", query.consistency);
+
+  if (query.search) {
+    values.push(
+      `%${query.search}%`,
+      `%${query.search}%`,
+      `%${query.search}%`,
+      `%${query.search}%`,
+      `%${query.search}%`
+    );
+    clauses.push(
+      `(empresa_name ILIKE $${values.length - 4} OR rut::text ILIKE $${values.length - 3} OR device_name ILIKE $${values.length - 2} OR device_id ILIKE $${values.length - 1} OR tenant_name ILIKE $${values.length})`
+    );
+  }
+
+  const whereSql = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+  const paginationSql = appendPagination(values, query.limit, query.offset);
+
+  const result = await dbPool.query(
+    `SELECT *
+     FROM rr_gestion_soporte.device_control_resumen
+     ${whereSql}
+     ORDER BY
+       CASE nivel_alerta_emision
+         WHEN 'URGENTE' THEN 1
+         WHEN 'SIN_EMISION' THEN 2
+         WHEN 'WARNING' THEN 3
+         ELSE 4
+       END,
+       CASE alerta_consistencia
+         WHEN 'ACTIVO_SIN_EMISION' THEN 1
+         WHEN 'ACTIVO_SIN_EMISION_RECIENTE' THEN 2
+         WHEN 'NO_ACTIVO_CON_EMISION' THEN 3
+         ELSE 4
+       END,
+       dias_sin_emitir DESC NULLS FIRST,
+       empresa_name ASC NULLS LAST,
+       device_name ASC NULLS LAST
      ${paginationSql}`,
     values
   );

@@ -83,6 +83,9 @@ Errores esperados:
 GET /api/support/companies
 GET /api/support/devices
 GET /api/support/company-devices
+GET /api/support/control/companies
+GET /api/support/control/documents-summary
+GET /api/support/control/devices
 ```
 
 Query params comunes:
@@ -95,6 +98,7 @@ Filtros adicionales:
 
 - `GET /api/support/devices?tenantId=<uuid>&status=active`
 - `GET /api/support/company-devices?tenantId=<uuid>&rut=<rut>`
+- `GET /api/support/control/devices?tenantId=<uuid>&rut=<rut>&alert=URGENTE&consistency=ACTIVO_SIN_EMISION`
 
 Respuesta:
 
@@ -113,3 +117,5 @@ Respuesta:
   }
 }
 ```
+
+`GET /api/support/control/devices` lee `rr_gestion_soporte.device_control_resumen` y permite revisar estado, garantia, documentos emitidos, dias sin emitir y alertas por device.

@@ -161,6 +161,16 @@ h1 {
   overflow: auto;
 }
 
+.compact-table table {
+  min-width: 1060px;
+}
+
+.compact-table th,
+.compact-table td {
+  font-size: 0.82rem;
+  padding: 9px 10px;
+}
+
 .detail-panel {
   background: #ffffff;
   border: 1px solid #d7e0ea;

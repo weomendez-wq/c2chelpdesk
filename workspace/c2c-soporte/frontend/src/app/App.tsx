@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   getCompanyControl,
+  getDeviceControl,
   getDocumentsSummary,
   type CompanyControl,
   type CompanyControlAlert,
   type CompanyControlQuery,
+  type DeviceControl,
   type DocumentsSummary
 } from "../services/supportApi";
 
@@ -69,6 +71,11 @@ export const App = () => {
   const [documentsState, setDocumentsState] = useState<LoadState<DocumentsSummary>>({
     status: "idle",
     data: emptyDocumentsSummary,
+    error: null
+  });
+  const [deviceState, setDeviceState] = useState<LoadState<DeviceControl[]>>({
+    status: "idle",
+    data: [],
     error: null
   });
 
@@ -150,6 +157,53 @@ export const App = () => {
     return () => abortController.abort();
   }, [selectedCompany]);
 
+  useEffect(() => {
+    const abortController = new AbortController();
+    const query =
+      selectedCompany?.tenant_id && selectedCompany.rut
+        ? {
+            limit: 100,
+            offset: 0,
+            rut: selectedCompany.rut,
+            tenantId: selectedCompany.tenant_id
+          }
+        : {
+            limit: 100,
+            offset: 0,
+            alert: alert || undefined,
+            search: search.trim() || undefined,
+            status: status || undefined
+          };
+
+    setDeviceState((current) => ({
+      status: "loading",
+      data: current.data,
+      error: null
+    }));
+
+    getDeviceControl(query, abortController.signal)
+      .then((response) => {
+        setDeviceState({
+          status: "success",
+          data: response.items,
+          error: null
+        });
+      })
+      .catch((error: unknown) => {
+        if (abortController.signal.aborted) {
+          return;
+        }
+
+        setDeviceState({
+          status: "error",
+          data: [],
+          error: error instanceof Error ? error.message : "No se pudo cargar devices"
+        });
+      });
+
+    return () => abortController.abort();
+  }, [alert, search, selectedCompany, status]);
+
   const companySummary = useMemo(() => {
     const total = companyState.data.length;
     const active = companyState.data.filter((item) => item.empresa_status === "active").length;
@@ -170,6 +224,22 @@ export const App = () => {
     1,
     ...documentsState.data.monthly.map((item) => item.documents)
   );
+
+  const deviceSummary = useMemo(() => {
+    const total = deviceState.data.length;
+    const active = deviceState.data.filter((item) => item.device_status === "active").length;
+    const withoutEmission = deviceState.data.filter(
+      (item) => item.nivel_alerta_emision === "SIN_EMISION"
+    ).length;
+    const urgent = deviceState.data.filter((item) => item.nivel_alerta_emision === "URGENTE").length;
+
+    return {
+      active,
+      total,
+      urgent,
+      withoutEmission
+    };
+  }, [deviceState.data]);
 
   return (
     <main className="app-shell">
@@ -305,6 +375,90 @@ export const App = () => {
               ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="detail-panel" aria-label="Control devices">
+        <div className="detail-heading">
+          <div>
+            <p className="eyebrow">Devices operativos</p>
+            <h2>{selectedCompany?.empresa_name ?? "Primeros 100 devices por prioridad"}</h2>
+            <p className="compact-id">
+              {selectedCompany
+                ? `Tenant ${selectedCompany.tenant_id} | RUT ${selectedCompany.rut ?? "-"}`
+                : "Filtro general segun busqueda, estado y alerta"}
+            </p>
+          </div>
+        </div>
+
+        {deviceState.status === "error" ? <p className="status error">{deviceState.error}</p> : null}
+        {deviceState.status === "loading" ? (
+          <LoadingIndicator label="Cargando control de devices..." />
+        ) : null}
+
+        <div className="metrics documents">
+          <div className="metric">
+            <span>Devices</span>
+            <strong>{formatNumber(deviceSummary.total)}</strong>
+          </div>
+          <div className="metric">
+            <span>Activos</span>
+            <strong>{formatNumber(deviceSummary.active)}</strong>
+          </div>
+          <div className="metric warning">
+            <span>Sin emision</span>
+            <strong>{formatNumber(deviceSummary.withoutEmission)}</strong>
+          </div>
+          <div className="metric urgent">
+            <span>Urgentes</span>
+            <strong>{formatNumber(deviceSummary.urgent)}</strong>
+          </div>
+        </div>
+
+        <div className="table-wrap compact-table" aria-label="Tabla control devices">
+          <table>
+            <thead>
+              <tr>
+                <th>Device</th>
+                <th>Estado</th>
+                <th>Garantia</th>
+                <th>Alerta</th>
+                <th>Consistencia</th>
+                <th>Docs 2026</th>
+                <th>Ultima emision</th>
+                <th>Dias sin emitir</th>
+                <th>Local</th>
+              </tr>
+            </thead>
+            <tbody>
+              {deviceState.data.map((item) => (
+                <tr key={`${item.tenant_id}-${item.device_id}`}>
+                  <td>
+                    <strong className="table-title">{item.device_name ?? item.device_id}</strong>
+                    <span className="table-subtitle">{item.device_id}</span>
+                  </td>
+                  <td>
+                    <span className={`badge ${item.device_status ?? ""}`}>{item.device_status}</span>
+                  </td>
+                  <td>{item.estado_garantia}</td>
+                  <td>
+                    <span className={`badge alert-${item.nivel_alerta_emision.toLowerCase()}`}>
+                      {item.nivel_alerta_emision}
+                    </span>
+                  </td>
+                  <td>{item.alerta_consistencia}</td>
+                  <td>{formatNumber(item.documentos_emitidos_2026)}</td>
+                  <td>{formatDate(item.ultima_emision)}</td>
+                  <td>{formatDays(item.dias_sin_emitir)}</td>
+                  <td>{item.local ?? item.comuna ?? item.ciudad ?? "-"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {deviceState.status === "success" && deviceState.data.length === 0 ? (
+            <p className="empty">No hay devices para los filtros seleccionados.</p>
+          ) : null}
         </div>
       </section>
 
