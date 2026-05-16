@@ -1,0 +1,29 @@
+-- FUNCTION: rr_gestion_soporte.get_status_folios_global(uuid)
+
+-- DROP FUNCTION IF EXISTS rr_gestion_soporte.get_status_folios_global(uuid);
+
+CREATE OR REPLACE FUNCTION rr_gestion_soporte.get_status_folios_global(
+	p_tenant_id uuid)
+    RETURNS TABLE(resultado_tiene_criticos boolean, resultado_stock_total bigint) 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+BEGIN
+    RETURN QUERY
+    WITH resumen AS (
+        -- Aquí corregimos el nombre de la columna para que coincida con la función interna
+        SELECT folios_en_uso_restantes, estado_critico 
+        FROM rr_gestion_soporte.get_caf_status_summary(p_tenant_id)
+    )
+    SELECT 
+        COALESCE(BOOL_OR(estado_critico = 'CRITICO'), false) as resultado_tiene_criticos,
+        COALESCE(SUM(folios_en_uso_restantes), 0)::BIGINT as resultado_stock_total
+    FROM resumen;
+END;
+$BODY$;
+
+ALTER FUNCTION rr_gestion_soporte.get_status_folios_global(uuid)
+    OWNER TO master;

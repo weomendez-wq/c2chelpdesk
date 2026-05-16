@@ -1,0 +1,69 @@
+5-- FUNCTION: rr_gestion_soporte.insertar_rangos_libres(uuid, integer, character varying, integer, bigint, bigint, bigint[])
+
+-- DROP FUNCTION IF EXISTS rr_gestion_soporte.insertar_rangos_libres(uuid, integer, character varying, integer, bigint, bigint, bigint[]);
+
+CREATE OR REPLACE FUNCTION rr_gestion_soporte.insertar_rangos_libres(
+	p_tenant_id uuid,
+	p_rut integer,
+	p_empresa character varying,
+	p_document_type integer,
+	p_folio_ini bigint,
+	p_folio_fin bigint,
+	p_folios_ocupados bigint[])
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+DECLARE
+    actual_ini bigint;
+    folio bigint;
+BEGIN
+    actual_ini := p_folio_ini;
+
+    -- Si no hay folios ocupados, todo el rango es libre
+    IF p_folios_ocupados IS NULL OR array_length(p_folios_ocupados, 1) = 0 THEN
+        INSERT INTO rr_gestion_folios.folios_libres_historico(
+            tenant_id, rut, empresa, document_type, folio_ini, folio_fin, folios_totales
+        ) VALUES (
+            p_tenant_id, p_rut, p_empresa, p_document_type, p_folio_ini, p_folio_fin, (p_folio_fin - p_folio_ini + 1)
+        );
+        RETURN;
+    END IF;
+
+    -- Recorrer folios ocupados y crear rangos libres
+    FOREACH folio IN ARRAY p_folios_ocupados LOOP
+        IF folio > actual_ini THEN
+            INSERT INTO rr_gestion_folios.folios_libres_historico(
+                tenant_id, rut, empresa, document_type, folio_ini, folio_fin, folios_totales
+            ) VALUES (
+                p_tenant_id, p_rut, p_empresa, p_document_type,
+                actual_ini,
+                folio - 1,
+                folio - actual_ini
+            );
+        END IF;
+        actual_ini := folio + 1;
+    END LOOP;
+
+    -- Insertar último rango libre si queda
+    IF actual_ini <= p_folio_fin THEN
+        INSERT INTO rr_gestion_folios.folios_libres_historico(
+            tenant_id, rut, empresa, document_type, folio_ini, folio_fin, folios_totales
+        ) VALUES (
+            p_tenant_id, p_rut, p_empresa, p_document_type,
+            actual_ini,
+            p_folio_fin,
+            p_folio_fin - actual_ini + 1
+        );
+    END IF;
+END;
+$BODY$;
+
+ALTER FUNCTION rr_gestion_soporte.insertar_rangos_libres(uuid, integer, character varying, integer, bigint, bigint, bigint[])
+    OWNER TO master;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.insertar_rangos_libres(uuid, integer, character varying, integer, bigint, bigint, bigint[]) TO PUBLIC;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.insertar_rangos_libres(uuid, integer, character varying, integer, bigint, bigint, bigint[]) TO master;
+

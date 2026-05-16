@@ -1,0 +1,63 @@
+-- FUNCTION: rr_gestion_soporte.registrar_folios_libres_con_saltos()
+
+-- DROP FUNCTION IF EXISTS rr_gestion_soporte.registrar_folios_libres_con_saltos();
+
+CREATE OR REPLACE FUNCTION rr_gestion_soporte.registrar_folios_libres_con_saltos(
+	)
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+DECLARE
+    rec RECORD;
+    start_folio BIGINT;
+    end_folio BIGINT;
+BEGIN
+    -- Limpiar registros del día si quieres evitar duplicados (opcional)
+    -- DELETE FROM rr_gestion_folios.historico_folios_libres;
+
+    FOR rec IN
+        SELECT *
+        FROM rr_gestion_folios.calcular_folios_disponibles_por_rango()
+    LOOP
+        -- Si no hay folios usados, todo el rango está libre
+        IF rec.folios_usados = 0 THEN
+            INSERT INTO rr_gestion_folios.historico_folios_libres(
+                tenant_id, rut, empresa, document_type, folio_ini, folio_fin,
+                folios_totales, folios_usados, folios_libres, folio_barrera
+            )
+            VALUES (
+                rec.tenant_id, rec.rut, rec.empresa, rec.document_type,
+                rec.folio_ini, rec.folio_fin,
+                rec.folios_totales, rec.folios_usados, rec.folios_libres, rec.folio_barrera
+            );
+        ELSE
+            -- Si hay folios ocupados, calculamos los sub-rangos libres
+            start_folio := rec.folio_ini;
+            end_folio := COALESCE(rec.folio_barrera - 1, rec.folio_fin);
+
+            IF start_folio <= end_folio THEN
+                INSERT INTO rr_gestion_folios.historico_folios_libres(
+                    tenant_id, rut, empresa, document_type, folio_ini, folio_fin,
+                    folios_totales, folios_usados, folios_libres, folio_barrera
+                )
+                VALUES (
+                    rec.tenant_id, rec.rut, rec.empresa, rec.document_type,
+                    start_folio, end_folio,
+                    end_folio - start_folio + 1, rec.folios_usados,
+                    end_folio - start_folio + 1, rec.folio_barrera
+                );
+            END IF;
+        END IF;
+    END LOOP;
+END;
+$BODY$;
+
+ALTER FUNCTION rr_gestion_soporte.registrar_folios_libres_con_saltos()
+    OWNER TO master;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.registrar_folios_libres_con_saltos() TO PUBLIC;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.registrar_folios_libres_con_saltos() TO master;
+

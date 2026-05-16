@@ -1,0 +1,64 @@
+-- FUNCTION: rr_gestion_soporte.calcular_folios_disponibles_con_saltos()
+
+-- DROP FUNCTION IF EXISTS rr_gestion_soporte.calcular_folios_disponibles_con_saltos();
+
+CREATE OR REPLACE FUNCTION rr_gestion_soporte.calcular_folios_disponibles_con_saltos(
+	)
+    RETURNS TABLE(tenant_id uuid, rut integer, document_type integer, folio_ini bigint, folio_fin bigint, folios_totales bigint, folios_usados bigint, folios_libres bigint, folio_barrera bigint) 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+DECLARE
+    rec_caf RECORD;
+    folios_ocupados bigint[];
+    min_ocupado bigint;
+BEGIN
+    FOR rec_caf IN
+        SELECT *
+        FROM caf c
+    LOOP
+        -- Obtenemos los folios ocupados dentro del rango
+        SELECT array_agg(d.folio::bigint ORDER BY d.folio)
+        INTO folios_ocupados
+        FROM documentos d
+        WHERE d.rut = rec_caf.rut
+          AND d.tipodocumento = rec_caf.document_type
+          AND d.folio BETWEEN rec_caf.folio_ini AND rec_caf.folio_fin;
+
+        -- Definimos la barrera como el folio mínimo ocupado
+        IF folios_ocupados IS NOT NULL THEN
+            SELECT MIN(f) INTO min_ocupado
+            FROM unnest(folios_ocupados) AS f;
+        ELSE
+            min_ocupado := NULL;
+        END IF;
+
+        -- Retornamos la fila con totales y folios libres
+        RETURN QUERY
+        SELECT 
+            rec_caf.tenant_id,
+            rec_caf.rut,
+            rec_caf.document_type,
+            rec_caf.folio_ini,
+            rec_caf.folio_fin,
+            (rec_caf.folio_fin - rec_caf.folio_ini + 1)::bigint AS folios_totales,
+            COALESCE(array_length(folios_ocupados, 1)::bigint, 0) AS folios_usados,
+            CASE 
+                WHEN min_ocupado IS NOT NULL THEN (min_ocupado - rec_caf.folio_ini)::bigint
+                ELSE (rec_caf.folio_fin - rec_caf.folio_ini + 1)::bigint
+            END AS folios_libres,
+            min_ocupado AS folio_barrera;
+    END LOOP;
+END;
+$BODY$;
+
+ALTER FUNCTION rr_gestion_soporte.calcular_folios_disponibles_con_saltos()
+    OWNER TO master;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.calcular_folios_disponibles_con_saltos() TO PUBLIC;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.calcular_folios_disponibles_con_saltos() TO master;
+

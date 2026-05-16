@@ -1,0 +1,116 @@
+-- FUNCTION: rr_gestion_soporte.obtener_resumen_folios_all()
+
+-- DROP FUNCTION IF EXISTS rr_gestion_soporte.obtener_resumen_folios_all();
+
+CREATE OR REPLACE FUNCTION rr_gestion_soporte.obtener_resumen_folios_all(
+	)
+    RETURNS TABLE(tenant_id uuid, rut integer, nombre_empresa character varying, tipodocumento integer, caf_folio_ini bigint, caf_folio_fin bigint, folios_totales bigint, folios_usados bigint, folios_libres bigint, folio_barrera bigint, alerta_folios character varying) 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+BEGIN
+    RETURN QUERY
+    WITH rangos AS (
+        SELECT
+            c.tenant_id,
+            c.rut,
+            c.document_type AS tipodocumento,
+            c.folio_ini,
+            c.folio_fin,
+            (c.folio_fin - c.folio_ini + 1)::bigint AS folios_totales
+        FROM caf c
+    ),
+    folios_ocupados AS (
+        SELECT
+            d.rut,
+            d.tipodocumento,
+            d.folio::bigint,
+            d.device_id
+        FROM documentos d
+    ),
+    barrera AS (
+        SELECT
+            r.tenant_id,
+            r.rut,
+            r.tipodocumento,
+            MIN(f.folio)::bigint AS folio_barrera
+        FROM rangos r
+        JOIN folios_ocupados f
+          ON f.rut = r.rut
+         AND f.tipodocumento = r.tipodocumento
+         AND f.folio BETWEEN r.folio_ini AND r.folio_fin
+        GROUP BY r.tenant_id, r.rut, r.tipodocumento
+    ),
+    folios_usados_rango AS (
+        SELECT
+            r.tenant_id,
+            r.rut,
+            r.tipodocumento,
+            COUNT(f.folio)::bigint AS folios_usados
+        FROM rangos r
+        JOIN folios_ocupados f
+          ON f.rut = r.rut
+         AND f.tipodocumento = r.tipodocumento
+         AND f.folio BETWEEN r.folio_ini AND r.folio_fin
+        GROUP BY r.tenant_id, r.rut, r.tipodocumento
+    )
+    SELECT
+        r.tenant_id,
+        r.rut,
+        e.name AS nombre_empresa,
+        r.tipodocumento,
+        r.folio_ini AS caf_folio_ini,
+        r.folio_fin AS caf_folio_fin,
+        r.folios_totales,
+        COALESCE(fu.folios_usados,0) AS folios_usados,
+        COALESCE(
+            CASE 
+                WHEN b.folio_barrera IS NOT NULL THEN b.folio_barrera - r.folio_ini
+                ELSE r.folios_totales
+            END, r.folios_totales
+        ) AS folios_libres,
+        b.folio_barrera,
+        (
+            CASE
+                WHEN COALESCE(
+                    CASE 
+                        WHEN b.folio_barrera IS NOT NULL THEN b.folio_barrera - r.folio_ini
+                        ELSE r.folios_totales
+                    END, r.folios_totales
+                ) = 0 THEN 'Sin folios'
+                WHEN COALESCE(
+                    CASE 
+                        WHEN b.folio_barrera IS NOT NULL THEN b.folio_barrera - r.folio_ini
+                        ELSE r.folios_totales
+                    END, r.folios_totales
+                ) <= 20 THEN 'Muy pocos folios'
+                WHEN COALESCE(
+                    CASE 
+                        WHEN b.folio_barrera IS NOT NULL THEN b.folio_barrera - r.folio_ini
+                        ELSE r.folios_totales
+                    END, r.folios_totales
+                ) <= 50 THEN 'Pocos folios'
+                ELSE 'Folios suficientes'
+            END
+        )::varchar AS alerta_folios
+    FROM rangos r
+    LEFT JOIN folios_usados_rango fu
+      ON fu.rut = r.rut AND fu.tipodocumento = r.tipodocumento
+    LEFT JOIN barrera b
+      ON b.rut = r.rut AND b.tipodocumento = r.tipodocumento
+    LEFT JOIN empresa e
+      ON e.rut = r.rut
+    ORDER BY r.rut, r.tipodocumento, r.folio_ini;
+END;
+$BODY$;
+
+ALTER FUNCTION rr_gestion_soporte.obtener_resumen_folios_all()
+    OWNER TO master;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.obtener_resumen_folios_all() TO PUBLIC;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.obtener_resumen_folios_all() TO master;
+

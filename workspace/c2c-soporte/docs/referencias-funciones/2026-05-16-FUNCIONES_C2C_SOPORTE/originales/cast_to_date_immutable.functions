@@ -1,0 +1,34 @@
+-- FUNCTION: public.cast_to_date_immutable(text)
+
+-- DROP FUNCTION IF EXISTS public.cast_to_date_immutable(text);
+
+CREATE OR REPLACE FUNCTION public.cast_to_date_immutable(
+	text_date text)
+    RETURNS date
+    LANGUAGE 'plpgsql'
+    COST 100
+    IMMUTABLE PARALLEL UNSAFE
+AS $BODY$
+BEGIN
+    IF text_date IS NULL OR text_date = '' THEN
+        RETURN '1900-01-01'::date;
+    END IF;
+
+    -- Si contiene un guión, tomamos solo los primeros 10 caracteres e intentamos DD-MM-YYYY
+    IF text_date LIKE '%-%' THEN
+        RETURN TO_DATE(SUBSTRING(text_date FROM 1 FOR 10), 'DD-MM-YYYY');
+    
+    -- Si contiene una barra, limpiamos y aplicamos MM/DD/YYYY
+    ELSIF text_date LIKE '%/%' THEN
+        RETURN TO_DATE(SUBSTRING(REGEXP_REPLACE(text_date, '[^0-9/]', '', 'g') FROM 1 FOR 10), 'MM/DD/YYYY');
+    
+    ELSE
+        RETURN '1900-01-01'::date;
+    END IF;
+EXCEPTION WHEN OTHERS THEN
+    RETURN '1900-01-01'::date;
+END;
+$BODY$;
+
+ALTER FUNCTION public.cast_to_date_immutable(text)
+    OWNER TO master;

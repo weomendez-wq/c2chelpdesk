@@ -1,0 +1,80 @@
+-- FUNCTION: rr_gestion_soporte.c2cpruebas_registrar_folios_libres_detallado()
+
+-- DROP FUNCTION IF EXISTS rr_gestion_soporte.c2cpruebas_registrar_folios_libres_detallado();
+
+CREATE OR REPLACE FUNCTION rr_gestion_soporte.c2cpruebas_registrar_folios_libres_detallado(
+	)
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+DECLARE
+    rec RECORD;
+    start_folio bigint;
+    end_folio bigint;
+BEGIN
+    -- Recorremos cada rango de folios y su información
+    FOR rec IN
+        SELECT *
+        FROM rr_gestion_folios.calcular_folios_disponibles_por_rango()
+    LOOP
+        -- Inicializamos el primer folio libre
+        start_folio := rec.folio_ini;
+
+        -- Si existe folio_barrera, registramos rango libre hasta el primer folio usado
+        IF rec.folio_barrera IS NOT NULL THEN
+            end_folio := rec.folio_barrera - 1;
+            
+            IF end_folio >= start_folio THEN
+                INSERT INTO rr_gestion_folios.historico_folios_libres(
+                    tenant_id, rut, empresa, document_type,
+                    folio_ini, folio_fin, folios_totales,
+                    folios_usados, folios_libres, folio_barrera, created_at
+                )
+                VALUES (
+                    rec.tenant_id, rec.rut, rec.empresa, rec.document_type,
+                    start_folio, end_folio,
+                    end_folio - start_folio + 1,  -- folios_totales
+                    0,                            -- folios_usados
+                    end_folio - start_folio + 1,  -- folios_libres
+                    rec.folio_barrera,
+                    NOW()
+                );
+            END IF;
+
+            -- Actualizamos start_folio al folio usado (barrera)
+            start_folio := rec.folio_barrera + 1;
+        END IF;
+
+        -- Si quedan folios libres hasta el fin del rango
+        IF start_folio <= rec.folio_fin THEN
+            end_folio := rec.folio_fin;
+
+            INSERT INTO rr_gestion_folios.historico_folios_libres(
+                tenant_id, rut, empresa, document_type,
+                folio_ini, folio_fin, folios_totales,
+                folios_usados, folios_libres, folio_barrera, created_at
+            )
+            VALUES (
+                rec.tenant_id, rec.rut, rec.empresa, rec.document_type,
+                start_folio, end_folio,
+                end_folio - start_folio + 1,  -- folios_totales
+                0,                            -- folios_usados
+                end_folio - start_folio + 1,  -- folios_libres
+                rec.folio_barrera,
+                NOW()
+            );
+        END IF;
+
+    END LOOP;
+END;
+$BODY$;
+
+ALTER FUNCTION rr_gestion_soporte.c2cpruebas_registrar_folios_libres_detallado()
+    OWNER TO master;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.c2cpruebas_registrar_folios_libres_detallado() TO PUBLIC;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.c2cpruebas_registrar_folios_libres_detallado() TO master;
+

@@ -1,0 +1,66 @@
+-- FUNCTION: rr_gestion_soporte.generar_resumen_empresas(uuid)
+
+-- DROP FUNCTION IF EXISTS rr_gestion_soporte.generar_resumen_empresas(uuid);
+
+CREATE OR REPLACE FUNCTION rr_gestion_soporte.generar_resumen_empresas(
+	p_tenant_id uuid DEFAULT NULL::uuid)
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+BEGIN
+    -- primero limpiamos registros previos del mismo tenant (opcional)
+    IF p_tenant_id IS NOT NULL THEN
+        DELETE FROM rr_gestion_folios.resumen_empresas
+        WHERE tenant_id = p_tenant_id;
+    ELSE
+        DELETE FROM rr_gestion_folios.resumen_empresas;
+    END IF;
+
+    -- insertar resumen calculado
+    INSERT INTO rr_gestion_folios.resumen_empresas (
+        tenant_id,
+        rut,
+        empresa_name,
+        total_empresas,
+        total_caf,
+        total_documentos,
+        total_devices,
+        total_tipos_documento
+    )
+    SELECT 
+        e.tenant_id,
+        e.rut,
+        e.name AS empresa_name,
+        -- total empresas por tenant
+        (SELECT COUNT(*) 
+         FROM empresa e2 
+         WHERE e2.tenant_id = e.tenant_id) AS total_empresas,
+        -- total caf de esa empresa
+        COUNT(DISTINCT c.cafserial) AS total_caf,
+        -- total documentos de esa empresa
+        COUNT(DISTINCT d.folio) AS total_documentos,
+        -- total devices por tenant
+        (SELECT COUNT(DISTINCT dv.device_id) 
+         FROM device dv 
+         WHERE dv.tenant_id = e.tenant_id) AS total_devices,
+        -- total tipos de documento de esa empresa
+        COUNT(DISTINCT d.tipodocumento) AS total_tipos_documento
+    FROM empresa e
+    LEFT JOIN caf c 
+        ON c.rut = e.rut AND c.tenant_id = e.tenant_id
+    LEFT JOIN documentos d 
+        ON d.rut = e.rut AND d.tenant_id = e.tenant_id
+    WHERE (p_tenant_id IS NULL OR e.tenant_id = p_tenant_id)
+    GROUP BY e.tenant_id, e.rut, e.name;
+END;
+$BODY$;
+
+ALTER FUNCTION rr_gestion_soporte.generar_resumen_empresas(uuid)
+    OWNER TO master;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.generar_resumen_empresas(uuid) TO PUBLIC;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.generar_resumen_empresas(uuid) TO master;
+

@@ -1,0 +1,41 @@
+-- FUNCTION: public.resumen_caf(uuid, integer, integer)
+
+-- DROP FUNCTION IF EXISTS public.resumen_caf(uuid, integer, integer);
+
+CREATE OR REPLACE FUNCTION public.resumen_caf(
+	p_tenant_id uuid DEFAULT NULL::uuid,
+	p_rut integer DEFAULT NULL::integer,
+	p_document_type integer DEFAULT NULL::integer)
+    RETURNS TABLE(tenant_id uuid, rut integer, document_type integer, cantidad_rangos bigint, total_folios bigint, min_folio_ini bigint, max_folio_fin bigint, rangos jsonb) 
+    LANGUAGE 'sql'
+    COST 100
+    STABLE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+  SELECT
+    caf.tenant_id,
+    caf.rut,
+    caf.document_type,
+    COUNT(*)::bigint AS cantidad_rangos,
+    COALESCE(SUM(caf.folio_fin - caf.folio_ini + 1)::bigint, 0) AS total_folios,
+    MIN(caf.folio_ini)::bigint AS min_folio_ini,
+    MAX(caf.folio_fin)::bigint AS max_folio_fin,
+    jsonb_agg(
+      jsonb_build_object(
+        'folio_ini', caf.folio_ini,
+        'folio_fin', caf.folio_fin,
+        'cafserial', caf.cafserial,
+        'created_at', caf.created_at
+      ) ORDER BY caf.folio_ini
+    ) AS rangos
+  FROM public.caf caf
+  WHERE (p_tenant_id IS NULL OR caf.tenant_id = p_tenant_id)
+    AND (p_rut IS NULL OR caf.rut = p_rut)
+    AND (p_document_type IS NULL OR caf.document_type = p_document_type)
+  GROUP BY caf.tenant_id, caf.rut, caf.document_type
+  ORDER BY caf.rut, caf.document_type;
+$BODY$;
+
+ALTER FUNCTION public.resumen_caf(uuid, integer, integer)
+    OWNER TO master;

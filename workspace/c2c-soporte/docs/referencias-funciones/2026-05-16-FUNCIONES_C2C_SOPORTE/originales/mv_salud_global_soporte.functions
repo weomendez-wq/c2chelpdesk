@@ -1,0 +1,63 @@
+-- View: public.mv_salud_global_soporte
+
+-- DROP MATERIALIZED VIEW IF EXISTS public.mv_salud_global_soporte;
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS public.mv_salud_global_soporte
+TABLESPACE pg_default
+AS
+ SELECT tenant_id,
+    name AS empresa_nombre,
+    rut,
+    ( SELECT count(*) AS count
+           FROM device d
+          WHERE d.tenant_id = e.tenant_id) AS total_devices,
+    ( SELECT COALESCE(sum(c.folio_fin - GREATEST(COALESCE((( SELECT max(d.folio) AS max
+                   FROM documentos d
+                  WHERE d.tenant_id = e.tenant_id AND d.rut = c.rut AND d.tipodocumento = c.document_type AND d.folio >= c.folio_ini AND d.folio <= c.folio_fin))::bigint, c.folio_ini - 1), c.folio_ini - 1)), 0::numeric) AS "coalesce"
+           FROM caf c
+          WHERE c.tenant_id = e.tenant_id) AS folios_disponibles,
+    ( SELECT count(*) AS count
+           FROM documentos d
+          WHERE d.tenant_id = e.tenant_id AND (d.estado_sii::text = 'RECHAZADO'::text OR d.estado_sii IS NULL) AND cast_to_date_immutable(d.fechahora::text) >= (CURRENT_DATE - '7 days'::interval)) AS docs_criticos_sii,
+    ( SELECT count(*) AS count
+           FROM documentos doc
+          WHERE doc.tenant_id = e.tenant_id AND cast_to_date_immutable(doc.fechahora::text) >= (CURRENT_DATE - '1 day'::interval)) AS docs_24h,
+    ( SELECT count(*) AS count
+           FROM documentos doc
+          WHERE doc.tenant_id = e.tenant_id AND cast_to_date_immutable(doc.fechahora::text) >= date_trunc('month'::text, CURRENT_DATE::timestamp with time zone)) AS docs_mes,
+    ( SELECT COALESCE(sum(
+                CASE
+                    WHEN (( SELECT max(d.folio) AS max
+                       FROM documentos d
+                      WHERE d.tenant_id = e.tenant_id AND d.rut = c.rut AND d.tipodocumento = c.document_type AND d.folio >= c.folio_ini AND d.folio <= c.folio_fin)) > c.folio_ini THEN (( SELECT max(d.folio) AS max
+                       FROM documentos d
+                      WHERE d.tenant_id = e.tenant_id AND d.rut = c.rut AND d.tipodocumento = c.document_type AND d.folio >= c.folio_ini AND d.folio <= c.folio_fin)) - c.folio_ini + 1 - (( SELECT count(*) AS count
+                       FROM documentos d
+                      WHERE d.tenant_id = e.tenant_id AND d.rut = c.rut AND d.tipodocumento = c.document_type AND d.folio >= c.folio_ini AND d.folio <= c.folio_fin))
+                    ELSE 0::bigint
+                END), 0::numeric) AS "coalesce"
+           FROM caf c
+          WHERE c.tenant_id = e.tenant_id) AS folios_obsoletos,
+    ( SELECT count(*) AS count
+           FROM caf c
+          WHERE c.tenant_id = e.tenant_id AND (c.folio_fin - COALESCE((( SELECT max(doc.folio) AS max
+                   FROM documentos doc
+                  WHERE doc.tenant_id = e.tenant_id AND doc.rut = c.rut AND doc.tipodocumento = c.document_type AND doc.folio >= c.folio_ini AND doc.folio <= c.folio_fin))::bigint, c.folio_ini - 1)) < 200) AS cafs_criticos,
+    ( SELECT max(cast_to_date_immutable(doc.fechahora::text)) AS max
+           FROM documentos doc
+          WHERE doc.tenant_id = e.tenant_id) AS ultima_emision
+   FROM empresa e
+WITH DATA;
+
+ALTER TABLE IF EXISTS public.mv_salud_global_soporte
+    OWNER TO master;
+
+
+CREATE INDEX idx_mv_salud_docs_mes
+    ON public.mv_salud_global_soporte USING btree
+    (docs_mes DESC)
+    TABLESPACE pg_default;
+CREATE UNIQUE INDEX idx_mv_salud_tenant
+    ON public.mv_salud_global_soporte USING btree
+    (tenant_id)
+    TABLESPACE pg_default;

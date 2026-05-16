@@ -1,0 +1,40 @@
+-- FUNCTION: rr_gestion_soporte.guardar_folios_libres_historico()
+
+-- DROP FUNCTION IF EXISTS rr_gestion_soporte.guardar_folios_libres_historico();
+
+CREATE OR REPLACE FUNCTION rr_gestion_soporte.guardar_folios_libres_historico(
+	)
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+BEGIN
+    INSERT INTO rr_gestion_folios.folios_libres_historico(
+        tenant_id,
+        rut,
+        empresa,
+        document_type,
+        folio_ini,
+        folio_fin,
+        folios_libres
+    )
+    SELECT
+        tenant_id,
+        rut,
+        empresa,
+        document_type,
+        folio_ini,
+        folio_fin,
+        folios_libres
+    FROM rr_gestion_folios.calcular_folios_disponibles_por_rango();
+END;
+$BODY$;
+
+ALTER FUNCTION rr_gestion_soporte.guardar_folios_libres_historico()
+    OWNER TO master;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.guardar_folios_libres_historico() TO PUBLIC;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.guardar_folios_libres_historico() TO master;
+

@@ -1,0 +1,43 @@
+-- FUNCTION: rr_gestion_soporte.subf_resumen_empresa(uuid, uuid, integer)
+
+-- DROP FUNCTION IF EXISTS rr_gestion_soporte.subf_resumen_empresa(uuid, uuid, integer);
+
+CREATE OR REPLACE FUNCTION rr_gestion_soporte.subf_resumen_empresa(
+	p_proceso_id uuid,
+	p_tenant_id uuid,
+	p_rut integer)
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+BEGIN
+    INSERT INTO rr_gestion_folios.resumen_empresas(
+        proceso_id, tenant_id, rut, nombre_empresa,
+        total_documentos, total_folios_autorizados, total_folios_utilizados,
+        total_folios_disponibles, folio_min, folio_max, actualizado_en
+    )
+    SELECT
+        p_proceso_id, e.tenant_id, e.rut, e.name,
+        COUNT(d.*) AS total_documentos,
+        COALESCE(SUM(c.folio_fin - c.folio_ini + 1),0) AS total_folios_autorizados,
+        COUNT(d.folio) AS total_folios_utilizados,
+        COALESCE(SUM(c.folio_fin - c.folio_ini + 1),0) - COUNT(d.folio) AS total_folios_disponibles,
+        MIN(c.folio_ini) AS folio_min,
+        MAX(c.folio_fin) AS folio_max,
+        clock_timestamp() AS actualizado_en
+    FROM public.empresa e
+    LEFT JOIN public.documentos d ON e.rut = d.rut
+    LEFT JOIN public.caf c ON e.rut = c.rut
+    WHERE e.rut = p_rut
+    GROUP BY e.tenant_id, e.rut, e.name;
+END;
+$BODY$;
+
+ALTER FUNCTION rr_gestion_soporte.subf_resumen_empresa(uuid, uuid, integer)
+    OWNER TO master;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.subf_resumen_empresa(uuid, uuid, integer) TO PUBLIC;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.subf_resumen_empresa(uuid, uuid, integer) TO master;
+

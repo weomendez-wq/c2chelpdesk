@@ -1,0 +1,80 @@
+-- FUNCTION: rr_gestion_soporte.calcular_folios_disponibles_historico()
+
+-- DROP FUNCTION IF EXISTS rr_gestion_soporte.calcular_folios_disponibles_historico();
+
+CREATE OR REPLACE FUNCTION rr_gestion_soporte.calcular_folios_disponibles_historico(
+	)
+    RETURNS TABLE(tenant_id uuid, rut integer, empresa character varying, document_type integer, folio_ini bigint, folio_fin bigint, folios_totales bigint, folios_usados bigint, folios_libres bigint, folio_barrera bigint) 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+DECLARE
+    rec_caf RECORD;
+    folios_ocupados bigint[];
+    min_ocupado bigint;
+BEGIN
+    FOR rec_caf IN
+        SELECT c.*, e.name AS empresa
+        FROM caf c
+        JOIN empresa e ON e.rut = c.rut
+    LOOP
+        -- Array de folios ocupados dentro del rango
+        SELECT array_agg(d.folio::bigint ORDER BY d.folio)
+        INTO folios_ocupados
+        FROM documentos d
+        WHERE d.rut = rec_caf.rut
+          AND d.tipodocumento = rec_caf.document_type
+          AND d.folio BETWEEN rec_caf.folio_ini AND rec_caf.folio_fin;
+
+        -- Determinar la barrera (primer folio ocupado)
+        IF folios_ocupados IS NOT NULL THEN
+            SELECT MIN(f) INTO min_ocupado
+            FROM unnest(folios_ocupados) AS f;
+        ELSE
+            min_ocupado := NULL;
+        END IF;
+
+        -- Retornar resumen por CAF
+        RETURN QUERY
+        SELECT 
+            rec_caf.tenant_id,
+            rec_caf.rut,
+            rec_caf.empresa,
+            rec_caf.document_type,
+            rec_caf.folio_ini,
+            rec_caf.folio_fin,
+            (rec_caf.folio_fin - rec_caf.folio_ini + 1)::bigint AS folios_totales,
+            COALESCE(array_length(folios_ocupados, 1)::bigint, 0) AS folios_usados,
+            CASE 
+                WHEN min_ocupado IS NOT NULL THEN (min_ocupado - rec_caf.folio_ini)::bigint
+                ELSE (rec_caf.folio_fin - rec_caf.folio_ini + 1)::bigint
+            END AS folios_libres,
+            min_ocupado AS folio_barrera;
+
+        -- Insertar rangos de folios libres en tabla histórica (solo si hay folios libres)
+        IF rec_caf.folio_ini <= rec_caf.folio_fin THEN
+            PERFORM rr_gestion_folios.insertar_rangos_libres(
+                rec_caf.tenant_id,
+                rec_caf.rut,
+                rec_caf.empresa,
+                rec_caf.document_type,
+                rec_caf.folio_ini,
+                rec_caf.folio_fin,
+                folios_ocupados
+            );
+        END IF;
+
+    END LOOP;
+END;
+$BODY$;
+
+ALTER FUNCTION rr_gestion_soporte.calcular_folios_disponibles_historico()
+    OWNER TO master;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.calcular_folios_disponibles_historico() TO PUBLIC;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.calcular_folios_disponibles_historico() TO master;
+

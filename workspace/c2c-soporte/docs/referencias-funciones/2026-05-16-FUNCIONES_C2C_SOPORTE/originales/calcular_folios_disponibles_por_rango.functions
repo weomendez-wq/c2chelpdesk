@@ -1,0 +1,80 @@
+-- FUNCTION: rr_gestion_soporte.calcular_folios_disponibles_por_rango()
+
+-- DROP FUNCTION IF EXISTS rr_gestion_soporte.calcular_folios_disponibles_por_rango();
+
+CREATE OR REPLACE FUNCTION rr_gestion_soporte.calcular_folios_disponibles_por_rango(
+	)
+    RETURNS TABLE(tenant_id uuid, rut integer, empresa character varying, document_type integer, folio_ini bigint, folio_fin bigint, folios_totales bigint, folios_usados bigint, folios_libres bigint, folio_barrera bigint) 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+BEGIN
+    RETURN QUERY
+    WITH rangos AS (
+        SELECT
+            c.tenant_id AS r_tenant_id,
+            c.rut AS r_rut,
+            e.name AS r_empresa,
+            c.document_type AS r_document_type,
+            c.folio_ini AS r_folio_ini,
+            c.folio_fin AS r_folio_fin,
+            (c.folio_fin - c.folio_ini + 1)::bigint AS r_folios_totales
+        FROM caf c
+        JOIN empresa e ON e.rut = c.rut
+    ),
+    folios_ocupados AS (
+        SELECT
+            d.rut AS f_rut,
+            d.tipodocumento AS f_document_type,
+            d.folio AS f_folio
+        FROM documentos d
+    ),
+    folios_por_rango AS (
+        SELECT
+            r.r_tenant_id,
+            r.r_rut,
+            r.r_empresa,
+            r.r_document_type,
+            r.r_folio_ini,
+            r.r_folio_fin,
+            r.r_folios_totales,
+            COUNT(f.f_folio)::bigint AS folios_usados,
+            MIN(f.f_folio)::bigint AS folio_barrera
+        FROM rangos r
+        LEFT JOIN folios_ocupados f
+          ON f.f_rut = r.r_rut
+         AND f.f_document_type = r.r_document_type
+         AND f.f_folio BETWEEN r.r_folio_ini AND r.r_folio_fin
+        GROUP BY r.r_tenant_id, r.r_rut, r.r_empresa, r.r_document_type, r.r_folio_ini, r.r_folio_fin, r.r_folios_totales
+    )
+    SELECT
+        r.r_tenant_id AS tenant_id,
+        r.r_rut AS rut,
+        r.r_empresa AS empresa,
+        r.r_document_type AS document_type,
+        r.r_folio_ini AS folio_ini,
+        r.r_folio_fin AS folio_fin,
+        r.r_folios_totales AS folios_totales,
+        COALESCE(r.folios_usados,0) AS folios_usados,
+        COALESCE(
+            CASE 
+                WHEN r.folio_barrera IS NOT NULL THEN r.folio_barrera - r.r_folio_ini
+                ELSE r.r_folios_totales
+            END, r.r_folios_totales
+        ) AS folios_libres,
+        r.folio_barrera
+    FROM folios_por_rango r
+    ORDER BY r.r_rut, r.r_document_type, r.r_folio_ini;
+END;
+$BODY$;
+
+ALTER FUNCTION rr_gestion_soporte.calcular_folios_disponibles_por_rango()
+    OWNER TO master;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.calcular_folios_disponibles_por_rango() TO PUBLIC;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.calcular_folios_disponibles_por_rango() TO master;
+

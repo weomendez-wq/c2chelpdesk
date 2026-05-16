@@ -1,0 +1,27 @@
+-- View: public.dashboard_kpis
+
+-- DROP VIEW public.dashboard_kpis;
+
+CREATE OR REPLACE VIEW public.dashboard_kpis
+ AS
+ WITH docs AS (
+         SELECT documentos.rut,
+            documentos.tenant_id,
+            documentos.device_id,
+            documentos.fechaemision::date AS fecha
+           FROM documentos
+        ), mes_actual AS (
+         SELECT date_trunc('month'::text, CURRENT_DATE::timestamp with time zone) AS inicio
+        )
+ SELECT ( SELECT count(*) AS count
+           FROM empresa) AS total_empresas,
+    ( SELECT count(*) AS count
+           FROM device) AS total_devices,
+    ( SELECT count(*) AS count
+           FROM documentos) AS total_documentos,
+    ( SELECT count(DISTINCT documentos.device_id) AS count
+           FROM documentos) AS devices_que_emiten;
+
+ALTER TABLE public.dashboard_kpis
+    OWNER TO master;
+

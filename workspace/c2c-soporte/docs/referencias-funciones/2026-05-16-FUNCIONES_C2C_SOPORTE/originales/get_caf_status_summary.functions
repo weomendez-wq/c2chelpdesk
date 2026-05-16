@@ -1,0 +1,66 @@
+-- FUNCTION: rr_gestion_soporte.get_caf_status_summary(uuid)
+
+-- DROP FUNCTION IF EXISTS rr_gestion_soporte.get_caf_status_summary(uuid);
+
+CREATE OR REPLACE FUNCTION rr_gestion_soporte.get_caf_status_summary(
+	p_tenant_id uuid)
+    RETURNS TABLE(document_type integer, total_disponible bigint, estado_critico text, folios_en_uso_restantes bigint, tiene_caf_de_reserva boolean) 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+BEGIN
+    RETURN QUERY
+    WITH caf_base AS (
+        SELECT
+            c.tenant_id,
+            c.document_type,
+            c.folio_ini,
+            c.folio_fin,
+            COUNT(d.folio) AS folios_ocupados
+        FROM caf c
+        LEFT JOIN documentos d ON d.tenant_id = c.tenant_id 
+            AND d.tipodocumento = c.document_type
+            AND d.folio BETWEEN c.folio_ini AND c.folio_fin
+        WHERE c.tenant_id = p_tenant_id
+        GROUP BY c.tenant_id, c.document_type, c.folio_ini, c.folio_fin
+    ),
+    maximos AS (
+        SELECT tipodocumento, MAX(folio) as max_global
+        FROM documentos 
+        WHERE tenant_id = p_tenant_id 
+        GROUP BY tipodocumento
+    ),
+    clasificacion AS (
+        SELECT
+            cb.*,
+            m.max_global,
+            (cb.folio_fin - cb.folio_ini + 1) - cb.folios_ocupados AS disponibles_rango,
+            CASE
+                WHEN m.max_global > cb.folio_fin THEN 'REZAGADO'
+                WHEN m.max_global BETWEEN cb.folio_ini AND cb.folio_fin THEN 'OCUPANDO'
+                ELSE 'RESERVA'
+            END AS estado_rango
+        FROM caf_base cb
+        LEFT JOIN maximos m ON m.tipodocumento = cb.document_type
+    )
+    SELECT
+        c.document_type,
+        SUM(c.disponibles_rango)::BIGINT as total_disponible,
+        CASE 
+            WHEN SUM(c.disponibles_rango) FILTER (WHERE c.estado_rango = 'OCUPANDO') < 100 
+                 AND NOT BOOL_OR(c.estado_rango = 'RESERVA') THEN 'CRITICO'
+            WHEN SUM(c.disponibles_rango) FILTER (WHERE c.estado_rango = 'OCUPANDO') < 500 THEN 'ADVERTENCIA'
+            ELSE 'OK'
+        END as estado_critico,
+        SUM(c.disponibles_rango) FILTER (WHERE c.estado_rango = 'OCUPANDO')::BIGINT as folios_en_uso_restantes,
+        BOOL_OR(c.estado_rango = 'RESERVA') as tiene_caf_de_reserva
+    FROM clasificacion c
+    GROUP BY c.document_type;
+END;
+$BODY$;
+
+ALTER FUNCTION rr_gestion_soporte.get_caf_status_summary(uuid)
+    OWNER TO master;

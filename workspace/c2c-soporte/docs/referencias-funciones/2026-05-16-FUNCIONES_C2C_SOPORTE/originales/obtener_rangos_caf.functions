@@ -1,0 +1,36 @@
+-- FUNCTION: rr_gestion_soporte.obtener_rangos_caf()
+
+-- DROP FUNCTION IF EXISTS rr_gestion_soporte.obtener_rangos_caf();
+
+CREATE OR REPLACE FUNCTION rr_gestion_soporte.obtener_rangos_caf(
+	)
+    RETURNS TABLE(tenant_id uuid, rut integer, empresa character varying, document_type integer, folio_ini bigint, folio_fin bigint, folios_totales bigint, fecha_creacion timestamp without time zone) 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+BEGIN
+    RETURN QUERY
+    SELECT
+        c.tenant_id,
+        c.rut,
+        e.name AS empresa,
+        c.document_type,
+        c.folio_ini,
+        c.folio_fin,
+        (c.folio_fin - c.folio_ini + 1)::bigint AS folios_totales,
+        c.created_at
+    FROM caf c
+    JOIN empresa e ON e.rut = c.rut;
+END;
+$BODY$;
+
+ALTER FUNCTION rr_gestion_soporte.obtener_rangos_caf()
+    OWNER TO master;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.obtener_rangos_caf() TO PUBLIC;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.obtener_rangos_caf() TO master;
+

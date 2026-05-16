@@ -1,0 +1,20 @@
+-- View: public.dispositivos_inactivos
+
+-- DROP MATERIALIZED VIEW IF EXISTS public.dispositivos_inactivos;
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS public.dispositivos_inactivos
+TABLESPACE pg_default
+AS
+ SELECT dev.device_id,
+    e.name AS empresa,
+    max(to_date(d.fechaemision::text, 'YYYY-MM-DD'::text)) AS ultima_emision,
+    CURRENT_DATE - max(to_date(d.fechaemision::text, 'YYYY-MM-DD'::text)) AS dias_inactivos
+   FROM documentos d
+     JOIN device dev ON dev.device_id::text = d.device_id::text
+     JOIN empresa e ON e.tenant_id = dev.tenant_id
+  GROUP BY dev.device_id, e.name
+  ORDER BY (CURRENT_DATE - max(to_date(d.fechaemision::text, 'YYYY-MM-DD'::text))) DESC
+WITH DATA;
+
+ALTER TABLE IF EXISTS public.dispositivos_inactivos
+    OWNER TO master;

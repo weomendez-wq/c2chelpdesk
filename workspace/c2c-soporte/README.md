@@ -89,6 +89,8 @@ El analisis de scripts SQL pendientes de integrar esta en `docs/17-analisis-quer
 
 Las referencias seleccionadas desde `layoutExample` se preservaron en `docs/referencias-layout/` para no perder componentes antes de eliminar esa carpeta.
 
+Las funciones SQL historicas seleccionadas desde `layoutExample/FUNCIONES_C2C_SOPORTE` se preservaron en `docs/referencias-funciones/`.
+
 La primera vista de control por empresa se crea con `database/sql/24-create-empresa-control-resumen.sql` y se verifica con `database/sql/25-verify-empresa-control-resumen.sql`.
 
 Las vistas operativas documentales y por device se crean con `database/sql/26-create-documentos-operational-views.sql` y `database/sql/28-create-device-operational-views.sql`; se verifican con `database/sql/27-verify-documentos-operational-views.sql` y `database/sql/29-verify-device-operational-views.sql`.

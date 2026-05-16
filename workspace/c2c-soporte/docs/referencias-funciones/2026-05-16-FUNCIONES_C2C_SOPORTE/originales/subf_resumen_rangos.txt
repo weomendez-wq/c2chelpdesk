@@ -1,0 +1,37 @@
+-- FUNCTION: rr_gestion_soporte.subf_resumen_rangos(uuid, uuid, integer)
+
+-- DROP FUNCTION IF EXISTS rr_gestion_soporte.subf_resumen_rangos(uuid, uuid, integer);
+
+CREATE OR REPLACE FUNCTION rr_gestion_soporte.subf_resumen_rangos(
+	p_proceso_id uuid,
+	p_tenant_id uuid,
+	p_rut integer)
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+BEGIN
+    INSERT INTO rr_gestion_folios.resumen_rangos_no_utilizados(
+        proceso_id, tenant_id, rut, tipodocumento, folio_ini, folio_fin, actualizado_en
+    )
+    SELECT
+        p_proceso_id, c.tenant_id, c.rut, c.document_type, c.folio_ini, c.folio_fin, clock_timestamp()
+    FROM public.caf c
+    LEFT JOIN public.documentos d
+      ON d.tenant_id = c.tenant_id
+     AND d.rut = c.rut
+     AND d.tipodocumento = c.document_type
+     AND d.folio BETWEEN c.folio_ini AND c.folio_fin
+    WHERE c.rut = p_rut
+      AND d.folio IS NULL;
+END;
+$BODY$;
+
+ALTER FUNCTION rr_gestion_soporte.subf_resumen_rangos(uuid, uuid, integer)
+    OWNER TO master;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.subf_resumen_rangos(uuid, uuid, integer) TO PUBLIC;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.subf_resumen_rangos(uuid, uuid, integer) TO master;
+

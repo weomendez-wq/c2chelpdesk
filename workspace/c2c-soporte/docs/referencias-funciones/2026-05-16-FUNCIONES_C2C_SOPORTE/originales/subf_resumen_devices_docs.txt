@@ -1,0 +1,34 @@
+-- FUNCTION: rr_gestion_soporte.subf_resumen_devices_docs(uuid, uuid, integer)
+
+-- DROP FUNCTION IF EXISTS rr_gestion_soporte.subf_resumen_devices_docs(uuid, uuid, integer);
+
+CREATE OR REPLACE FUNCTION rr_gestion_soporte.subf_resumen_devices_docs(
+	p_proceso_id uuid,
+	p_tenant_id uuid,
+	p_rut integer)
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+BEGIN
+    INSERT INTO rr_gestion_folios.resumen_devices_docs(
+        proceso_id, tenant_id, rut, device_id, tipodocumento, total_documentos, actualizado_en
+    )
+    SELECT
+        p_proceso_id, d.tenant_id, d.rut, d.device_id, d.tipodocumento,
+        COUNT(*) AS total_documentos,
+        clock_timestamp()
+    FROM public.documentos d
+    WHERE d.rut = p_rut
+    GROUP BY d.tenant_id, d.rut, d.device_id, d.tipodocumento;
+END;
+$BODY$;
+
+ALTER FUNCTION rr_gestion_soporte.subf_resumen_devices_docs(uuid, uuid, integer)
+    OWNER TO master;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.subf_resumen_devices_docs(uuid, uuid, integer) TO PUBLIC;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.subf_resumen_devices_docs(uuid, uuid, integer) TO master;
+

@@ -1,0 +1,73 @@
+-- FUNCTION: rr_gestion_soporte.calcular_historial_folios()
+
+-- DROP FUNCTION IF EXISTS rr_gestion_soporte.calcular_historial_folios();
+
+CREATE OR REPLACE FUNCTION rr_gestion_soporte.calcular_historial_folios(
+	)
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+BEGIN
+    -- Insertar resumen por rango
+    INSERT INTO rr_gestion_folios.historial_folios_rangos (
+        tenant_id, rut, empresa_name, document_type,
+        folio_ini, folio_fin,
+        total_folios, folios_ocupados, folios_disponibles,
+        min_folio_ocupado, max_folio_ocupado, caf_created_at
+    )
+    SELECT
+        c.tenant_id,
+        c.rut,
+        e.name AS empresa_name,
+        c.document_type,
+        c.folio_ini,
+        c.folio_fin,
+        (c.folio_fin - c.folio_ini + 1) AS total_folios,
+        COUNT(DISTINCT d.folio) AS folios_ocupados,
+        (c.folio_fin - c.folio_ini + 1) - COUNT(DISTINCT d.folio) AS folios_disponibles,
+        MIN(d.folio) AS min_folio_ocupado,
+        MAX(d.folio) AS max_folio_ocupado,
+        c.created_at AS caf_created_at
+    FROM caf c
+    JOIN empresa e ON c.rut = e.rut
+    LEFT JOIN documentos d
+        ON c.tenant_id = d.tenant_id
+       AND c.rut = d.rut
+       AND c.document_type = d.tipodocumento
+       AND d.folio BETWEEN c.folio_ini AND c.folio_fin
+    GROUP BY
+        c.tenant_id, c.rut, e.name, c.document_type,
+        c.folio_ini, c.folio_fin, c.created_at;
+
+    -- Insertar detalle por folio no ocupado
+    INSERT INTO rr_gestion_folios.historial_folios_detalle (
+        tenant_id, rut, empresa_name, document_type, folio, caf_created_at
+    )
+    SELECT
+        c.tenant_id,
+        c.rut,
+        e.name AS empresa_name,
+        c.document_type,
+        gs.folio,
+        c.created_at
+    FROM caf c
+    JOIN empresa e ON c.rut = e.rut
+    LEFT JOIN documentos d
+        ON c.tenant_id = d.tenant_id
+       AND c.rut = d.rut
+       AND c.document_type = d.tipodocumento
+       AND d.folio BETWEEN c.folio_ini AND c.folio_fin
+    JOIN LATERAL generate_series(c.folio_ini, c.folio_fin) AS gs(folio) ON TRUE
+    WHERE d.folio IS NULL;
+END;
+$BODY$;
+
+ALTER FUNCTION rr_gestion_soporte.calcular_historial_folios()
+    OWNER TO master;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.calcular_historial_folios() TO PUBLIC;
+
+GRANT EXECUTE ON FUNCTION rr_gestion_soporte.calcular_historial_folios() TO master;
+
