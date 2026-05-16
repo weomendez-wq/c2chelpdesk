@@ -80,7 +80,13 @@ export const documentsSummaryQuerySchema = z.object({
   rut: z.coerce.number().int().positive().optional()
 });
 
+export const cacheRefreshRequestSchema = z.object({
+  confirm: z.literal("REFRESH_LOCAL_CACHES"),
+  requestedBy: z.string().trim().min(1).max(120).default("local-support")
+});
+
 export type AlertsQuery = z.infer<typeof alertsQuerySchema>;
+export type CacheRefreshRequest = z.infer<typeof cacheRefreshRequestSchema>;
 export type CompaniesQuery = z.infer<typeof companiesQuerySchema>;
 export type DevicesQuery = z.infer<typeof devicesQuerySchema>;
 export type CompanyDevicesQuery = z.infer<typeof companyDevicesQuerySchema>;

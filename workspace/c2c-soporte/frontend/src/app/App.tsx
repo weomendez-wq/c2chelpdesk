@@ -8,9 +8,12 @@ import {
   getDocumentsSummary,
   getFolioRanges,
   getFoliosControl,
+  getCacheStatus,
   getOperationalAlerts,
+  refreshLocalCaches,
   type AlertSeverity,
   type AlertSource,
+  type CacheStatus,
   type CompanyControl,
   type CompanyControlAlert,
   type CompanyControlQuery,
@@ -87,7 +90,7 @@ const navigationItems = [
   { id: "folios", label: "Folios / CAF", status: "Activo" },
   { id: "rangos", label: "Rangos SII", status: "Activo" },
   { id: "alertas", label: "Alertas", status: "Activo" },
-  { id: "procesos", label: "Procesos", status: "Plan" },
+  { id: "procesos", label: "Procesos", status: "Activo" },
   { id: "mantenedores", label: "Mantenedores", status: "Plan" },
   { id: "configuracion", label: "Configuracion", status: "Plan" }
 ];
@@ -95,6 +98,15 @@ const navigationItems = [
 const formatDate = (value: string | null) => value ?? "-";
 const formatNumber = (value: number) => value.toLocaleString("es-CL");
 const formatMaybeNumber = (value: number | null) => (value === null ? "-" : formatNumber(value));
+const formatDateTime = (value: string | null) =>
+  value ? new Date(value).toLocaleString("es-CL") : "-";
+const formatDuration = (value: number | null) => {
+  if (value === null) {
+    return "-";
+  }
+
+  return `${Math.round(value / 1000).toLocaleString("es-CL")} s`;
+};
 
 const formatDays = (value: number | null) => {
   if (value === null) {
@@ -110,6 +122,11 @@ const LoadingIndicator = ({ label }: { label: string }) => (
     <span>{label}</span>
   </div>
 );
+
+const emptyCacheStatus: CacheStatus = {
+  currentCounts: {},
+  lastRefresh: null
+};
 
 export const App = () => {
   const [search, setSearch] = useState("");
@@ -164,6 +181,12 @@ export const App = () => {
     data: [],
     error: null
   });
+  const [cacheState, setCacheState] = useState<LoadState<CacheStatus>>({
+    status: "idle",
+    data: emptyCacheStatus,
+    error: null
+  });
+  const [cacheRefreshRunning, setCacheRefreshRunning] = useState(false);
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -456,6 +479,64 @@ export const App = () => {
   useEffect(() => {
     setAlertsOffset(0);
   }, [alertSource, operationalAlert, search, selectedCompany]);
+
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    setCacheState((current) => ({
+      status: "loading",
+      data: current.data,
+      error: null
+    }));
+
+    getCacheStatus(abortController.signal)
+      .then((response) => {
+        setCacheState({
+          status: "success",
+          data: response,
+          error: null
+        });
+      })
+      .catch((error: unknown) => {
+        if (abortController.signal.aborted) {
+          return;
+        }
+
+        setCacheState({
+          status: "error",
+          data: emptyCacheStatus,
+          error: error instanceof Error ? error.message : "No se pudo cargar estado de caches"
+        });
+      });
+
+    return () => abortController.abort();
+  }, []);
+
+  const handleRefreshCaches = () => {
+    setCacheRefreshRunning(true);
+    setCacheState((current) => ({
+      status: "loading",
+      data: current.data,
+      error: null
+    }));
+
+    refreshLocalCaches()
+      .then((response) => {
+        setCacheState({
+          status: "success",
+          data: response,
+          error: null
+        });
+      })
+      .catch((error: unknown) => {
+        setCacheState((current) => ({
+          status: "error",
+          data: current.data,
+          error: error instanceof Error ? error.message : "No se pudo refrescar caches"
+        }));
+      })
+      .finally(() => setCacheRefreshRunning(false));
+  };
 
   const companySummary = useMemo(() => {
     const total = companyState.data.length;
@@ -1221,12 +1302,79 @@ export const App = () => {
               />
             </div>
           </article>
-          <article className="planning-card" id="procesos">
-            <p className="eyebrow">Procesos</p>
-            <h2>Ejecuciones manuales</h2>
-            <p>
-              Mostrara logs locales de cargas historicas y procesos controlados con auditoria.
-            </p>
+          <article className="planning-card process-card" id="procesos">
+            <div className="detail-heading">
+              <div>
+                <p className="eyebrow">Procesos</p>
+                <h2>Refresco caches locales</h2>
+                <p className="compact-id">
+                  Regenera datos rapidos desde vistas locales `rr_gestion_soporte`
+                </p>
+              </div>
+              <button
+                className="primary-button"
+                disabled={cacheRefreshRunning}
+                type="button"
+                onClick={handleRefreshCaches}
+              >
+                {cacheRefreshRunning ? "Refrescando..." : "Refrescar caches"}
+              </button>
+            </div>
+
+            {cacheState.status === "error" ? (
+              <p className="status error">{cacheState.error}</p>
+            ) : null}
+            {cacheState.status === "loading" || cacheRefreshRunning ? (
+              <LoadingIndicator label="Procesando caches locales..." />
+            ) : null}
+
+            <div className="metrics documents">
+              <MetricCard
+                label="Estado"
+                value={cacheState.data.lastRefresh?.status ?? "Sin ejecucion"}
+                helper={cacheState.data.lastRefresh?.message ?? "Auditoria local"}
+                tone={cacheState.data.lastRefresh?.status === "SUCCESS" ? "success" : "info"}
+              />
+              <MetricCard
+                label="Duracion"
+                value={formatDuration(cacheState.data.lastRefresh?.durationMs ?? null)}
+                helper="Ultimo refresh"
+                tone="info"
+              />
+              <MetricCard
+                label="Alertas cache"
+                value={formatNumber(cacheState.data.currentCounts.alertas_operativas_cache ?? 0)}
+                helper="Bandeja operacional"
+                tone="warning"
+              />
+              <MetricCard
+                label="Rangos cache"
+                value={formatNumber(
+                  cacheState.data.currentCounts.folios_rangos_clasificados_cache ?? 0
+                )}
+                helper="Rangos SII"
+                tone="info"
+              />
+            </div>
+
+            <div className="cache-status-grid">
+              <div>
+                <span>Inicio</span>
+                <strong>{formatDateTime(cacheState.data.lastRefresh?.startedAt ?? null)}</strong>
+              </div>
+              <div>
+                <span>Termino</span>
+                <strong>{formatDateTime(cacheState.data.lastRefresh?.finishedAt ?? null)}</strong>
+              </div>
+              <div>
+                <span>Solicitado por</span>
+                <strong>{cacheState.data.lastRefresh?.requestedBy ?? "-"}</strong>
+              </div>
+              <div>
+                <span>ID refresh</span>
+                <strong>{cacheState.data.lastRefresh?.refreshId ?? "-"}</strong>
+              </div>
+            </div>
           </article>
           <article className="planning-card" id="mantenedores">
             <p className="eyebrow">Mantenedores</p>

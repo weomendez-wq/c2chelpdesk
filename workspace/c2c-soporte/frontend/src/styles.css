@@ -508,6 +508,22 @@ h1 {
   padding: 8px 12px;
 }
 
+.primary-button {
+  background: #1d4ed8;
+  border: 1px solid #1d4ed8;
+  border-radius: 6px;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 800;
+  min-height: 38px;
+  padding: 9px 12px;
+}
+
+.primary-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .analytics-grid {
   display: grid;
   gap: 16px;
@@ -784,11 +800,47 @@ tbody tr {
   grid-column: 1 / -1;
 }
 
+.planning-card.process-card {
+  display: grid;
+  gap: 16px;
+  grid-column: 1 / -1;
+}
+
 .inline-filters {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   justify-content: flex-end;
+}
+
+.cache-status-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+}
+
+.cache-status-grid div {
+  background: #f8fbfd;
+  border: 1px solid #e5ebf2;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.cache-status-grid span,
+.cache-status-grid strong {
+  display: block;
+}
+
+.cache-status-grid span {
+  color: #66758a;
+  font-size: 0.78rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.cache-status-grid strong {
+  color: #1d2733;
+  font-size: 0.88rem;
 }
 
 .planning-card h2 {
@@ -839,6 +891,7 @@ tbody tr {
   }
 
   .filters,
+  .cache-status-grid,
   .metrics,
   .metrics.documents,
   .analytics-grid,

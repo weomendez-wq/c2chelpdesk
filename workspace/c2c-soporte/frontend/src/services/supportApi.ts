@@ -204,6 +204,20 @@ export type OperationalAlert = {
   reference_date: string | null;
 };
 
+export type CacheStatus = {
+  currentCounts: Record<string, number>;
+  lastRefresh: {
+    cacheCounts: Record<string, number> | null;
+    durationMs: number | null;
+    finishedAt: string | null;
+    message: string | null;
+    refreshId: number;
+    requestedBy: string | null;
+    startedAt: string;
+    status: string;
+  } | null;
+};
+
 export type AlertsQuery = {
   limit?: number;
   offset?: number;
@@ -366,6 +380,49 @@ export const getOperationalAlerts = async (
   }
 
   const payload = (await response.json()) as ApiSuccess<PaginatedResponse<OperationalAlert>>;
+
+  if (!payload.ok) {
+    throw new Error("Respuesta API invalida");
+  }
+
+  return payload.data;
+};
+
+export const getCacheStatus = async (signal?: AbortSignal): Promise<CacheStatus> => {
+  const response = await fetch("/api/support/control/cache-status", {
+    signal
+  });
+
+  if (!response.ok) {
+    throw new Error("No se pudo consultar el estado de caches");
+  }
+
+  const payload = (await response.json()) as ApiSuccess<CacheStatus>;
+
+  if (!payload.ok) {
+    throw new Error("Respuesta API invalida");
+  }
+
+  return payload.data;
+};
+
+export const refreshLocalCaches = async (): Promise<CacheStatus> => {
+  const response = await fetch("/api/support/control/cache-refresh", {
+    body: JSON.stringify({
+      confirm: "REFRESH_LOCAL_CACHES",
+      requestedBy: "frontend-local"
+    }),
+    headers: {
+      "content-type": "application/json"
+    },
+    method: "POST"
+  });
+
+  if (!response.ok) {
+    throw new Error("No se pudo refrescar caches locales");
+  }
+
+  const payload = (await response.json()) as ApiSuccess<CacheStatus>;
 
   if (!payload.ok) {
     throw new Error("Respuesta API invalida");

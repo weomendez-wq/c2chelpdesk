@@ -3,6 +3,7 @@ import { ok } from "../../shared/apiResponse.js";
 import { AppError } from "../../shared/appError.js";
 import {
   alertsQuerySchema,
+  cacheRefreshRequestSchema,
   companiesQuerySchema,
   companyControlQuerySchema,
   companyDevicesQuerySchema,
@@ -13,6 +14,7 @@ import {
   foliosControlQuerySchema
 } from "./support.schemas.js";
 import {
+  getCacheStatus,
   getDocumentsSummary,
   listAlerts,
   listCompanies,
@@ -21,7 +23,8 @@ import {
   listDeviceControl,
   listDevices,
   listFolioRanges,
-  listFoliosControl
+  listFoliosControl,
+  refreshLocalCaches
 } from "./support.service.js";
 
 export const supportRouter = Router();
@@ -199,6 +202,36 @@ supportRouter.get("/control/alerts", async (req, res, next) => {
     }
 
     const data = await listAlerts(parsedQuery.data);
+
+    res.json(ok({ data, requestId: req.requestId }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+supportRouter.get("/control/cache-status", async (req, res, next) => {
+  try {
+    const data = await getCacheStatus();
+
+    res.json(ok({ data, requestId: req.requestId }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+supportRouter.post("/control/cache-refresh", async (req, res, next) => {
+  try {
+    const parsedBody = cacheRefreshRequestSchema.safeParse(req.body);
+
+    if (!parsedBody.success) {
+      throw new AppError({
+        code: "VALIDATION_ERROR",
+        message: "Confirmacion de refresco invalida",
+        statusCode: 400
+      });
+    }
+
+    const data = await refreshLocalCaches(parsedBody.data);
 
     res.json(ok({ data, requestId: req.requestId }));
   } catch (error) {

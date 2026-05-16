@@ -1,6 +1,7 @@
 import { dbPool } from "../../config/database.js";
 import type {
   AlertsQuery,
+  CacheRefreshRequest,
   CompaniesQuery,
   CompanyControlQuery,
   CompanyDevicesQuery,
@@ -41,6 +42,20 @@ export type DocumentsSummaryResult = {
   }>;
 };
 
+export type CacheStatusResult = {
+  lastRefresh: {
+    refreshId: number;
+    status: string;
+    startedAt: string;
+    finishedAt: string | null;
+    durationMs: number | null;
+    requestedBy: string | null;
+    message: string | null;
+    cacheCounts: Record<string, number> | null;
+  } | null;
+  currentCounts: Record<string, number>;
+};
+
 const addFilter = (clauses: string[], values: unknown[], sql: string, value: unknown) => {
   if (value === undefined) {
     return;
@@ -57,6 +72,281 @@ const appendPagination = (values: unknown[], limit: number, offset: number) => {
   const offsetPlaceholder = `$${values.length}`;
 
   return `LIMIT ${limitPlaceholder} OFFSET ${offsetPlaceholder}`;
+};
+
+const cacheCountSql = `
+  SELECT jsonb_object_agg(cache_name, rows_count) AS cache_counts
+  FROM (
+    SELECT 'documentos_2026_mensual_cache' AS cache_name, count(*)::bigint AS rows_count
+    FROM rr_gestion_soporte.documentos_2026_mensual_cache
+    UNION ALL
+    SELECT 'documentos_2026_device_mensual_cache', count(*)::bigint
+    FROM rr_gestion_soporte.documentos_2026_device_mensual_cache
+    UNION ALL
+    SELECT 'empresa_control_resumen_cache', count(*)::bigint
+    FROM rr_gestion_soporte.empresa_control_resumen_cache
+    UNION ALL
+    SELECT 'device_control_resumen_cache', count(*)::bigint
+    FROM rr_gestion_soporte.device_control_resumen_cache
+    UNION ALL
+    SELECT 'folios_control_resumen_cache', count(*)::bigint
+    FROM rr_gestion_soporte.folios_control_resumen_cache
+    UNION ALL
+    SELECT 'folios_proyeccion_agotamiento_cache', count(*)::bigint
+    FROM rr_gestion_soporte.folios_proyeccion_agotamiento_cache
+    UNION ALL
+    SELECT 'folios_rangos_clasificados_cache', count(*)::bigint
+    FROM rr_gestion_soporte.folios_rangos_clasificados_cache
+    UNION ALL
+    SELECT 'alertas_operativas_cache', count(*)::bigint
+    FROM rr_gestion_soporte.alertas_operativas_cache
+  ) counts
+`;
+
+const alertCacheSelectSql = `
+  WITH alerts AS (
+    SELECT
+      tenant_id,
+      tenant_name,
+      rut,
+      empresa_name,
+      'EMPRESA'::text AS source,
+      nivel_alerta_emision::text AS severity,
+      CASE
+        WHEN nivel_alerta_emision = 'SIN_EMISION' THEN 'Empresa sin emision'
+        ELSE 'Empresa con alerta de emision'
+      END AS title,
+      concat(
+        'Docs 2026: ', documentos_emitidos_2026::text,
+        '. Dias sin emitir: ', coalesce(dias_sin_emitir::text, 'sin dato')
+      ) AS detail,
+      NULL::text AS entity_id,
+      NULL::integer AS document_type,
+      documentos_emitidos_2026::numeric AS metric_value,
+      dias_sin_emitir::numeric AS metric_secondary,
+      ultima_emision::text AS reference_date,
+      now() AS generated_at
+    FROM tmp_empresa_control_resumen_cache
+    WHERE nivel_alerta_emision <> 'OK'
+
+    UNION ALL
+
+    SELECT
+      tenant_id,
+      tenant_name,
+      rut,
+      empresa_name,
+      'DEVICE'::text AS source,
+      CASE
+        WHEN nivel_alerta_emision <> 'OK' THEN nivel_alerta_emision::text
+        ELSE 'WARNING'
+      END AS severity,
+      CASE
+        WHEN nivel_alerta_emision <> 'OK' THEN 'Device con alerta de emision'
+        ELSE 'Device con alerta de consistencia'
+      END AS title,
+      concat(
+        'Device: ', coalesce(device_name, device_id),
+        '. Consistencia: ', alerta_consistencia,
+        '. Docs 2026: ', documentos_emitidos_2026::text
+      ) AS detail,
+      device_id::text AS entity_id,
+      NULL::integer AS document_type,
+      documentos_emitidos_2026::numeric AS metric_value,
+      dias_sin_emitir::numeric AS metric_secondary,
+      ultima_emision::text AS reference_date,
+      now() AS generated_at
+    FROM tmp_device_control_resumen_cache
+    WHERE nivel_alerta_emision <> 'OK'
+       OR alerta_consistencia <> 'OK'
+
+    UNION ALL
+
+    SELECT
+      tenant_id,
+      tenant_name,
+      rut,
+      empresa_name,
+      'FOLIOS'::text AS source,
+      nivel_alerta_folios::text AS severity,
+      'Folios requieren revision' AS title,
+      concat(
+        'Tipo DTE: ', document_type::text,
+        '. Disponibles: ', folios_disponibles::text,
+        '. Diferencia solicitados/rango: ', diferencia_solicitado_rango::text
+      ) AS detail,
+      NULL::text AS entity_id,
+      document_type::integer AS document_type,
+      folios_disponibles::numeric AS metric_value,
+      diferencia_solicitado_rango::numeric AS metric_secondary,
+      ultima_emision::text AS reference_date,
+      now() AS generated_at
+    FROM tmp_folios_control_resumen_cache
+    WHERE nivel_alerta_folios <> 'OK'
+
+    UNION ALL
+
+    SELECT
+      tenant_id,
+      tenant_name,
+      rut,
+      empresa_name,
+      'AGOTAMIENTO'::text AS source,
+      nivel_alerta_agotamiento::text AS severity,
+      'Proyeccion de agotamiento' AS title,
+      concat(
+        'Tipo DTE: ', document_type::text,
+        '. Disponibles: ', folios_disponibles::text,
+        '. Dias 30d: ', coalesce(dias_hasta_agotar_30d::text, 'sin base'),
+        '. Dias 90d: ', coalesce(dias_hasta_agotar_90d::text, 'sin base')
+      ) AS detail,
+      NULL::text AS entity_id,
+      document_type::integer AS document_type,
+      folios_disponibles::numeric AS metric_value,
+      coalesce(dias_hasta_agotar_30d, dias_hasta_agotar_90d)::numeric AS metric_secondary,
+      NULL::text AS reference_date,
+      now() AS generated_at
+    FROM tmp_folios_proyeccion_agotamiento_cache
+    WHERE nivel_alerta_agotamiento <> 'OK'
+  )
+  SELECT *
+  FROM alerts
+`;
+
+const toNumberRecord = (value: unknown): Record<string, number> => {
+  if (!value || typeof value !== "object") {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).map(([key, item]) => [key, Number(item)])
+  );
+};
+
+export const getCacheStatus = async (): Promise<CacheStatusResult> => {
+  const [statusResult, countsResult] = await Promise.all([
+    dbPool.query(
+      `SELECT
+         refresh_id,
+         status,
+         started_at,
+         finished_at,
+         duration_ms,
+         requested_by,
+         message,
+         cache_counts
+       FROM rr_gestion_soporte.cache_refresh_log
+       ORDER BY started_at DESC
+       LIMIT 1`
+    ),
+    dbPool.query(cacheCountSql)
+  ]);
+
+  const lastRefresh = statusResult.rows[0];
+
+  return {
+    currentCounts: toNumberRecord(countsResult.rows[0]?.cache_counts),
+    lastRefresh: lastRefresh
+      ? {
+          cacheCounts: lastRefresh.cache_counts ? toNumberRecord(lastRefresh.cache_counts) : null,
+          durationMs: lastRefresh.duration_ms === null ? null : Number(lastRefresh.duration_ms),
+          finishedAt: lastRefresh.finished_at,
+          message: lastRefresh.message,
+          refreshId: Number(lastRefresh.refresh_id),
+          requestedBy: lastRefresh.requested_by,
+          startedAt: lastRefresh.started_at,
+          status: lastRefresh.status
+        }
+      : null
+  };
+};
+
+export const refreshLocalCaches = async (
+  request: CacheRefreshRequest
+): Promise<CacheStatusResult> => {
+  const client = await dbPool.connect();
+  const startedAt = Date.now();
+  let refreshId: number | null = null;
+
+  try {
+    const logResult = await client.query(
+      `INSERT INTO rr_gestion_soporte.cache_refresh_log (status, requested_by, message)
+       VALUES ('RUNNING', $1, 'Refresco local iniciado')
+       RETURNING refresh_id`,
+      [request.requestedBy]
+    );
+    refreshId = Number(logResult.rows[0].refresh_id);
+    await client.query("BEGIN");
+
+    await client.query("CREATE TEMP TABLE tmp_documentos_2026_mensual_cache AS SELECT * FROM rr_gestion_soporte.documentos_2026_mensual");
+    await client.query("CREATE TEMP TABLE tmp_documentos_2026_device_mensual_cache AS SELECT * FROM rr_gestion_soporte.documentos_2026_device_mensual");
+    await client.query("CREATE TEMP TABLE tmp_empresa_control_resumen_cache AS SELECT * FROM rr_gestion_soporte.empresa_control_resumen");
+    await client.query("CREATE TEMP TABLE tmp_device_control_resumen_cache AS SELECT * FROM rr_gestion_soporte.device_control_resumen");
+    await client.query("CREATE TEMP TABLE tmp_folios_control_resumen_cache AS SELECT * FROM rr_gestion_soporte.folios_control_resumen");
+    await client.query("CREATE TEMP TABLE tmp_folios_proyeccion_agotamiento_cache AS SELECT * FROM rr_gestion_soporte.folios_proyeccion_agotamiento");
+    await client.query("CREATE TEMP TABLE tmp_folios_rangos_clasificados_cache AS SELECT * FROM rr_gestion_soporte.folios_rangos_clasificados_detalle");
+    await client.query(`CREATE TEMP TABLE tmp_alertas_operativas_cache AS ${alertCacheSelectSql}`);
+
+    await client.query(
+      `TRUNCATE
+         rr_gestion_soporte.documentos_2026_mensual_cache,
+         rr_gestion_soporte.documentos_2026_device_mensual_cache,
+         rr_gestion_soporte.empresa_control_resumen_cache,
+         rr_gestion_soporte.device_control_resumen_cache,
+         rr_gestion_soporte.folios_control_resumen_cache,
+         rr_gestion_soporte.folios_proyeccion_agotamiento_cache,
+         rr_gestion_soporte.folios_rangos_clasificados_cache,
+         rr_gestion_soporte.alertas_operativas_cache`
+    );
+
+    await client.query("INSERT INTO rr_gestion_soporte.documentos_2026_mensual_cache SELECT * FROM tmp_documentos_2026_mensual_cache");
+    await client.query("INSERT INTO rr_gestion_soporte.documentos_2026_device_mensual_cache SELECT * FROM tmp_documentos_2026_device_mensual_cache");
+    await client.query("INSERT INTO rr_gestion_soporte.empresa_control_resumen_cache SELECT * FROM tmp_empresa_control_resumen_cache");
+    await client.query("INSERT INTO rr_gestion_soporte.device_control_resumen_cache SELECT * FROM tmp_device_control_resumen_cache");
+    await client.query("INSERT INTO rr_gestion_soporte.folios_control_resumen_cache SELECT * FROM tmp_folios_control_resumen_cache");
+    await client.query("INSERT INTO rr_gestion_soporte.folios_proyeccion_agotamiento_cache SELECT * FROM tmp_folios_proyeccion_agotamiento_cache");
+    await client.query("INSERT INTO rr_gestion_soporte.folios_rangos_clasificados_cache SELECT * FROM tmp_folios_rangos_clasificados_cache");
+    await client.query("INSERT INTO rr_gestion_soporte.alertas_operativas_cache SELECT * FROM tmp_alertas_operativas_cache");
+
+    const countsResult = await client.query(cacheCountSql);
+    const durationMs = Date.now() - startedAt;
+
+    await client.query(
+      `UPDATE rr_gestion_soporte.cache_refresh_log
+       SET
+         status = 'SUCCESS',
+         finished_at = clock_timestamp(),
+         duration_ms = $1,
+         message = 'Refresco local completado',
+         cache_counts = $2
+       WHERE refresh_id = $3`,
+      [durationMs, countsResult.rows[0]?.cache_counts ?? {}, refreshId]
+    );
+
+    await client.query("COMMIT");
+
+    return getCacheStatus();
+  } catch (error) {
+    await client.query("ROLLBACK");
+
+    if (refreshId !== null) {
+      const durationMs = Date.now() - startedAt;
+      await dbPool.query(
+        `UPDATE rr_gestion_soporte.cache_refresh_log
+         SET
+           status = 'ERROR',
+           finished_at = clock_timestamp(),
+           duration_ms = $1,
+           message = $2
+         WHERE refresh_id = $3`,
+        [durationMs, error instanceof Error ? error.message : "Error desconocido", refreshId]
+      );
+    }
+
+    throw error;
+  } finally {
+    client.release();
+  }
 };
 
 export const listCompanies = async (

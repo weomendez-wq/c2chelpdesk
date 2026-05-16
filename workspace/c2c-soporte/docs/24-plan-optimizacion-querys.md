@@ -449,6 +449,27 @@ Bitacora:
 docs/bitacora/2026-05-16-optimizacion-querys-local.md
 ```
 
+## Siguiente avance: refresco controlado
+
+Script de control creado:
+
+```txt
+database/sql/performance/46-create-cache-refresh-control.sql
+```
+
+Objetivo:
+
+- Crear auditoria local `rr_gestion_soporte.cache_refresh_log`.
+- Permitir que el backend ejecute refrescos manuales de caches.
+- Mantener trazabilidad de inicio, termino, duracion, estado y conteos.
+
+Regla:
+
+- El refresco debe requerir confirmacion explicita.
+- Debe recalcular primero tablas temporales.
+- Solo despues debe reemplazar caches locales dentro de una transaccion.
+- Si falla, la transaccion debe revertir el cambio y registrar error.
+
 ## Decisiones pendientes
 
 - Si usaremos tablas cache actualizables por proceso manual o materialized views locales.

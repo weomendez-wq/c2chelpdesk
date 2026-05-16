@@ -89,6 +89,8 @@ GET /api/support/control/devices
 GET /api/support/control/folios
 GET /api/support/control/folio-ranges
 GET /api/support/control/alerts
+GET /api/support/control/cache-status
+POST /api/support/control/cache-refresh
 ```
 
 Query params comunes:
@@ -126,6 +128,19 @@ Respuesta:
 `GET /api/support/control/folio-ranges` lee `rr_gestion_soporte.folios_rangos_clasificados_detalle` y permite revisar rangos CAF clasificados para fase SII. Es solo lectura y no ejecuta acciones SII.
 
 `GET /api/support/control/alerts` consolida alertas de empresas, devices, folios y proyeccion de agotamiento desde vistas locales `rr_gestion_soporte`. No consulta `public` ni ejecuta acciones de escritura.
+
+`GET /api/support/control/cache-status` devuelve conteos actuales de caches locales y el ultimo refresh registrado.
+
+`POST /api/support/control/cache-refresh` ejecuta un refresco manual de caches locales en `rr_gestion_soporte`. Requiere confirmacion explicita:
+
+```json
+{
+  "confirm": "REFRESH_LOCAL_CACHES",
+  "requestedBy": "frontend-local"
+}
+```
+
+Este proceso no toca `public`; reemplaza solo caches locales del proyecto y registra auditoria en `rr_gestion_soporte.cache_refresh_log`.
 
 Filtros adicionales de rangos:
 
