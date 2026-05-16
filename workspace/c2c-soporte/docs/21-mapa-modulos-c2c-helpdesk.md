@@ -283,6 +283,12 @@ Estado implementacion:
 
 ### 7. Alertas
 
+Estado:
+
+```txt
+Implementacion inicial disponible
+```
+
 Proposito:
 
 Centralizar riesgos detectados por el sistema.
@@ -300,20 +306,26 @@ Fuentes:
 rr_gestion_soporte.empresa_control_resumen
 rr_gestion_soporte.folios_control_resumen
 rr_gestion_soporte.folios_proyeccion_agotamiento
-rr_gestion_soporte.folios_resumen_empresa_extendido
-rr_gestion_soporte.folios_resumen_device_extendido
+rr_gestion_soporte.device_control_resumen
 ```
 
-Endpoint propuesto:
+Endpoint:
 
 ```txt
 GET /api/support/control/alerts
 ```
 
+Alcance inicial:
+
+- Solo lectura sobre objetos locales `rr_gestion_soporte`.
+- No consulta `rr_gestion_soporte.folios_rangos_clasificados_detalle` en la primera version, porque esa vista puede tardar varios segundos y ya queda cubierta por el modulo Rangos SII.
+- Consolidar alertas de empresas sin emision, devices con problemas de emision/consistencia, folios con diferencias o falta de stock, y proyeccion de agotamiento.
+- Filtros por severidad, fuente, tenant, RUT y busqueda.
+
 Componentes:
 
 - Bandeja de alertas.
-- Filtro por severidad.
+- Filtro por severidad y fuente.
 - Acceso al detalle de empresa/device/rango.
 
 ### 8. Procesos

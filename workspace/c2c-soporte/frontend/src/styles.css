@@ -664,6 +664,11 @@ tbody tr {
   color: #991b1b;
 }
 
+.badge.alert-sin_base_estimacion {
+  background: #e5e7eb;
+  color: #374151;
+}
+
 .badge.range-caducado_candidato {
   background: #fef3c7;
   color: #92400e;
@@ -771,6 +776,19 @@ tbody tr {
   display: grid;
   gap: 16px;
   grid-column: 1 / -1;
+}
+
+.planning-card.alerts-card {
+  display: grid;
+  gap: 16px;
+  grid-column: 1 / -1;
+}
+
+.inline-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
 }
 
 .planning-card h2 {

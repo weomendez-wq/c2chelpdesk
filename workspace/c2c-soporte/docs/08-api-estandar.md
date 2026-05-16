@@ -88,6 +88,7 @@ GET /api/support/control/documents-summary
 GET /api/support/control/devices
 GET /api/support/control/folios
 GET /api/support/control/folio-ranges
+GET /api/support/control/alerts
 ```
 
 Query params comunes:
@@ -124,9 +125,18 @@ Respuesta:
 
 `GET /api/support/control/folio-ranges` lee `rr_gestion_soporte.folios_rangos_clasificados_detalle` y permite revisar rangos CAF clasificados para fase SII. Es solo lectura y no ejecuta acciones SII.
 
+`GET /api/support/control/alerts` consolida alertas de empresas, devices, folios y proyeccion de agotamiento desde vistas locales `rr_gestion_soporte`. No consulta `public` ni ejecuta acciones de escritura.
+
 Filtros adicionales de rangos:
 
 - `estadoOperativo`: `POR_OCUPAR`, `EN_USO`, `AGOTADO`, `CADUCADO_CANDIDATO`, `REVISION_DATOS`.
 - `estadoRango`: `RANGOSINUSO`, `RANGOOCUPADO`, `RANGOCARGAPARCIAL`.
 - `clasificacionTemporal`: `RANGOFUTURO`, `RANGOACTUAL`, `RANGOANTERIOR`, `SINCLASIFICACION`.
 - `documentType`: tipo de documento.
+
+Filtros adicionales de alertas:
+
+- `severity`: `REVISION_DATOS`, `SIN_FOLIOS`, `URGENTE`, `WARNING`, `SIN_EMISION`, `SIN_BASE_ESTIMACION`.
+- `source`: `EMPRESA`, `DEVICE`, `FOLIOS`, `AGOTAMIENTO`.
+- `tenantId`: tenant seleccionado.
+- `rut`: RUT de empresa.

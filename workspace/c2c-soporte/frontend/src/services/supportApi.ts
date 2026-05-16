@@ -17,6 +17,14 @@ export type PaginatedResponse<TItem> = {
 
 export type CompanyControlAlert = "OK" | "WARNING" | "URGENTE" | "SIN_EMISION";
 export type FoliosControlAlert = "OK" | "WARNING" | "URGENTE" | "SIN_FOLIOS" | "REVISION_DATOS";
+export type AlertSeverity =
+  | "REVISION_DATOS"
+  | "SIN_FOLIOS"
+  | "URGENTE"
+  | "WARNING"
+  | "SIN_EMISION"
+  | "SIN_BASE_ESTIMACION";
+export type AlertSource = "EMPRESA" | "DEVICE" | "FOLIOS" | "AGOTAMIENTO";
 export type FolioRangeOperationalState =
   | "POR_OCUPAR"
   | "EN_USO"
@@ -180,6 +188,32 @@ export type FolioRangeQuery = {
   tenantId?: string;
 };
 
+export type OperationalAlert = {
+  tenant_id: string;
+  tenant_name: string | null;
+  rut: number | null;
+  empresa_name: string | null;
+  source: AlertSource;
+  severity: AlertSeverity;
+  title: string;
+  detail: string;
+  entity_id: string | null;
+  document_type: number | null;
+  metric_value: number | null;
+  metric_secondary: number | null;
+  reference_date: string | null;
+};
+
+export type AlertsQuery = {
+  limit?: number;
+  offset?: number;
+  search?: string;
+  tenantId?: string;
+  rut?: number;
+  severity?: AlertSeverity;
+  source?: AlertSource;
+};
+
 export type DocumentsSummary = {
   filters: {
     tenantId?: string;
@@ -311,6 +345,27 @@ export const getFolioRanges = async (
   }
 
   const payload = (await response.json()) as ApiSuccess<PaginatedResponse<FolioRange>>;
+
+  if (!payload.ok) {
+    throw new Error("Respuesta API invalida");
+  }
+
+  return payload.data;
+};
+
+export const getOperationalAlerts = async (
+  query: AlertsQuery,
+  signal?: AbortSignal
+): Promise<PaginatedResponse<OperationalAlert>> => {
+  const response = await fetch(`/api/support/control/alerts${buildQueryString(query)}`, {
+    signal
+  });
+
+  if (!response.ok) {
+    throw new Error("No se pudo consultar alertas operacionales");
+  }
+
+  const payload = (await response.json()) as ApiSuccess<PaginatedResponse<OperationalAlert>>;
 
   if (!payload.ok) {
     throw new Error("Respuesta API invalida");

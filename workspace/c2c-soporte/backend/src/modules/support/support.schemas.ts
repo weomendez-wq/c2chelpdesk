@@ -59,11 +59,28 @@ export const folioRangesQuerySchema = paginationQuerySchema.extend({
   tenantId: z.string().uuid().optional()
 });
 
+export const alertsQuerySchema = paginationQuerySchema.extend({
+  rut: z.coerce.number().int().positive().optional(),
+  severity: z
+    .enum([
+      "REVISION_DATOS",
+      "SIN_FOLIOS",
+      "URGENTE",
+      "WARNING",
+      "SIN_EMISION",
+      "SIN_BASE_ESTIMACION"
+    ])
+    .optional(),
+  source: z.enum(["EMPRESA", "DEVICE", "FOLIOS", "AGOTAMIENTO"]).optional(),
+  tenantId: z.string().uuid().optional()
+});
+
 export const documentsSummaryQuerySchema = z.object({
   tenantId: z.string().uuid().optional(),
   rut: z.coerce.number().int().positive().optional()
 });
 
+export type AlertsQuery = z.infer<typeof alertsQuerySchema>;
 export type CompaniesQuery = z.infer<typeof companiesQuerySchema>;
 export type DevicesQuery = z.infer<typeof devicesQuerySchema>;
 export type CompanyDevicesQuery = z.infer<typeof companyDevicesQuerySchema>;

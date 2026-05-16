@@ -8,6 +8,9 @@ import {
   getDocumentsSummary,
   getFolioRanges,
   getFoliosControl,
+  getOperationalAlerts,
+  type AlertSeverity,
+  type AlertSource,
   type CompanyControl,
   type CompanyControlAlert,
   type CompanyControlQuery,
@@ -15,7 +18,8 @@ import {
   type DocumentsSummary,
   type FolioRange,
   type FolioRangeOperationalState,
-  type FoliosControl
+  type FoliosControl,
+  type OperationalAlert
 } from "../services/supportApi";
 
 type LoadState<TData> =
@@ -57,14 +61,32 @@ const rangeStateOptions: Array<{ value: "" | FolioRangeOperationalState; label: 
   { value: "REVISION_DATOS", label: "Revision datos" }
 ];
 
+const operationalAlertOptions: Array<{ value: "" | AlertSeverity; label: string }> = [
+  { value: "", label: "Todas" },
+  { value: "REVISION_DATOS", label: "Revision datos" },
+  { value: "SIN_FOLIOS", label: "Sin folios" },
+  { value: "URGENTE", label: "Urgente" },
+  { value: "WARNING", label: "Warning" },
+  { value: "SIN_EMISION", label: "Sin emision" },
+  { value: "SIN_BASE_ESTIMACION", label: "Sin base" }
+];
+
+const alertSourceOptions: Array<{ value: "" | AlertSource; label: string }> = [
+  { value: "", label: "Todas" },
+  { value: "EMPRESA", label: "Empresa" },
+  { value: "DEVICE", label: "Device" },
+  { value: "FOLIOS", label: "Folios" },
+  { value: "AGOTAMIENTO", label: "Agotamiento" }
+];
+
 const navigationItems = [
   { id: "torre-control", label: "Torre de Control", status: "Activo" },
   { id: "empresas", label: "Empresas", status: "Activo" },
   { id: "cajeros", label: "Cajeros / Devices", status: "Activo" },
   { id: "documentos", label: "Documentos", status: "Activo" },
   { id: "folios", label: "Folios / CAF", status: "Activo" },
-  { id: "rangos", label: "Rangos SII", status: "Plan" },
-  { id: "alertas", label: "Alertas", status: "Plan" },
+  { id: "rangos", label: "Rangos SII", status: "Activo" },
+  { id: "alertas", label: "Alertas", status: "Activo" },
   { id: "procesos", label: "Procesos", status: "Plan" },
   { id: "mantenedores", label: "Mantenedores", status: "Plan" },
   { id: "configuracion", label: "Configuracion", status: "Plan" }
@@ -72,6 +94,7 @@ const navigationItems = [
 
 const formatDate = (value: string | null) => value ?? "-";
 const formatNumber = (value: number) => value.toLocaleString("es-CL");
+const formatMaybeNumber = (value: number | null) => (value === null ? "-" : formatNumber(value));
 
 const formatDays = (value: number | null) => {
   if (value === null) {
@@ -106,6 +129,11 @@ export const App = () => {
   const [rangesOffset, setRangesOffset] = useState(0);
   const [rangesTotal, setRangesTotal] = useState<number | undefined>();
   const [rangeState, setRangeState] = useState<"" | FolioRangeOperationalState>("");
+  const [alertsLimit, setAlertsLimit] = useState(50);
+  const [alertsOffset, setAlertsOffset] = useState(0);
+  const [alertsTotal, setAlertsTotal] = useState<number | undefined>();
+  const [operationalAlert, setOperationalAlert] = useState<"" | AlertSeverity>("");
+  const [alertSource, setAlertSource] = useState<"" | AlertSource>("");
   const [companyState, setCompanyState] = useState<LoadState<CompanyControl[]>>({
     status: "idle",
     data: [],
@@ -127,6 +155,11 @@ export const App = () => {
     error: null
   });
   const [rangesState, setRangesState] = useState<LoadState<FolioRange[]>>({
+    status: "idle",
+    data: [],
+    error: null
+  });
+  const [alertsState, setAlertsState] = useState<LoadState<OperationalAlert[]>>({
     status: "idle",
     data: [],
     error: null
@@ -370,6 +403,60 @@ export const App = () => {
     setRangesOffset(0);
   }, [rangeState, search, selectedCompany]);
 
+  useEffect(() => {
+    const abortController = new AbortController();
+    const query =
+      selectedCompany?.tenant_id && selectedCompany.rut
+        ? {
+            limit: alertsLimit,
+            offset: alertsOffset,
+            rut: selectedCompany.rut,
+            severity: operationalAlert || undefined,
+            source: alertSource || undefined,
+            tenantId: selectedCompany.tenant_id
+          }
+        : {
+            limit: alertsLimit,
+            offset: alertsOffset,
+            search: search.trim() || undefined,
+            severity: operationalAlert || undefined,
+            source: alertSource || undefined
+          };
+
+    setAlertsState((current) => ({
+      status: "loading",
+      data: current.data,
+      error: null
+    }));
+
+    getOperationalAlerts(query, abortController.signal)
+      .then((response) => {
+        setAlertsState({
+          status: "success",
+          data: response.items,
+          error: null
+        });
+        setAlertsTotal(response.pagination.total);
+      })
+      .catch((error: unknown) => {
+        if (abortController.signal.aborted) {
+          return;
+        }
+
+        setAlertsState({
+          status: "error",
+          data: [],
+          error: error instanceof Error ? error.message : "No se pudo cargar alertas"
+        });
+      });
+
+    return () => abortController.abort();
+  }, [alertSource, alertsLimit, alertsOffset, operationalAlert, search, selectedCompany]);
+
+  useEffect(() => {
+    setAlertsOffset(0);
+  }, [alertSource, operationalAlert, search, selectedCompany]);
+
   const companySummary = useMemo(() => {
     const total = companyState.data.length;
     const active = companyState.data.filter((item) => item.empresa_status === "active").length;
@@ -441,6 +528,21 @@ export const App = () => {
       { anteriores: 0, candidatos: 0, lostFolios: 0, rangos: 0, sinUso: 0 }
     );
   }, [rangesState.data]);
+
+  const alertsSummary = useMemo(() => {
+    return alertsState.data.reduce(
+      (accumulator, item) => ({
+        folios: accumulator.folios + (item.source === "FOLIOS" || item.source === "AGOTAMIENTO" ? 1 : 0),
+        revision: accumulator.revision + (item.severity === "REVISION_DATOS" ? 1 : 0),
+        sinBase: accumulator.sinBase + (item.severity === "SIN_BASE_ESTIMACION" ? 1 : 0),
+        total: accumulator.total + 1,
+        urgent:
+          accumulator.urgent +
+          (item.severity === "URGENTE" || item.severity === "SIN_FOLIOS" ? 1 : 0)
+      }),
+      { folios: 0, revision: 0, sinBase: 0, total: 0, urgent: 0 }
+    );
+  }, [alertsState.data]);
 
   return (
     <div className="product-shell">
@@ -978,12 +1080,146 @@ export const App = () => {
               />
             </div>
           </article>
-          <article className="planning-card" id="alertas">
-            <p className="eyebrow">Alertas</p>
-            <h2>Bandeja operacional</h2>
-            <p>
-              Consolidara revision de datos, warnings, urgencias y casos sin base de estimacion.
-            </p>
+          <article className="planning-card alerts-card" id="alertas">
+            <div className="detail-heading">
+              <div>
+                <p className="eyebrow">Alertas</p>
+                <h2>Bandeja operacional</h2>
+                <p className="compact-id">
+                  {selectedCompany
+                    ? `Tenant ${selectedCompany.tenant_id} | RUT ${selectedCompany.rut ?? "-"}`
+                    : "Empresas, devices, folios y agotamiento"}
+                </p>
+              </div>
+              <div className="inline-filters">
+                <label className="field inline-field">
+                  <span>Severidad</span>
+                  <select
+                    value={operationalAlert}
+                    onChange={(event) =>
+                      setOperationalAlert(event.target.value as "" | AlertSeverity)
+                    }
+                  >
+                    {operationalAlertOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field inline-field">
+                  <span>Fuente</span>
+                  <select
+                    value={alertSource}
+                    onChange={(event) => setAlertSource(event.target.value as "" | AlertSource)}
+                  >
+                    {alertSourceOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            {alertsState.status === "error" ? (
+              <p className="status error">{alertsState.error}</p>
+            ) : null}
+            {alertsState.status === "loading" ? (
+              <LoadingIndicator label="Cargando alertas operacionales..." />
+            ) : null}
+
+            <div className="metrics documents">
+              <MetricCard
+                label="Alertas"
+                value={formatNumber(alertsTotal ?? alertsSummary.total)}
+                helper={`${formatNumber(alertsSummary.total)} visibles`}
+              />
+              <MetricCard
+                label="Urgentes"
+                value={formatNumber(alertsSummary.urgent)}
+                helper="Urgente o sin folios"
+                tone={alertsSummary.urgent > 0 ? "urgent" : "success"}
+              />
+              <MetricCard
+                label="Revision"
+                value={formatNumber(alertsSummary.revision)}
+                helper="Diferencias de datos"
+                tone={alertsSummary.revision > 0 ? "warning" : "success"}
+              />
+              <MetricCard
+                label="Folios"
+                value={formatNumber(alertsSummary.folios)}
+                helper={`${formatNumber(alertsSummary.sinBase)} sin base`}
+                tone={alertsSummary.folios > 0 ? "info" : "success"}
+              />
+            </div>
+
+            <div className="table-wrap compact-table" aria-label="Tabla alertas operacionales">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Empresa</th>
+                    <th>Fuente</th>
+                    <th>Severidad</th>
+                    <th>Detalle</th>
+                    <th>Entidad</th>
+                    <th>Metrica</th>
+                    <th>Referencia</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {alertsState.data.map((item, index) => (
+                    <tr
+                      key={`${item.source}-${item.tenant_id}-${item.rut}-${item.entity_id ?? "empresa"}-${item.document_type ?? "na"}-${index}`}
+                    >
+                      <td>
+                        <strong className="table-title">{item.empresa_name ?? item.tenant_name}</strong>
+                        <span className="table-subtitle">
+                          RUT {item.rut ?? "-"} | Tenant {item.tenant_id}
+                        </span>
+                      </td>
+                      <td>{item.source}</td>
+                      <td>
+                        <span className={`badge alert-${item.severity.toLowerCase()}`}>
+                          {item.severity}
+                        </span>
+                      </td>
+                      <td>
+                        <strong className="table-title">{item.title}</strong>
+                        <span className="table-subtitle">{item.detail}</span>
+                      </td>
+                      <td>{item.entity_id ?? (item.document_type ? `DTE ${item.document_type}` : "-")}</td>
+                      <td>
+                        {formatMaybeNumber(item.metric_value)}
+                        {item.metric_secondary !== null ? (
+                          <span className="table-subtitle">
+                            Ref. {formatMaybeNumber(item.metric_secondary)}
+                          </span>
+                        ) : null}
+                      </td>
+                      <td>{formatDate(item.reference_date)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {alertsState.status === "success" && alertsState.data.length === 0 ? (
+                <p className="empty">No hay alertas para los filtros seleccionados.</p>
+              ) : null}
+              <PaginationBar
+                itemCount={alertsState.data.length}
+                limit={alertsLimit}
+                offset={alertsOffset}
+                total={alertsTotal}
+                onLimitChange={(nextLimit) => {
+                  setAlertsLimit(nextLimit);
+                  setAlertsOffset(0);
+                }}
+                onOffsetChange={setAlertsOffset}
+              />
+            </div>
           </article>
           <article className="planning-card" id="procesos">
             <p className="eyebrow">Procesos</p>

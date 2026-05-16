@@ -2,6 +2,7 @@ import { Router } from "express";
 import { ok } from "../../shared/apiResponse.js";
 import { AppError } from "../../shared/appError.js";
 import {
+  alertsQuerySchema,
   companiesQuerySchema,
   companyControlQuerySchema,
   companyDevicesQuerySchema,
@@ -13,6 +14,7 @@ import {
 } from "./support.schemas.js";
 import {
   getDocumentsSummary,
+  listAlerts,
   listCompanies,
   listCompanyControl,
   listCompanyDevices,
@@ -177,6 +179,26 @@ supportRouter.get("/control/folio-ranges", async (req, res, next) => {
     }
 
     const data = await listFolioRanges(parsedQuery.data);
+
+    res.json(ok({ data, requestId: req.requestId }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+supportRouter.get("/control/alerts", async (req, res, next) => {
+  try {
+    const parsedQuery = alertsQuerySchema.safeParse(req.query);
+
+    if (!parsedQuery.success) {
+      throw new AppError({
+        code: "VALIDATION_ERROR",
+        message: "Parametros de consulta invalidos",
+        statusCode: 400
+      });
+    }
+
+    const data = await listAlerts(parsedQuery.data);
 
     res.json(ok({ data, requestId: req.requestId }));
   } catch (error) {

@@ -1,5 +1,6 @@
 import { dbPool } from "../../config/database.js";
 import type {
+  AlertsQuery,
   CompaniesQuery,
   CompanyControlQuery,
   CompanyDevicesQuery,
@@ -39,6 +40,110 @@ export type DocumentsSummaryResult = {
     documents: number;
   }>;
 };
+
+const alertsBaseSql = `
+  WITH alerts AS (
+    SELECT
+      tenant_id,
+      tenant_name,
+      rut,
+      empresa_name,
+      'EMPRESA'::text AS source,
+      nivel_alerta_emision::text AS severity,
+      CASE
+        WHEN nivel_alerta_emision = 'SIN_EMISION' THEN 'Empresa sin emision'
+        ELSE 'Empresa con alerta de emision'
+      END AS title,
+      concat(
+        'Docs 2026: ', documentos_emitidos_2026::text,
+        '. Dias sin emitir: ', coalesce(dias_sin_emitir::text, 'sin dato')
+      ) AS detail,
+      NULL::text AS entity_id,
+      NULL::integer AS document_type,
+      documentos_emitidos_2026::numeric AS metric_value,
+      dias_sin_emitir::numeric AS metric_secondary,
+      ultima_emision::text AS reference_date
+    FROM rr_gestion_soporte.empresa_control_resumen
+    WHERE nivel_alerta_emision <> 'OK'
+
+    UNION ALL
+
+    SELECT
+      tenant_id,
+      tenant_name,
+      rut,
+      empresa_name,
+      'DEVICE'::text AS source,
+      CASE
+        WHEN nivel_alerta_emision <> 'OK' THEN nivel_alerta_emision::text
+        ELSE 'WARNING'
+      END AS severity,
+      CASE
+        WHEN nivel_alerta_emision <> 'OK' THEN 'Device con alerta de emision'
+        ELSE 'Device con alerta de consistencia'
+      END AS title,
+      concat(
+        'Device: ', coalesce(device_name, device_id),
+        '. Consistencia: ', alerta_consistencia,
+        '. Docs 2026: ', documentos_emitidos_2026::text
+      ) AS detail,
+      device_id::text AS entity_id,
+      NULL::integer AS document_type,
+      documentos_emitidos_2026::numeric AS metric_value,
+      dias_sin_emitir::numeric AS metric_secondary,
+      ultima_emision::text AS reference_date
+    FROM rr_gestion_soporte.device_control_resumen
+    WHERE nivel_alerta_emision <> 'OK'
+       OR alerta_consistencia <> 'OK'
+
+    UNION ALL
+
+    SELECT
+      tenant_id,
+      tenant_name,
+      rut,
+      empresa_name,
+      'FOLIOS'::text AS source,
+      nivel_alerta_folios::text AS severity,
+      'Folios requieren revision' AS title,
+      concat(
+        'Tipo DTE: ', document_type::text,
+        '. Disponibles: ', folios_disponibles::text,
+        '. Diferencia solicitados/rango: ', diferencia_solicitado_rango::text
+      ) AS detail,
+      NULL::text AS entity_id,
+      document_type::integer AS document_type,
+      folios_disponibles::numeric AS metric_value,
+      diferencia_solicitado_rango::numeric AS metric_secondary,
+      ultima_emision::text AS reference_date
+    FROM rr_gestion_soporte.folios_control_resumen
+    WHERE nivel_alerta_folios <> 'OK'
+
+    UNION ALL
+
+    SELECT
+      tenant_id,
+      tenant_name,
+      rut,
+      empresa_name,
+      'AGOTAMIENTO'::text AS source,
+      nivel_alerta_agotamiento::text AS severity,
+      'Proyeccion de agotamiento' AS title,
+      concat(
+        'Tipo DTE: ', document_type::text,
+        '. Disponibles: ', folios_disponibles::text,
+        '. Dias 30d: ', coalesce(dias_hasta_agotar_30d::text, 'sin base'),
+        '. Dias 90d: ', coalesce(dias_hasta_agotar_90d::text, 'sin base')
+      ) AS detail,
+      NULL::text AS entity_id,
+      document_type::integer AS document_type,
+      folios_disponibles::numeric AS metric_value,
+      coalesce(dias_hasta_agotar_30d, dias_hasta_agotar_90d)::numeric AS metric_secondary,
+      NULL::text AS reference_date
+    FROM rr_gestion_soporte.folios_proyeccion_agotamiento
+    WHERE nivel_alerta_agotamiento <> 'OK'
+  )
+`;
 
 const addFilter = (clauses: string[], values: unknown[], sql: string, value: unknown) => {
   if (value === undefined) {
@@ -477,6 +582,93 @@ export const listFolioRanges = async (
     "lost_folios"
   ];
 
+  const items = result.rows.map((row) => {
+    const item = { ...row };
+
+    numericFields.forEach((field) => {
+      if (item[field] !== null && item[field] !== undefined) {
+        item[field] = Number(item[field]);
+      }
+    });
+
+    return item;
+  });
+
+  return {
+    items,
+    pagination: {
+      limit: query.limit,
+      offset: query.offset,
+      total: Number(countResult.rows[0]?.total ?? 0)
+    }
+  };
+};
+
+export const listAlerts = async (
+  query: AlertsQuery
+): Promise<PaginatedResult<Record<string, unknown>>> => {
+  const clauses: string[] = [];
+  const values: unknown[] = [];
+
+  addFilter(clauses, values, "tenant_id = ?", query.tenantId);
+  addFilter(clauses, values, "rut = ?", query.rut);
+  addFilter(clauses, values, "severity = ?", query.severity);
+  addFilter(clauses, values, "source = ?", query.source);
+
+  if (query.search) {
+    values.push(
+      `%${query.search}%`,
+      `%${query.search}%`,
+      `%${query.search}%`,
+      `%${query.search}%`,
+      `%${query.search}%`
+    );
+    clauses.push(
+      `(empresa_name ILIKE $${values.length - 4} OR rut::text ILIKE $${values.length - 3} OR tenant_name ILIKE $${values.length - 2} OR coalesce(entity_id, '') ILIKE $${values.length - 1} OR detail ILIKE $${values.length})`
+    );
+  }
+
+  const whereSql = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+  const countValues = [...values];
+  const paginationSql = appendPagination(values, query.limit, query.offset);
+
+  const orderSql = `
+    ORDER BY
+      CASE severity
+        WHEN 'REVISION_DATOS' THEN 1
+        WHEN 'SIN_FOLIOS' THEN 2
+        WHEN 'URGENTE' THEN 3
+        WHEN 'SIN_EMISION' THEN 4
+        WHEN 'WARNING' THEN 5
+        WHEN 'SIN_BASE_ESTIMACION' THEN 6
+        ELSE 9
+      END,
+      metric_secondary DESC NULLS LAST,
+      metric_value ASC NULLS LAST,
+      empresa_name ASC NULLS LAST,
+      source ASC
+  `;
+
+  const [result, countResult] = await Promise.all([
+    dbPool.query(
+      `${alertsBaseSql}
+       SELECT *
+       FROM alerts
+       ${whereSql}
+       ${orderSql}
+       ${paginationSql}`,
+      values
+    ),
+    dbPool.query(
+      `${alertsBaseSql}
+       SELECT count(*)::bigint AS total
+       FROM alerts
+       ${whereSql}`,
+      countValues
+    )
+  ]);
+
+  const numericFields = ["rut", "document_type", "metric_value", "metric_secondary"];
   const items = result.rows.map((row) => {
     const item = { ...row };
 
