@@ -524,6 +524,47 @@ h1 {
   opacity: 0.65;
 }
 
+.ghost-button.compact,
+.primary-button.compact {
+  min-height: 32px;
+  padding: 6px 9px;
+}
+
+.table-input {
+  background: #ffffff;
+  border: 1px solid #c7d1dd;
+  border-radius: 6px;
+  min-height: 32px;
+  padding: 6px 8px;
+  width: 100%;
+}
+
+.table-input.numeric {
+  max-width: 110px;
+}
+
+.table-input:disabled {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.inline-check,
+.row-actions {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.inline-check {
+  color: #425166;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.row-actions {
+  flex-wrap: wrap;
+}
+
 .analytics-grid {
   display: grid;
   gap: 16px;

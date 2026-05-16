@@ -238,6 +238,14 @@ export type DteConfig = {
   warning_dias: number;
 };
 
+export type DteConfigUpdateRequest = {
+  activo: boolean;
+  aplicaVencimiento: boolean;
+  documentLabel: string;
+  vigenciaMeses: number | null;
+  warningDias: number;
+};
+
 export type AlertsQuery = {
   limit?: number;
   offset?: number;
@@ -436,6 +444,35 @@ export const getDteConfig = async (signal?: AbortSignal): Promise<DteConfig[]> =
   }
 
   const payload = (await response.json()) as ApiSuccess<DteConfig[]>;
+
+  if (!payload.ok) {
+    throw new Error("Respuesta API invalida");
+  }
+
+  return payload.data;
+};
+
+export const updateDteConfig = async (
+  configId: number,
+  request: DteConfigUpdateRequest
+): Promise<DteConfig> => {
+  const response = await fetch(`/api/support/control/maintainers/dte-config/${configId}`, {
+    body: JSON.stringify({
+      ...request,
+      confirm: "UPDATE_DTE_CONFIG",
+      requestedBy: "frontend-local"
+    }),
+    headers: {
+      "content-type": "application/json"
+    },
+    method: "PATCH"
+  });
+
+  if (!response.ok) {
+    throw new Error("No se pudo actualizar la configuracion DTE");
+  }
+
+  const payload = (await response.json()) as ApiSuccess<DteConfig>;
 
   if (!payload.ok) {
     throw new Error("Respuesta API invalida");

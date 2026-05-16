@@ -145,7 +145,7 @@ Sin edicion inicial.
 Tipo:
 
 ```txt
-Solo lectura inicial; editable local futuro
+Editable local
 ```
 
 Tabla actual:
@@ -176,9 +176,17 @@ Acciones:
 
 - Ver configuracion.
 - Filtrar por estado.
-- Preparar edicion posterior con auditoria.
+- Editar nombre visible.
+- Editar vigencia CAF en meses.
+- Editar dias de warning.
+- Activar/desactivar regla.
+- Registrar auditoria local por cambio.
 
 No debe cambiar documentos ni CAF.
+
+Requisito operativo:
+
+- Despues de guardar una regla, se debe refrescar caches desde el modulo Procesos para que alertas y rangos SII reflejen el nuevo umbral.
 
 ### 4. Umbrales de alerta
 
@@ -344,15 +352,22 @@ Este mantenedor puede esperar hasta que el flujo de tickets este definido.
 
 ## Primer mantenedor editable recomendado
 
-El primer mantenedor editable debe ser:
+El primer mantenedor editable operativo queda:
 
 ```txt
-Umbrales de alerta
+Tipos DTE / CAF
 ```
 
 Motivo:
 
 - Es local.
 - No toca datos importados.
-- Tiene alto valor operativo.
-- Permite ajustar warnings sin cambiar SQL.
+- Ya existe tabla controlada `rr_gestion_soporte.caf_vencimiento_config`.
+- Permite ajustar warning/vigencia CAF sin cambiar SQL.
+- Prepara el patron de confirmacion y auditoria para los siguientes mantenedores.
+
+El siguiente mantenedor editable recomendado sigue siendo:
+
+```txt
+Umbrales de alerta
+```

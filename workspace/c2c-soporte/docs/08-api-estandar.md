@@ -92,6 +92,7 @@ GET /api/support/control/alerts
 GET /api/support/control/cache-status
 POST /api/support/control/cache-refresh
 GET /api/support/control/maintainers/dte-config
+PATCH /api/support/control/maintainers/dte-config/:configId
 ```
 
 Query params comunes:
@@ -144,6 +145,22 @@ Respuesta:
 Este proceso no toca `public`; reemplaza solo caches locales del proyecto y registra auditoria en `rr_gestion_soporte.cache_refresh_log`.
 
 `GET /api/support/control/maintainers/dte-config` devuelve la configuracion local de tipos DTE y vencimiento CAF desde `rr_gestion_soporte.caf_vencimiento_config`. Es solo lectura en esta etapa y sirve como primera base del modulo Mantenedores.
+
+`PATCH /api/support/control/maintainers/dte-config/:configId` actualiza solo la configuracion local DTE/CAF en `rr_gestion_soporte.caf_vencimiento_config` y registra auditoria en `rr_gestion_soporte.config_change_log`. Requiere confirmacion explicita:
+
+```json
+{
+  "confirm": "UPDATE_DTE_CONFIG",
+  "requestedBy": "frontend-local",
+  "documentLabel": "Factura electronica",
+  "vigenciaMeses": 6,
+  "warningDias": 30,
+  "aplicaVencimiento": true,
+  "activo": true
+}
+```
+
+Este endpoint no toca `public`, `staging_public`, documentos ni XML CAF. Despues de actualizar reglas se debe ejecutar el refresco manual de caches para recalcular alertas y rangos.
 
 Filtros adicionales de rangos:
 

@@ -85,6 +85,16 @@ export const cacheRefreshRequestSchema = z.object({
   requestedBy: z.string().trim().min(1).max(120).default("local-support")
 });
 
+export const dteConfigUpdateRequestSchema = z.object({
+  activo: z.boolean(),
+  aplicaVencimiento: z.boolean(),
+  confirm: z.literal("UPDATE_DTE_CONFIG"),
+  documentLabel: z.string().trim().min(3).max(120),
+  requestedBy: z.string().trim().min(1).max(120).default("local-support"),
+  vigenciaMeses: z.union([z.coerce.number().int().min(1).max(120), z.null()]),
+  warningDias: z.coerce.number().int().min(0).max(365)
+});
+
 export type AlertsQuery = z.infer<typeof alertsQuerySchema>;
 export type CacheRefreshRequest = z.infer<typeof cacheRefreshRequestSchema>;
 export type CompaniesQuery = z.infer<typeof companiesQuerySchema>;
@@ -95,3 +105,4 @@ export type DeviceControlQuery = z.infer<typeof deviceControlQuerySchema>;
 export type FoliosControlQuery = z.infer<typeof foliosControlQuerySchema>;
 export type FolioRangesQuery = z.infer<typeof folioRangesQuerySchema>;
 export type DocumentsSummaryQuery = z.infer<typeof documentsSummaryQuerySchema>;
+export type DteConfigUpdateRequest = z.infer<typeof dteConfigUpdateRequestSchema>;

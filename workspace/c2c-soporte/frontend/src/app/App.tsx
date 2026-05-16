@@ -12,6 +12,7 @@ import {
   getDteConfig,
   getOperationalAlerts,
   refreshLocalCaches,
+  updateDteConfig,
   type AlertSeverity,
   type AlertSource,
   type CacheStatus,
@@ -31,6 +32,14 @@ type LoadState<TData> =
   | { status: "idle" | "loading"; data: TData; error: null }
   | { status: "success"; data: TData; error: null }
   | { status: "error"; data: TData; error: string };
+
+type DteConfigDraft = {
+  activo: boolean;
+  aplicaVencimiento: boolean;
+  documentLabel: string;
+  vigenciaMeses: string;
+  warningDias: string;
+};
 
 const emptyDocumentsSummary: DocumentsSummary = {
   byDocumentType: [],
@@ -214,6 +223,15 @@ export const App = () => {
     data: [],
     error: null
   });
+  const [editingDteConfigId, setEditingDteConfigId] = useState<number | null>(null);
+  const [dteConfigDraft, setDteConfigDraft] = useState<DteConfigDraft>({
+    activo: true,
+    aplicaVencimiento: false,
+    documentLabel: "",
+    vigenciaMeses: "",
+    warningDias: "30"
+  });
+  const [dteConfigSaving, setDteConfigSaving] = useState(false);
   const [cacheRefreshRunning, setCacheRefreshRunning] = useState(false);
 
   useEffect(() => {
@@ -596,6 +614,90 @@ export const App = () => {
         }));
       })
       .finally(() => setCacheRefreshRunning(false));
+  };
+
+  const startEditDteConfig = (item: DteConfig) => {
+    setEditingDteConfigId(item.config_id);
+    setDteConfigDraft({
+      activo: item.activo,
+      aplicaVencimiento: item.aplica_vencimiento,
+      documentLabel: item.document_label,
+      vigenciaMeses: item.vigencia_meses === null ? "" : String(item.vigencia_meses),
+      warningDias: String(item.warning_dias)
+    });
+  };
+
+  const cancelEditDteConfig = () => {
+    setEditingDteConfigId(null);
+    setDteConfigSaving(false);
+  };
+
+  const handleSaveDteConfig = () => {
+    if (editingDteConfigId === null) {
+      return;
+    }
+
+    const warningDias = Number(dteConfigDraft.warningDias);
+    const vigenciaMeses = dteConfigDraft.vigenciaMeses.trim()
+      ? Number(dteConfigDraft.vigenciaMeses)
+      : null;
+
+    if (!dteConfigDraft.documentLabel.trim() || !Number.isInteger(warningDias) || warningDias < 0) {
+      setDteConfigState((current) => ({
+        status: "error",
+        data: current.data,
+        error: "Nombre y dias de warning son obligatorios"
+      }));
+      return;
+    }
+
+    if (
+      dteConfigDraft.aplicaVencimiento &&
+      (!Number.isInteger(vigenciaMeses) || vigenciaMeses === null || vigenciaMeses <= 0)
+    ) {
+      setDteConfigState((current) => ({
+        status: "error",
+        data: current.data,
+        error: "Si aplica vencimiento, la vigencia debe ser mayor a 0"
+      }));
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Actualizar configuracion DTE/CAF local? Despues debes refrescar caches para recalcular alertas."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDteConfigSaving(true);
+    updateDteConfig(editingDteConfigId, {
+      activo: dteConfigDraft.activo,
+      aplicaVencimiento: dteConfigDraft.aplicaVencimiento,
+      documentLabel: dteConfigDraft.documentLabel.trim(),
+      vigenciaMeses,
+      warningDias
+    })
+      .then((updated) => {
+        setDteConfigState((current) => ({
+          status: "success",
+          data: current.data.map((item) => (item.config_id === updated.config_id ? updated : item)),
+          error: null
+        }));
+        setEditingDteConfigId(null);
+      })
+      .catch((error: unknown) => {
+        setDteConfigState((current) => ({
+          status: "error",
+          data: current.data,
+          error:
+            error instanceof Error
+              ? error.message
+              : "No se pudo actualizar configuracion DTE"
+        }));
+      })
+      .finally(() => setDteConfigSaving(false));
   };
 
   const companySummary = useMemo(() => {
@@ -1474,10 +1576,10 @@ export const App = () => {
                 <p className="eyebrow">Mantenedores</p>
                 <h2>Configuracion DTE / CAF</h2>
                 <p className="compact-id">
-                  Reglas locales de vencimiento y avisos, sin modificar documentos ni CAF origen
+                  Reglas locales editables, sin modificar documentos ni CAF origen
                 </p>
               </div>
-              <span className="badge alert-ok">Solo lectura</span>
+              <span className="badge alert-warning">Requiere refresh</span>
             </div>
 
             {dteConfigState.status === "error" ? (
@@ -1496,36 +1598,151 @@ export const App = () => {
                     <th>Warning</th>
                     <th>Vencimiento</th>
                     <th>Estado</th>
+                    <th>Accion</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {dteConfigState.data.map((item) => (
-                    <tr key={item.config_id}>
-                      <td>
-                        <strong>{documentTypeLabel(item.document_type, item.document_label)}</strong>
-                      </td>
-                      <td>
-                        {item.vigencia_meses === null
-                          ? "No aplica"
-                          : `${item.vigencia_meses} meses`}
-                      </td>
-                      <td>{item.warning_dias} dias</td>
-                      <td>
-                        <span
-                          className={`badge ${
-                            item.aplica_vencimiento ? "alert-warning" : "alert-ok"
-                          }`}
-                        >
-                          {item.aplica_vencimiento ? "Controlado" : "No aplica"}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`badge ${item.activo ? "alert-ok" : "alert-warning"}`}>
-                          {item.activo ? "Activo" : "Inactivo"}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {dteConfigState.data.map((item) => {
+                    const isEditing = editingDteConfigId === item.config_id;
+
+                    return (
+                      <tr key={item.config_id}>
+                        <td>
+                          {isEditing ? (
+                            <input
+                              className="table-input"
+                              value={dteConfigDraft.documentLabel}
+                              onChange={(event) =>
+                                setDteConfigDraft((current) => ({
+                                  ...current,
+                                  documentLabel: event.target.value
+                                }))
+                              }
+                            />
+                          ) : (
+                            <strong>{documentTypeLabel(item.document_type, item.document_label)}</strong>
+                          )}
+                        </td>
+                        <td>
+                          {isEditing ? (
+                            <input
+                              className="table-input numeric"
+                              disabled={!dteConfigDraft.aplicaVencimiento}
+                              min={1}
+                              type="number"
+                              value={dteConfigDraft.vigenciaMeses}
+                              onChange={(event) =>
+                                setDteConfigDraft((current) => ({
+                                  ...current,
+                                  vigenciaMeses: event.target.value
+                                }))
+                              }
+                            />
+                          ) : item.vigencia_meses === null ? (
+                            "No aplica"
+                          ) : (
+                            `${item.vigencia_meses} meses`
+                          )}
+                        </td>
+                        <td>
+                          {isEditing ? (
+                            <input
+                              className="table-input numeric"
+                              min={0}
+                              type="number"
+                              value={dteConfigDraft.warningDias}
+                              onChange={(event) =>
+                                setDteConfigDraft((current) => ({
+                                  ...current,
+                                  warningDias: event.target.value
+                                }))
+                              }
+                            />
+                          ) : (
+                            `${item.warning_dias} dias`
+                          )}
+                        </td>
+                        <td>
+                          {isEditing ? (
+                            <label className="inline-check">
+                              <input
+                                checked={dteConfigDraft.aplicaVencimiento}
+                                type="checkbox"
+                                onChange={(event) =>
+                                  setDteConfigDraft((current) => ({
+                                    ...current,
+                                    aplicaVencimiento: event.target.checked,
+                                    vigenciaMeses: event.target.checked ? current.vigenciaMeses : ""
+                                  }))
+                                }
+                              />
+                              Aplica
+                            </label>
+                          ) : (
+                            <span
+                              className={`badge ${
+                                item.aplica_vencimiento ? "alert-warning" : "alert-ok"
+                              }`}
+                            >
+                              {item.aplica_vencimiento ? "Controlado" : "No aplica"}
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          {isEditing ? (
+                            <label className="inline-check">
+                              <input
+                                checked={dteConfigDraft.activo}
+                                type="checkbox"
+                                onChange={(event) =>
+                                  setDteConfigDraft((current) => ({
+                                    ...current,
+                                    activo: event.target.checked
+                                  }))
+                                }
+                              />
+                              Activo
+                            </label>
+                          ) : (
+                            <span className={`badge ${item.activo ? "alert-ok" : "alert-warning"}`}>
+                              {item.activo ? "Activo" : "Inactivo"}
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          {isEditing ? (
+                            <div className="row-actions">
+                              <button
+                                className="primary-button compact"
+                                disabled={dteConfigSaving}
+                                type="button"
+                                onClick={handleSaveDteConfig}
+                              >
+                                Guardar
+                              </button>
+                              <button
+                                className="ghost-button compact"
+                                disabled={dteConfigSaving}
+                                type="button"
+                                onClick={cancelEditDteConfig}
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              className="ghost-button compact"
+                              disabled={dteConfigSaving}
+                              type="button"
+                              onClick={() => startEditDteConfig(item)}
+                            >
+                              Editar
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
               {dteConfigState.status !== "loading" && dteConfigState.data.length === 0 ? (

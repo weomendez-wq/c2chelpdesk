@@ -9,6 +9,7 @@ import {
   companyDevicesQuerySchema,
   deviceControlQuerySchema,
   documentsSummaryQuerySchema,
+  dteConfigUpdateRequestSchema,
   devicesQuerySchema,
   folioRangesQuerySchema,
   foliosControlQuerySchema
@@ -25,7 +26,8 @@ import {
   listDevices,
   listFolioRanges,
   listFoliosControl,
-  refreshLocalCaches
+  refreshLocalCaches,
+  updateDteConfig
 } from "./support.service.js";
 
 export const supportRouter = Router();
@@ -223,6 +225,36 @@ supportRouter.get("/control/cache-status", async (req, res, next) => {
 supportRouter.get("/control/maintainers/dte-config", async (req, res, next) => {
   try {
     const data = await listDteConfig();
+
+    res.json(ok({ data, requestId: req.requestId }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+supportRouter.patch("/control/maintainers/dte-config/:configId", async (req, res, next) => {
+  try {
+    const configId = Number(req.params.configId);
+
+    if (!Number.isInteger(configId) || configId <= 0) {
+      throw new AppError({
+        code: "VALIDATION_ERROR",
+        message: "Identificador de configuracion invalido",
+        statusCode: 400
+      });
+    }
+
+    const parsedBody = dteConfigUpdateRequestSchema.safeParse(req.body);
+
+    if (!parsedBody.success) {
+      throw new AppError({
+        code: "VALIDATION_ERROR",
+        message: "Configuracion DTE invalida",
+        statusCode: 400
+      });
+    }
+
+    const data = await updateDteConfig(configId, parsedBody.data);
 
     res.json(ok({ data, requestId: req.requestId }));
   } catch (error) {

@@ -113,7 +113,7 @@ El control de vencimiento CAF para facturas electronicas tipo `33` quedo registr
 
 Los modulos frontend activos incluyen Torre de Control, Empresas, Cajeros/Devices, Documentos, Folios/CAF, Rangos SII y Alertas. Los endpoints principales estan documentados en `docs/08-api-estandar.md`.
 
-El primer bloque de Mantenedores muestra en modo solo lectura la configuracion local DTE/CAF desde `rr_gestion_soporte.caf_vencimiento_config`; la edicion queda pendiente hasta cerrar auditoria y validaciones.
+El primer bloque de Mantenedores permite revisar y editar la configuracion local DTE/CAF desde `rr_gestion_soporte.caf_vencimiento_config`; cada cambio registra auditoria local en `rr_gestion_soporte.config_change_log` y requiere refrescar caches para recalcular alertas. La bitacora esta en `docs/bitacora/2026-05-16-mantenedor-dte-caf-editable.md`.
 
 La primera vista de control por empresa se crea con `database/sql/24-create-empresa-control-resumen.sql` y se verifica con `database/sql/25-verify-empresa-control-resumen.sql`.
 

@@ -1,4 +1,5 @@
 import { dbPool } from "../../config/database.js";
+import { AppError } from "../../shared/appError.js";
 import type {
   AlertsQuery,
   CacheRefreshRequest,
@@ -8,6 +9,7 @@ import type {
   DeviceControlQuery,
   DocumentsSummaryQuery,
   DevicesQuery,
+  DteConfigUpdateRequest,
   FolioRangesQuery,
   FoliosControlQuery
 } from "./support.schemas.js";
@@ -310,6 +312,97 @@ export const listDteConfig = async (): Promise<Record<string, unknown>[]> => {
   );
 
   return result.rows;
+};
+
+export const updateDteConfig = async (
+  configId: number,
+  request: DteConfigUpdateRequest
+): Promise<Record<string, unknown>> => {
+  const client = await dbPool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const currentResult = await client.query(
+      `SELECT
+         config_id::integer AS config_id,
+         document_type,
+         document_label,
+         vigencia_meses,
+         warning_dias,
+         aplica_vencimiento,
+         activo,
+         created_at,
+         updated_at
+       FROM rr_gestion_soporte.caf_vencimiento_config
+       WHERE config_id = $1
+       FOR UPDATE`,
+      [configId]
+    );
+
+    if (currentResult.rowCount === 0) {
+      throw new AppError({
+        code: "NOT_FOUND",
+        message: "Configuracion DTE no encontrada",
+        statusCode: 404
+      });
+    }
+
+    const oldValue = currentResult.rows[0];
+    const updatedResult = await client.query(
+      `UPDATE rr_gestion_soporte.caf_vencimiento_config
+       SET
+         document_label = $2,
+         vigencia_meses = $3,
+         warning_dias = $4,
+         aplica_vencimiento = $5,
+         activo = $6,
+         updated_at = now()
+       WHERE config_id = $1
+       RETURNING
+         config_id::integer AS config_id,
+         document_type,
+         document_label,
+         vigencia_meses,
+         warning_dias,
+         aplica_vencimiento,
+         activo,
+         created_at,
+         updated_at`,
+      [
+        configId,
+        request.documentLabel,
+        request.vigenciaMeses,
+        request.warningDias,
+        request.aplicaVencimiento,
+        request.activo
+      ]
+    );
+
+    const newValue = updatedResult.rows[0];
+
+    await client.query(
+      `INSERT INTO rr_gestion_soporte.config_change_log (
+         config_scope,
+         config_id,
+         action,
+         requested_by,
+         old_value,
+         new_value
+       )
+       VALUES ('DTE_CAF_CONFIG', $1, 'UPDATE', $2, $3::jsonb, $4::jsonb)`,
+      [configId, request.requestedBy, JSON.stringify(oldValue), JSON.stringify(newValue)]
+    );
+
+    await client.query("COMMIT");
+
+    return newValue;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 };
 
 export const refreshLocalCaches = async (
