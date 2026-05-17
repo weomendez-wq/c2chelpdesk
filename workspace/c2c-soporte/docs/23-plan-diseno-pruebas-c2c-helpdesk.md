@@ -197,6 +197,7 @@ TicketStatusBadge
 - Un ticket puede vincularse a device, CAF, rango o tipo DTE.
 - El estado del ticket no debe modificar datos origen.
 - Toda accion debe quedar en timeline.
+- La primera bandeja puede usar alertas actuales como candidatos antes de crear persistencia.
 
 ## Pruebas tecnicas recomendadas
 

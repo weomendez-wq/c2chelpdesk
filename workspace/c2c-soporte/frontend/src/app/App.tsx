@@ -109,6 +109,7 @@ const alertSourceOptions: Array<{ value: "" | AlertSource; label: string }> = [
 
 const navigationItems = [
   { id: "prototipo-helpdesk", label: "Helpdesk", status: "Nuevo" },
+  { id: "mesa-ayuda", label: "Mesa Ayuda", status: "Nuevo" },
   { id: "torre-control", label: "Torre de Control", status: "Activo" },
   { id: "empresas", label: "Empresas", status: "Activo" },
   { id: "cajeros", label: "Cajeros / Devices", status: "Activo" },
@@ -198,6 +199,18 @@ const getSeverityTone = (severity: string): "neutral" | "success" | "warning" | 
   }
 
   return "success";
+};
+
+const sourceLabel = (source: AlertSource) => {
+  const labels: Record<AlertSource, string> = {
+    AGOTAMIENTO: "Agotamiento",
+    CAF_VENCIMIENTO: "CAF",
+    DEVICE: "Device",
+    EMPRESA: "Empresa",
+    FOLIOS: "Folios"
+  };
+
+  return labels[source] ?? source;
 };
 
 const LoadingIndicator = ({ label }: { label: string }) => (
@@ -1005,6 +1018,37 @@ export const App = () => {
       .slice(0, 3);
   }, [alertsState.data]);
 
+  const ticketCandidates = useMemo(() => {
+    return [...alertsState.data]
+      .sort((left, right) => {
+        const severityDiff =
+          (severityWeight[right.severity] ?? 0) - (severityWeight[left.severity] ?? 0);
+
+        if (severityDiff !== 0) {
+          return severityDiff;
+        }
+
+        return (right.metric_value ?? 0) - (left.metric_value ?? 0);
+      })
+      .slice(0, 8);
+  }, [alertsState.data]);
+
+  const ticketCandidateSummary = useMemo(() => {
+    return ticketCandidates.reduce(
+      (accumulator, item) => ({
+        caf: accumulator.caf + (item.source === "CAF_VENCIMIENTO" ? 1 : 0),
+        folios:
+          accumulator.folios +
+          (item.source === "FOLIOS" || item.source === "AGOTAMIENTO" ? 1 : 0),
+        revision: accumulator.revision + (item.severity === "REVISION_DATOS" ? 1 : 0),
+        urgent:
+          accumulator.urgent +
+          (item.severity === "URGENTE" || item.severity === "SIN_FOLIOS" ? 1 : 0)
+      }),
+      { caf: 0, folios: 0, revision: 0, urgent: 0 }
+    );
+  }, [ticketCandidates]);
+
   const dteOperationalSummary = useMemo(() => {
     return [33, 39, 41].map((documentType) => {
       const folioItems = foliosState.data.filter((item) => item.document_type === documentType);
@@ -1122,6 +1166,7 @@ export const App = () => {
               </p>
             </div>
             <div className="workspace-actions" aria-label="Accesos rapidos">
+              <a href="#mesa-ayuda">Mesa ayuda</a>
               <a href="#alertas">Alertas</a>
               <a href="#folios">Folios</a>
               <a href="#rangos">Rangos SII</a>
@@ -1189,6 +1234,75 @@ export const App = () => {
               </div>
             </article>
           </div>
+        </section>
+
+        <section className="ticket-workbench" id="mesa-ayuda" aria-label="Mesa de ayuda">
+          <div className="detail-heading">
+            <div>
+              <p className="eyebrow">Mesa de ayuda</p>
+              <h2>Bandeja candidata</h2>
+              <p className="compact-id">
+                {selectedCompany
+                  ? `Gestion inicial para ${selectedCompany.empresa_name}`
+                  : "Alertas operativas priorizadas para gestion de soporte"}
+              </p>
+            </div>
+            <div className="ticket-summary">
+              <span>
+                Urgentes <strong>{formatNumber(ticketCandidateSummary.urgent)}</strong>
+              </span>
+              <span>
+                Revision <strong>{formatNumber(ticketCandidateSummary.revision)}</strong>
+              </span>
+              <span>
+                Folios <strong>{formatNumber(ticketCandidateSummary.folios)}</strong>
+              </span>
+              <span>
+                CAF <strong>{formatNumber(ticketCandidateSummary.caf)}</strong>
+              </span>
+            </div>
+          </div>
+
+          {alertsState.status === "loading" ? (
+            <LoadingIndicator label="Preparando bandeja de soporte..." />
+          ) : null}
+
+          <div className="ticket-board">
+            {ticketCandidates.map((item, index) => (
+              <article
+                className={`ticket-card tone-${getSeverityTone(item.severity)}`}
+                key={`${item.source}-${item.tenant_id}-${item.rut}-${item.entity_id ?? index}`}
+              >
+                <div className="ticket-card-header">
+                  <span className={`badge alert-${item.severity.toLowerCase()}`}>
+                    {item.severity}
+                  </span>
+                  <small>{sourceLabel(item.source)}</small>
+                </div>
+                <strong>{item.title}</strong>
+                <p>{item.empresa_name ?? item.tenant_name}</p>
+                <div className="ticket-meta-grid">
+                  <span>
+                    RUT <strong>{item.rut ?? "-"}</strong>
+                  </span>
+                  <span>
+                    DTE <strong>{item.document_type ?? "-"}</strong>
+                  </span>
+                  <span>
+                    Metrica <strong>{formatMaybeNumber(item.metric_value)}</strong>
+                  </span>
+                  <span>
+                    Ref. <strong>{formatDate(item.reference_date)}</strong>
+                  </span>
+                </div>
+                <a href="#alertas">Ver detalle</a>
+              </article>
+            ))}
+          </div>
+
+          {alertsState.status === "success" && ticketCandidates.length === 0 ? (
+            <p className="empty">No hay candidatos para los filtros seleccionados.</p>
+          ) : null}
         </section>
 
       <section className="metrics" id="torre-control" aria-label="Torre de control">

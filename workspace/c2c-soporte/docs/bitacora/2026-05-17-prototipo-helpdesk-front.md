@@ -50,6 +50,31 @@ Cuando se integre la mesa de ayuda del servicio de soporte, el prototipo debera 
 - Estados de ticket independientes de los datos origen.
 - Auditoria de gestion del equipo de soporte.
 
+## Iteracion 2 - Bandeja candidata
+
+Se agregara una primera bandeja visual de Mesa de Ayuda usando las alertas actuales como candidatos a ticket.
+
+Alcance:
+
+- No persistir tickets todavia.
+- No crear endpoints nuevos.
+- No modificar base de datos.
+- Usar `alertas_operativas_cache` indirectamente a traves del endpoint actual de alertas.
+- Mostrar estado, severidad, empresa, contexto y metrica para observar si el flujo sirve al equipo de soporte.
+
+Decision:
+
+- Si la bandeja resulta clara, el siguiente paso sera disenar tablas locales de tickets y timeline.
+- Si resulta confusa, se ajustara agrupacion por empresa, severidad o tipo de origen antes de crear persistencia.
+
+Implementacion:
+
+- Se agrega modulo visual `Mesa Ayuda` en la navegacion.
+- Se agrega seccion `Bandeja candidata`.
+- La bandeja usa alertas cargadas actualmente, ordenadas por severidad.
+- Se muestran conteos de urgentes, revision, folios y CAF.
+- Cada candidato mantiene enlace hacia el detalle de alertas.
+
 ## Validacion esperada
 
 - Frontend typecheck OK.

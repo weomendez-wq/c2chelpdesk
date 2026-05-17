@@ -115,7 +115,7 @@ El control de vencimiento CAF para facturas electronicas tipo `33` quedo registr
 
 Los modulos frontend activos incluyen Torre de Control, Empresas, Cajeros/Devices, Documentos, Folios/CAF, Rangos SII y Alertas. Los endpoints principales estan documentados en `docs/08-api-estandar.md`.
 
-El primer prototipo visual Helpdesk agrega una franja operativa superior para empresa en foco, prioridad inmediata y SII/CAF por DTE. La bitacora esta en `docs/bitacora/2026-05-17-prototipo-helpdesk-front.md`.
+El primer prototipo visual Helpdesk agrega una franja operativa superior para empresa en foco, prioridad inmediata, SII/CAF por DTE y una bandeja candidata para futura gestion de tickets. La bitacora esta en `docs/bitacora/2026-05-17-prototipo-helpdesk-front.md`.
 
 El primer bloque de Mantenedores permite revisar y editar la configuracion local DTE/CAF desde `rr_gestion_soporte.caf_vencimiento_config`; cada cambio registra auditoria local en `rr_gestion_soporte.config_change_log` y requiere refrescar caches para recalcular alertas. La bitacora esta en `docs/bitacora/2026-05-16-mantenedor-dte-caf-editable.md`.
 
