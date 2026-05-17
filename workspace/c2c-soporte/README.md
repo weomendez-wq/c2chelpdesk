@@ -115,6 +115,8 @@ Los modulos frontend activos incluyen Torre de Control, Empresas, Cajeros/Device
 
 El primer bloque de Mantenedores permite revisar y editar la configuracion local DTE/CAF desde `rr_gestion_soporte.caf_vencimiento_config`; cada cambio registra auditoria local en `rr_gestion_soporte.config_change_log` y requiere refrescar caches para recalcular alertas. La bitacora esta en `docs/bitacora/2026-05-16-mantenedor-dte-caf-editable.md`.
 
+El segundo bloque de Mantenedores permite editar umbrales locales de folios y emision desde `rr_gestion_soporte.folios_alerta_config`, usando la misma auditoria local.
+
 La primera vista de control por empresa se crea con `database/sql/24-create-empresa-control-resumen.sql` y se verifica con `database/sql/25-verify-empresa-control-resumen.sql`.
 
 Las vistas operativas documentales y por device se crean con `database/sql/26-create-documentos-operational-views.sql` y `database/sql/28-create-device-operational-views.sql`; se verifican con `database/sql/27-verify-documentos-operational-views.sql` y `database/sql/29-verify-device-operational-views.sql`.

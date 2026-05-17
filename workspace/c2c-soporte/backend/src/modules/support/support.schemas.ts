@@ -95,6 +95,18 @@ export const dteConfigUpdateRequestSchema = z.object({
   warningDias: z.coerce.number().int().min(0).max(365)
 });
 
+export const foliosAlertConfigUpdateRequestSchema = z.object({
+  activo: z.boolean(),
+  confirm: z.literal("UPDATE_FOLIOS_ALERT_CONFIG"),
+  diasAgotamientoUrgente: z.coerce.number().int().min(0).max(3650),
+  diasAgotamientoWarning: z.coerce.number().int().min(0).max(3650),
+  diasSinEmisionUrgente: z.coerce.number().int().min(0).max(3650),
+  diasSinEmisionWarning: z.coerce.number().int().min(0).max(3650),
+  minimoFoliosUrgente: z.coerce.number().int().min(0).max(999999999),
+  minimoFoliosWarning: z.coerce.number().int().min(0).max(999999999),
+  requestedBy: z.string().trim().min(1).max(120).default("local-support")
+});
+
 export type AlertsQuery = z.infer<typeof alertsQuerySchema>;
 export type CacheRefreshRequest = z.infer<typeof cacheRefreshRequestSchema>;
 export type CompaniesQuery = z.infer<typeof companiesQuerySchema>;
@@ -106,3 +118,6 @@ export type FoliosControlQuery = z.infer<typeof foliosControlQuerySchema>;
 export type FolioRangesQuery = z.infer<typeof folioRangesQuerySchema>;
 export type DocumentsSummaryQuery = z.infer<typeof documentsSummaryQuerySchema>;
 export type DteConfigUpdateRequest = z.infer<typeof dteConfigUpdateRequestSchema>;
+export type FoliosAlertConfigUpdateRequest = z.infer<
+  typeof foliosAlertConfigUpdateRequestSchema
+>;

@@ -225,12 +225,14 @@ Acciones:
 - Crear regla.
 - Editar regla.
 - Activar/desactivar regla.
+- Registrar auditoria local.
 
 Requisitos:
 
 - Auditoria local.
 - Confirmacion antes de guardar.
 - Validacion de numeros positivos.
+- Refresco manual de caches despues de guardar cambios.
 
 ### 5. Rangos CAF / SII
 

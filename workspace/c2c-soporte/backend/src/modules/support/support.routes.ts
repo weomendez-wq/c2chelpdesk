@@ -11,6 +11,7 @@ import {
   documentsSummaryQuerySchema,
   dteConfigUpdateRequestSchema,
   devicesQuerySchema,
+  foliosAlertConfigUpdateRequestSchema,
   folioRangesQuerySchema,
   foliosControlQuerySchema
 } from "./support.schemas.js";
@@ -25,9 +26,11 @@ import {
   listDeviceControl,
   listDevices,
   listFolioRanges,
+  listFoliosAlertConfig,
   listFoliosControl,
   refreshLocalCaches,
-  updateDteConfig
+  updateDteConfig,
+  updateFoliosAlertConfig
 } from "./support.service.js";
 
 export const supportRouter = Router();
@@ -255,6 +258,46 @@ supportRouter.patch("/control/maintainers/dte-config/:configId", async (req, res
     }
 
     const data = await updateDteConfig(configId, parsedBody.data);
+
+    res.json(ok({ data, requestId: req.requestId }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+supportRouter.get("/control/maintainers/folios-alert-config", async (req, res, next) => {
+  try {
+    const data = await listFoliosAlertConfig();
+
+    res.json(ok({ data, requestId: req.requestId }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+supportRouter.patch("/control/maintainers/folios-alert-config/:configId", async (req, res, next) => {
+  try {
+    const configId = Number(req.params.configId);
+
+    if (!Number.isInteger(configId) || configId <= 0) {
+      throw new AppError({
+        code: "VALIDATION_ERROR",
+        message: "Identificador de umbral invalido",
+        statusCode: 400
+      });
+    }
+
+    const parsedBody = foliosAlertConfigUpdateRequestSchema.safeParse(req.body);
+
+    if (!parsedBody.success) {
+      throw new AppError({
+        code: "VALIDATION_ERROR",
+        message: "Configuracion de umbrales invalida",
+        statusCode: 400
+      });
+    }
+
+    const data = await updateFoliosAlertConfig(configId, parsedBody.data);
 
     res.json(ok({ data, requestId: req.requestId }));
   } catch (error) {

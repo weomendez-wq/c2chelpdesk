@@ -8,11 +8,13 @@ import {
   getDocumentsSummary,
   getFolioRanges,
   getFoliosControl,
+  getFoliosAlertConfig,
   getCacheStatus,
   getDteConfig,
   getOperationalAlerts,
   refreshLocalCaches,
   updateDteConfig,
+  updateFoliosAlertConfig,
   type AlertSeverity,
   type AlertSource,
   type CacheStatus,
@@ -22,6 +24,7 @@ import {
   type DeviceControl,
   type DocumentsSummary,
   type DteConfig,
+  type FoliosAlertConfig,
   type FolioRange,
   type FolioRangeOperationalState,
   type FoliosControl,
@@ -39,6 +42,16 @@ type DteConfigDraft = {
   documentLabel: string;
   vigenciaMeses: string;
   warningDias: string;
+};
+
+type FoliosAlertConfigDraft = {
+  activo: boolean;
+  diasAgotamientoUrgente: string;
+  diasAgotamientoWarning: string;
+  diasSinEmisionUrgente: string;
+  diasSinEmisionWarning: string;
+  minimoFoliosUrgente: string;
+  minimoFoliosWarning: string;
 };
 
 const emptyDocumentsSummary: DocumentsSummary = {
@@ -223,6 +236,13 @@ export const App = () => {
     data: [],
     error: null
   });
+  const [foliosAlertConfigState, setFoliosAlertConfigState] = useState<
+    LoadState<FoliosAlertConfig[]>
+  >({
+    status: "idle",
+    data: [],
+    error: null
+  });
   const [editingDteConfigId, setEditingDteConfigId] = useState<number | null>(null);
   const [dteConfigDraft, setDteConfigDraft] = useState<DteConfigDraft>({
     activo: true,
@@ -232,6 +252,20 @@ export const App = () => {
     warningDias: "30"
   });
   const [dteConfigSaving, setDteConfigSaving] = useState(false);
+  const [editingFoliosAlertConfigId, setEditingFoliosAlertConfigId] = useState<number | null>(
+    null
+  );
+  const [foliosAlertConfigDraft, setFoliosAlertConfigDraft] =
+    useState<FoliosAlertConfigDraft>({
+      activo: true,
+      diasAgotamientoUrgente: "15",
+      diasAgotamientoWarning: "30",
+      diasSinEmisionUrgente: "7",
+      diasSinEmisionWarning: "3",
+      minimoFoliosUrgente: "10000",
+      minimoFoliosWarning: "30000"
+    });
+  const [foliosAlertConfigSaving, setFoliosAlertConfigSaving] = useState(false);
   const [cacheRefreshRunning, setCacheRefreshRunning] = useState(false);
 
   useEffect(() => {
@@ -590,6 +624,38 @@ export const App = () => {
     return () => abortController.abort();
   }, []);
 
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    setFoliosAlertConfigState((current) => ({
+      status: "loading",
+      data: current.data,
+      error: null
+    }));
+
+    getFoliosAlertConfig(abortController.signal)
+      .then((response) => {
+        setFoliosAlertConfigState({
+          status: "success",
+          data: response,
+          error: null
+        });
+      })
+      .catch((error: unknown) => {
+        if (abortController.signal.aborted) {
+          return;
+        }
+
+        setFoliosAlertConfigState({
+          status: "error",
+          data: [],
+          error: error instanceof Error ? error.message : "No se pudo cargar umbrales"
+        });
+      });
+
+    return () => abortController.abort();
+  }, []);
+
   const handleRefreshCaches = () => {
     setCacheRefreshRunning(true);
     setCacheState((current) => ({
@@ -698,6 +764,92 @@ export const App = () => {
         }));
       })
       .finally(() => setDteConfigSaving(false));
+  };
+
+  const startEditFoliosAlertConfig = (item: FoliosAlertConfig) => {
+    setEditingFoliosAlertConfigId(item.config_id);
+    setFoliosAlertConfigDraft({
+      activo: item.activo,
+      diasAgotamientoUrgente: String(item.dias_agotamiento_urgente),
+      diasAgotamientoWarning: String(item.dias_agotamiento_warning),
+      diasSinEmisionUrgente: String(item.dias_sin_emision_urgente),
+      diasSinEmisionWarning: String(item.dias_sin_emision_warning),
+      minimoFoliosUrgente: String(item.minimo_folios_urgente),
+      minimoFoliosWarning: String(item.minimo_folios_warning)
+    });
+  };
+
+  const cancelEditFoliosAlertConfig = () => {
+    setEditingFoliosAlertConfigId(null);
+    setFoliosAlertConfigSaving(false);
+  };
+
+  const handleSaveFoliosAlertConfig = () => {
+    if (editingFoliosAlertConfigId === null) {
+      return;
+    }
+
+    const draftValues = {
+      activo: foliosAlertConfigDraft.activo,
+      diasAgotamientoUrgente: Number(foliosAlertConfigDraft.diasAgotamientoUrgente),
+      diasAgotamientoWarning: Number(foliosAlertConfigDraft.diasAgotamientoWarning),
+      diasSinEmisionUrgente: Number(foliosAlertConfigDraft.diasSinEmisionUrgente),
+      diasSinEmisionWarning: Number(foliosAlertConfigDraft.diasSinEmisionWarning),
+      minimoFoliosUrgente: Number(foliosAlertConfigDraft.minimoFoliosUrgente),
+      minimoFoliosWarning: Number(foliosAlertConfigDraft.minimoFoliosWarning)
+    };
+
+    const numericValues = Object.values(draftValues).filter(
+      (value): value is number => typeof value === "number"
+    );
+
+    if (numericValues.some((value) => !Number.isInteger(value) || value < 0)) {
+      setFoliosAlertConfigState((current) => ({
+        status: "error",
+        data: current.data,
+        error: "Todos los umbrales deben ser numeros enteros mayores o iguales a 0"
+      }));
+      return;
+    }
+
+    if (draftValues.minimoFoliosUrgente > draftValues.minimoFoliosWarning) {
+      setFoliosAlertConfigState((current) => ({
+        status: "error",
+        data: current.data,
+        error: "El minimo urgente no puede ser mayor que el warning"
+      }));
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Actualizar umbrales locales? Despues debes refrescar caches para recalcular alertas."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setFoliosAlertConfigSaving(true);
+    updateFoliosAlertConfig(editingFoliosAlertConfigId, draftValues)
+      .then((updated) => {
+        setFoliosAlertConfigState((current) => ({
+          status: "success",
+          data: current.data.map((item) => (item.config_id === updated.config_id ? updated : item)),
+          error: null
+        }));
+        setEditingFoliosAlertConfigId(null);
+      })
+      .catch((error: unknown) => {
+        setFoliosAlertConfigState((current) => ({
+          status: "error",
+          data: current.data,
+          error:
+            error instanceof Error
+              ? error.message
+              : "No se pudo actualizar umbrales de alerta"
+        }));
+      })
+      .finally(() => setFoliosAlertConfigSaving(false));
   };
 
   const companySummary = useMemo(() => {
@@ -1747,6 +1899,226 @@ export const App = () => {
               </table>
               {dteConfigState.status !== "loading" && dteConfigState.data.length === 0 ? (
                 <p className="status">Sin configuracion local registrada.</p>
+              ) : null}
+            </div>
+
+            <div className="detail-heading maintainer-subheading">
+              <div>
+                <p className="eyebrow">Umbrales</p>
+                <h2>Alertas de folios y emision</h2>
+                <p className="compact-id">
+                  Reglas locales para stock, agotamiento y dias sin emitir
+                </p>
+              </div>
+            </div>
+
+            {foliosAlertConfigState.status === "error" ? (
+              <p className="status error">{foliosAlertConfigState.error}</p>
+            ) : null}
+            {foliosAlertConfigState.status === "loading" ? (
+              <LoadingIndicator label="Cargando umbrales locales..." />
+            ) : null}
+
+            <div className="table-wrap compact-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Alcance</th>
+                    <th>Folios warning</th>
+                    <th>Folios urgente</th>
+                    <th>Agotamiento</th>
+                    <th>Sin emision</th>
+                    <th>Estado</th>
+                    <th>Accion</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {foliosAlertConfigState.data.map((item) => {
+                    const isEditing = editingFoliosAlertConfigId === item.config_id;
+
+                    return (
+                      <tr key={item.config_id}>
+                        <td>
+                          <strong className="table-title">
+                            {item.tenant_id || item.rut || item.document_type
+                              ? "Regla especifica"
+                              : "Global"}
+                          </strong>
+                          <span className="table-subtitle">
+                            Tenant {item.tenant_id ?? "*"} | RUT {item.rut ?? "*"} | DTE{" "}
+                            {item.document_type ?? "*"}
+                          </span>
+                        </td>
+                        <td>
+                          {isEditing ? (
+                            <input
+                              className="table-input numeric"
+                              min={0}
+                              type="number"
+                              value={foliosAlertConfigDraft.minimoFoliosWarning}
+                              onChange={(event) =>
+                                setFoliosAlertConfigDraft((current) => ({
+                                  ...current,
+                                  minimoFoliosWarning: event.target.value
+                                }))
+                              }
+                            />
+                          ) : (
+                            formatNumber(item.minimo_folios_warning)
+                          )}
+                        </td>
+                        <td>
+                          {isEditing ? (
+                            <input
+                              className="table-input numeric"
+                              min={0}
+                              type="number"
+                              value={foliosAlertConfigDraft.minimoFoliosUrgente}
+                              onChange={(event) =>
+                                setFoliosAlertConfigDraft((current) => ({
+                                  ...current,
+                                  minimoFoliosUrgente: event.target.value
+                                }))
+                              }
+                            />
+                          ) : (
+                            formatNumber(item.minimo_folios_urgente)
+                          )}
+                        </td>
+                        <td>
+                          {isEditing ? (
+                            <div className="stacked-inputs">
+                              <input
+                                className="table-input numeric"
+                                min={0}
+                                type="number"
+                                value={foliosAlertConfigDraft.diasAgotamientoWarning}
+                                onChange={(event) =>
+                                  setFoliosAlertConfigDraft((current) => ({
+                                    ...current,
+                                    diasAgotamientoWarning: event.target.value
+                                  }))
+                                }
+                              />
+                              <input
+                                className="table-input numeric"
+                                min={0}
+                                type="number"
+                                value={foliosAlertConfigDraft.diasAgotamientoUrgente}
+                                onChange={(event) =>
+                                  setFoliosAlertConfigDraft((current) => ({
+                                    ...current,
+                                    diasAgotamientoUrgente: event.target.value
+                                  }))
+                                }
+                              />
+                            </div>
+                          ) : (
+                            <>
+                              W {item.dias_agotamiento_warning}d
+                              <span className="table-subtitle">
+                                U {item.dias_agotamiento_urgente}d
+                              </span>
+                            </>
+                          )}
+                        </td>
+                        <td>
+                          {isEditing ? (
+                            <div className="stacked-inputs">
+                              <input
+                                className="table-input numeric"
+                                min={0}
+                                type="number"
+                                value={foliosAlertConfigDraft.diasSinEmisionWarning}
+                                onChange={(event) =>
+                                  setFoliosAlertConfigDraft((current) => ({
+                                    ...current,
+                                    diasSinEmisionWarning: event.target.value
+                                  }))
+                                }
+                              />
+                              <input
+                                className="table-input numeric"
+                                min={0}
+                                type="number"
+                                value={foliosAlertConfigDraft.diasSinEmisionUrgente}
+                                onChange={(event) =>
+                                  setFoliosAlertConfigDraft((current) => ({
+                                    ...current,
+                                    diasSinEmisionUrgente: event.target.value
+                                  }))
+                                }
+                              />
+                            </div>
+                          ) : (
+                            <>
+                              W {item.dias_sin_emision_warning}d
+                              <span className="table-subtitle">
+                                U {item.dias_sin_emision_urgente}d
+                              </span>
+                            </>
+                          )}
+                        </td>
+                        <td>
+                          {isEditing ? (
+                            <label className="inline-check">
+                              <input
+                                checked={foliosAlertConfigDraft.activo}
+                                type="checkbox"
+                                onChange={(event) =>
+                                  setFoliosAlertConfigDraft((current) => ({
+                                    ...current,
+                                    activo: event.target.checked
+                                  }))
+                                }
+                              />
+                              Activo
+                            </label>
+                          ) : (
+                            <span className={`badge ${item.activo ? "alert-ok" : "alert-warning"}`}>
+                              {item.activo ? "Activo" : "Inactivo"}
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          {isEditing ? (
+                            <div className="row-actions">
+                              <button
+                                className="primary-button compact"
+                                disabled={foliosAlertConfigSaving}
+                                type="button"
+                                onClick={handleSaveFoliosAlertConfig}
+                              >
+                                Guardar
+                              </button>
+                              <button
+                                className="ghost-button compact"
+                                disabled={foliosAlertConfigSaving}
+                                type="button"
+                                onClick={cancelEditFoliosAlertConfig}
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              className="ghost-button compact"
+                              disabled={foliosAlertConfigSaving}
+                              type="button"
+                              onClick={() => startEditFoliosAlertConfig(item)}
+                            >
+                              Editar
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {foliosAlertConfigState.status !== "loading" &&
+              foliosAlertConfigState.data.length === 0 ? (
+                <p className="status">Sin umbrales locales registrados.</p>
               ) : null}
             </div>
           </article>

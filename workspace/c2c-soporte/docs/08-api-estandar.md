@@ -93,6 +93,8 @@ GET /api/support/control/cache-status
 POST /api/support/control/cache-refresh
 GET /api/support/control/maintainers/dte-config
 PATCH /api/support/control/maintainers/dte-config/:configId
+GET /api/support/control/maintainers/folios-alert-config
+PATCH /api/support/control/maintainers/folios-alert-config/:configId
 ```
 
 Query params comunes:
@@ -161,6 +163,26 @@ Este proceso no toca `public`; reemplaza solo caches locales del proyecto y regi
 ```
 
 Este endpoint no toca `public`, `staging_public`, documentos ni XML CAF. Despues de actualizar reglas se debe ejecutar el refresco manual de caches para recalcular alertas y rangos.
+
+`GET /api/support/control/maintainers/folios-alert-config` devuelve reglas locales de umbrales desde `rr_gestion_soporte.folios_alerta_config`.
+
+`PATCH /api/support/control/maintainers/folios-alert-config/:configId` actualiza solo umbrales locales de folios/emision y registra auditoria en `rr_gestion_soporte.config_change_log`. Requiere confirmacion explicita:
+
+```json
+{
+  "confirm": "UPDATE_FOLIOS_ALERT_CONFIG",
+  "requestedBy": "frontend-local",
+  "minimoFoliosWarning": 30000,
+  "minimoFoliosUrgente": 10000,
+  "diasAgotamientoWarning": 30,
+  "diasAgotamientoUrgente": 15,
+  "diasSinEmisionWarning": 3,
+  "diasSinEmisionUrgente": 7,
+  "activo": true
+}
+```
+
+Despues de actualizar umbrales se debe ejecutar el refresco manual de caches para recalcular alertas.
 
 Filtros adicionales de rangos:
 

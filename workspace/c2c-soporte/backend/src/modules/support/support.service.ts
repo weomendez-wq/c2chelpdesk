@@ -10,6 +10,7 @@ import type {
   DocumentsSummaryQuery,
   DevicesQuery,
   DteConfigUpdateRequest,
+  FoliosAlertConfigUpdateRequest,
   FolioRangesQuery,
   FoliosControlQuery
 } from "./support.schemas.js";
@@ -391,6 +392,134 @@ export const updateDteConfig = async (
          new_value
        )
        VALUES ('DTE_CAF_CONFIG', $1, 'UPDATE', $2, $3::jsonb, $4::jsonb)`,
+      [configId, request.requestedBy, JSON.stringify(oldValue), JSON.stringify(newValue)]
+    );
+
+    await client.query("COMMIT");
+
+    return newValue;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+export const listFoliosAlertConfig = async (): Promise<Record<string, unknown>[]> => {
+  const result = await dbPool.query(
+    `SELECT
+       config_id::integer AS config_id,
+       tenant_id,
+       rut,
+       document_type,
+       minimo_folios_warning,
+       minimo_folios_urgente,
+       dias_agotamiento_warning,
+       dias_agotamiento_urgente,
+       dias_sin_emision_warning,
+       dias_sin_emision_urgente,
+       activo,
+       created_at,
+       updated_at
+     FROM rr_gestion_soporte.folios_alerta_config
+     ORDER BY
+       CASE WHEN tenant_id IS NULL AND rut IS NULL AND document_type IS NULL THEN 0 ELSE 1 END,
+       config_id`
+  );
+
+  return result.rows;
+};
+
+export const updateFoliosAlertConfig = async (
+  configId: number,
+  request: FoliosAlertConfigUpdateRequest
+): Promise<Record<string, unknown>> => {
+  const client = await dbPool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const currentResult = await client.query(
+      `SELECT
+         config_id::integer AS config_id,
+         tenant_id,
+         rut,
+         document_type,
+         minimo_folios_warning,
+         minimo_folios_urgente,
+         dias_agotamiento_warning,
+         dias_agotamiento_urgente,
+         dias_sin_emision_warning,
+         dias_sin_emision_urgente,
+         activo,
+         created_at,
+         updated_at
+       FROM rr_gestion_soporte.folios_alerta_config
+       WHERE config_id = $1
+       FOR UPDATE`,
+      [configId]
+    );
+
+    if (currentResult.rowCount === 0) {
+      throw new AppError({
+        code: "NOT_FOUND",
+        message: "Configuracion de umbrales no encontrada",
+        statusCode: 404
+      });
+    }
+
+    const oldValue = currentResult.rows[0];
+    const updatedResult = await client.query(
+      `UPDATE rr_gestion_soporte.folios_alerta_config
+       SET
+         minimo_folios_warning = $2,
+         minimo_folios_urgente = $3,
+         dias_agotamiento_warning = $4,
+         dias_agotamiento_urgente = $5,
+         dias_sin_emision_warning = $6,
+         dias_sin_emision_urgente = $7,
+         activo = $8,
+         updated_at = now()
+       WHERE config_id = $1
+       RETURNING
+         config_id::integer AS config_id,
+         tenant_id,
+         rut,
+         document_type,
+         minimo_folios_warning,
+         minimo_folios_urgente,
+         dias_agotamiento_warning,
+         dias_agotamiento_urgente,
+         dias_sin_emision_warning,
+         dias_sin_emision_urgente,
+         activo,
+         created_at,
+         updated_at`,
+      [
+        configId,
+        request.minimoFoliosWarning,
+        request.minimoFoliosUrgente,
+        request.diasAgotamientoWarning,
+        request.diasAgotamientoUrgente,
+        request.diasSinEmisionWarning,
+        request.diasSinEmisionUrgente,
+        request.activo
+      ]
+    );
+
+    const newValue = updatedResult.rows[0];
+
+    await client.query(
+      `INSERT INTO rr_gestion_soporte.config_change_log (
+         config_scope,
+         config_id,
+         action,
+         requested_by,
+         old_value,
+         new_value
+       )
+       VALUES ('FOLIOS_ALERT_CONFIG', $1, 'UPDATE', $2, $3::jsonb, $4::jsonb)`,
       [configId, request.requestedBy, JSON.stringify(oldValue), JSON.stringify(newValue)]
     );
 

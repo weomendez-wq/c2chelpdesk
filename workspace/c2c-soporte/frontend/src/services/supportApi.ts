@@ -246,6 +246,32 @@ export type DteConfigUpdateRequest = {
   warningDias: number;
 };
 
+export type FoliosAlertConfig = {
+  activo: boolean;
+  config_id: number;
+  created_at: string;
+  dias_agotamiento_urgente: number;
+  dias_agotamiento_warning: number;
+  dias_sin_emision_urgente: number;
+  dias_sin_emision_warning: number;
+  document_type: number | null;
+  minimo_folios_urgente: number;
+  minimo_folios_warning: number;
+  rut: number | null;
+  tenant_id: string | null;
+  updated_at: string;
+};
+
+export type FoliosAlertConfigUpdateRequest = {
+  activo: boolean;
+  diasAgotamientoUrgente: number;
+  diasAgotamientoWarning: number;
+  diasSinEmisionUrgente: number;
+  diasSinEmisionWarning: number;
+  minimoFoliosUrgente: number;
+  minimoFoliosWarning: number;
+};
+
 export type AlertsQuery = {
   limit?: number;
   offset?: number;
@@ -473,6 +499,58 @@ export const updateDteConfig = async (
   }
 
   const payload = (await response.json()) as ApiSuccess<DteConfig>;
+
+  if (!payload.ok) {
+    throw new Error("Respuesta API invalida");
+  }
+
+  return payload.data;
+};
+
+export const getFoliosAlertConfig = async (
+  signal?: AbortSignal
+): Promise<FoliosAlertConfig[]> => {
+  const response = await fetch("/api/support/control/maintainers/folios-alert-config", {
+    signal
+  });
+
+  if (!response.ok) {
+    throw new Error("No se pudo consultar los umbrales de alerta");
+  }
+
+  const payload = (await response.json()) as ApiSuccess<FoliosAlertConfig[]>;
+
+  if (!payload.ok) {
+    throw new Error("Respuesta API invalida");
+  }
+
+  return payload.data;
+};
+
+export const updateFoliosAlertConfig = async (
+  configId: number,
+  request: FoliosAlertConfigUpdateRequest
+): Promise<FoliosAlertConfig> => {
+  const response = await fetch(
+    `/api/support/control/maintainers/folios-alert-config/${configId}`,
+    {
+      body: JSON.stringify({
+        ...request,
+        confirm: "UPDATE_FOLIOS_ALERT_CONFIG",
+        requestedBy: "frontend-local"
+      }),
+      headers: {
+        "content-type": "application/json"
+      },
+      method: "PATCH"
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("No se pudo actualizar los umbrales de alerta");
+  }
+
+  const payload = (await response.json()) as ApiSuccess<FoliosAlertConfig>;
 
   if (!payload.ok) {
     throw new Error("Respuesta API invalida");

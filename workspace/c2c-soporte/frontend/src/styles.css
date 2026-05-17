@@ -565,6 +565,16 @@ h1 {
   flex-wrap: wrap;
 }
 
+.stacked-inputs {
+  display: grid;
+  gap: 6px;
+}
+
+.maintainer-subheading {
+  border-top: 1px solid #e5ebf2;
+  padding-top: 14px;
+}
+
 .analytics-grid {
   display: grid;
   gap: 16px;
