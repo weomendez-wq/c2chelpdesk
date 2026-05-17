@@ -15,8 +15,7 @@ FROM (
     ('rr_gestion_soporte.folios_control_resumen_cache'),
     ('rr_gestion_soporte.folios_proyeccion_agotamiento_cache'),
     ('rr_gestion_soporte.folios_rangos_clasificados_cache'),
-    ('rr_gestion_soporte.alertas_operativas_cache'),
-    ('rr_gestion_soporte.documentos_sin_caf_resumen')
+    ('rr_gestion_soporte.alertas_operativas_cache')
 ) AS required(object_name)
 ORDER BY object_name;
 
@@ -162,20 +161,7 @@ ORDER BY
   estado_operativo_rango,
   clasificacion_temporal;
 
-\echo '09_documentos_sin_caf_por_tipo'
-SELECT
-  document_type,
-  count(*)::bigint AS combinaciones,
-  coalesce(sum(documentos_sin_caf), 0)::bigint AS documentos_sin_caf,
-  coalesce(sum(devices_afectados), 0)::bigint AS devices_afectados,
-  min(primera_emision_sin_caf) AS primera_emision_sin_caf,
-  max(ultima_emision_sin_caf) AS ultima_emision_sin_caf
-FROM rr_gestion_soporte.documentos_sin_caf_resumen
-WHERE document_type IN (33, 39, 41)
-GROUP BY document_type
-ORDER BY document_type;
-
-\echo '10_alertas_sii_caf_operativas'
+\echo '09_alertas_sii_caf_operativas'
 SELECT
   source,
   severity,
@@ -198,7 +184,7 @@ ORDER BY
   END,
   document_type NULLS FIRST;
 
-\echo '11_top_empresas_alertas_sii_caf_cache'
+\echo '10_top_empresas_alertas_sii_caf_cache'
 SELECT
   tenant_id,
   tenant_name,

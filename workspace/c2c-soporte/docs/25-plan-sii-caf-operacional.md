@@ -88,6 +88,12 @@ Script de certificacion:
 database/sql/36-certify-sii-caf-operational-base.sql
 ```
 
+Verificacion extendida, solo si se necesita investigar documentos fuera de rangos CAF:
+
+```txt
+database/sql/37-certify-sii-caf-extended-documents.sql
+```
+
 Comando local sugerido:
 
 ```powershell

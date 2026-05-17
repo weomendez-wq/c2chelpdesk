@@ -85,6 +85,23 @@ Decision pendiente:
 - Confirmar si se corrige a 6 meses desde el mantenedor DTE/CAF.
 - Despues de corregir, ejecutar refresh manual de caches para recalcular alertas.
 
+Decision ejecutada:
+
+- Se actualizo `rr_gestion_soporte.caf_vencimiento_config` por API auditada.
+- `document_type = 33` quedo con `vigencia_meses = 6`.
+- Auditoria local registrada en `rr_gestion_soporte.config_change_log`:
+  - `config_scope = DTE_CAF_CONFIG`
+  - `config_id = 1`
+  - `requested_by = codex-sii-caf-fase`
+- Se ejecuto refresh manual de caches.
+- Refresh registrado:
+  - `refresh_id = 7`
+  - `status = SUCCESS`
+  - `duration_ms = 160388`
+  - `requested_by = codex-sii-caf-fase`
+- La recertificacion confirma que DTE `33` quedo en 6 meses.
+- Las cantidades de alertas no cambiaron, pero la regla local y la cache quedaron consistentes.
+
 ### Tiempo de certificacion
 
 La primera ejecucion demoro cerca de 88 segundos porque el cierre consultaba `rr_gestion_soporte.folios_resumen_empresa_extendido`, que es una vista extendida pesada.
@@ -102,6 +119,22 @@ Siguiente mejora recomendada:
 
 - Separar `documentos_sin_caf_resumen` como verificacion extendida o crear cache local para ese resumen.
 - Mantener la certificacion base solo sobre caches para que responda en pocos segundos.
+
+Decision aplicada:
+
+- La certificacion base `36-certify-sii-caf-operational-base.sql` queda enfocada en caches locales.
+- La revision de documentos sin CAF se separa a `37-certify-sii-caf-extended-documents.sql`.
+
+Validacion posterior:
+
+- Certificacion base sobre caches: menos de 1 segundo.
+- Certificacion extendida de documentos sin CAF: cerca de 55 segundos.
+- Resultado extendido: `0` documentos sin CAF para DTE `33`, `39` y `41`.
+
+Decision:
+
+- El flujo normal debe usar `36-certify-sii-caf-operational-base.sql`.
+- `37-certify-sii-caf-extended-documents.sql` queda para investigacion puntual, no para carga inicial de UI.
 
 ## Decision de avance
 
