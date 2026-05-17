@@ -82,6 +82,21 @@ Validaciones:
 - Total alertas folios.
 - Ultimo refresh cache.
 
+Script de certificacion:
+
+```txt
+database/sql/36-certify-sii-caf-operational-base.sql
+```
+
+Comando local sugerido:
+
+```powershell
+cd C:\RODPROJECTSCODEX\workspace\c2c-soporte
+$env:Path += ";C:\Program Files\PostgreSQL\18\bin"
+$env:PGPASSWORD = "postgres"
+psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\36-certify-sii-caf-operational-base.sql
+```
+
 Decision si aparece hallazgo:
 
 - Si falta una tabla local: crear o ejecutar solo el script local correspondiente.

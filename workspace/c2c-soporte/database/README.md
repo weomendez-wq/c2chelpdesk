@@ -70,6 +70,7 @@ Estos scripts son de solo lectura:
 - `sql/31-verify-folios-operational-views.sql`: verifica totales y alertas de las vistas de folios.
 - `sql/32-create-history-cashier-folio-foundation.sql`: crea tablas locales de resumen historico, configuracion de umbrales y vistas de cajeros/proyeccion/rangos.
 - `sql/33-verify-history-cashier-folio-foundation.sql`: verifica cajeros, proyeccion de folios y rangos CAF.
+- `sql/36-certify-sii-caf-operational-base.sql`: certifica base local SII/CAF por DTE `33`, `39` y `41`, usando solo caches y vistas locales.
 
 ## Scripts de inventario de origen
 
