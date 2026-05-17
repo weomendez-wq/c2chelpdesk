@@ -108,6 +108,7 @@ const alertSourceOptions: Array<{ value: "" | AlertSource; label: string }> = [
 ];
 
 const navigationItems = [
+  { id: "prototipo-helpdesk", label: "Helpdesk", status: "Nuevo" },
   { id: "torre-control", label: "Torre de Control", status: "Activo" },
   { id: "empresas", label: "Empresas", status: "Activo" },
   { id: "cajeros", label: "Cajeros / Devices", status: "Activo" },
@@ -159,6 +160,44 @@ const formatDays = (value: number | null) => {
   }
 
   return `${value} dias`;
+};
+
+const severityWeight: Record<string, number> = {
+  SIN_FOLIOS: 6,
+  URGENTE: 5,
+  REVISION_DATOS: 4,
+  WARNING: 3,
+  SIN_EMISION: 2,
+  SIN_BASE_ESTIMACION: 1,
+  OK: 0
+};
+
+const getMostRelevantSeverity = (values: Array<string | null | undefined>) =>
+  values.reduce(
+    (current: string, value) => {
+      const normalizedValue = value ?? "OK";
+
+      return (severityWeight[normalizedValue] ?? 0) > (severityWeight[current] ?? 0)
+        ? normalizedValue
+        : current;
+    },
+    "OK"
+  );
+
+const getSeverityTone = (severity: string): "neutral" | "success" | "warning" | "urgent" | "info" => {
+  if (severity === "URGENTE" || severity === "SIN_FOLIOS" || severity === "REVISION_DATOS") {
+    return "urgent";
+  }
+
+  if (severity === "WARNING" || severity === "SIN_EMISION") {
+    return "warning";
+  }
+
+  if (severity === "SIN_BASE_ESTIMACION") {
+    return "info";
+  }
+
+  return "success";
 };
 
 const LoadingIndicator = ({ label }: { label: string }) => (
@@ -951,6 +990,54 @@ export const App = () => {
     );
   }, [alertsState.data]);
 
+  const topOperationalAlerts = useMemo(() => {
+    return [...alertsState.data]
+      .sort((left, right) => {
+        const severityDiff =
+          (severityWeight[right.severity] ?? 0) - (severityWeight[left.severity] ?? 0);
+
+        if (severityDiff !== 0) {
+          return severityDiff;
+        }
+
+        return (right.metric_value ?? 0) - (left.metric_value ?? 0);
+      })
+      .slice(0, 3);
+  }, [alertsState.data]);
+
+  const dteOperationalSummary = useMemo(() => {
+    return [33, 39, 41].map((documentType) => {
+      const folioItems = foliosState.data.filter((item) => item.document_type === documentType);
+      const rangeItems = rangesState.data.filter((item) => item.document_type === documentType);
+      const cafAlerts = rangeItems.filter(
+        (item) =>
+          item.nivel_alerta_caf_vencimiento === "URGENTE" ||
+          item.nivel_alerta_caf_vencimiento === "WARNING" ||
+          item.nivel_alerta_caf_vencimiento === "SIN_FECHA_CAF"
+      ).length;
+      const severity = getMostRelevantSeverity([
+        ...folioItems.map((item) => item.nivel_alerta_folios),
+        ...rangeItems.map((item) => item.nivel_alerta_caf_vencimiento)
+      ]);
+
+      return {
+        caf: folioItems.reduce((total, item) => total + item.caf_count, 0),
+        cafAlerts,
+        documentType,
+        foliosDisponibles: folioItems.reduce((total, item) => total + item.folios_disponibles, 0),
+        ranges: rangeItems.length,
+        revision: folioItems.filter((item) => item.nivel_alerta_folios === "REVISION_DATOS")
+          .length,
+        severity
+      };
+    });
+  }, [foliosState.data, rangesState.data]);
+
+  const currentFocusLabel = selectedCompany?.empresa_name ?? "Vista global";
+  const currentFocusMeta = selectedCompany
+    ? `RUT ${selectedCompany.rut ?? "-"} | Tenant ${selectedCompany.tenant_id.slice(0, 8)}`
+    : `${formatNumber(companyTotal ?? companySummary.total)} empresas en monitoreo`;
+
   return (
     <div className="product-shell">
       <aside className="sidebar" aria-label="Modulos C2C Helpdesk">
@@ -1016,6 +1103,91 @@ export const App = () => {
                 ))}
               </select>
             </label>
+          </div>
+        </section>
+
+        <section
+          className="helpdesk-workspace"
+          id="prototipo-helpdesk"
+          aria-label="Prototipo operativo Helpdesk"
+        >
+          <div className="workspace-header">
+            <div>
+              <p className="eyebrow">Prototipo Helpdesk</p>
+              <h2>Atencion operativa y futuros tickets</h2>
+              <p className="compact-id">
+                {selectedCompany
+                  ? "Lectura compacta para una empresa seleccionada"
+                  : "Selecciona una empresa para pasar de monitoreo global a gestion puntual"}
+              </p>
+            </div>
+            <div className="workspace-actions" aria-label="Accesos rapidos">
+              <a href="#alertas">Alertas</a>
+              <a href="#folios">Folios</a>
+              <a href="#rangos">Rangos SII</a>
+            </div>
+          </div>
+
+          <div className="workspace-grid">
+            <article className="workspace-card focus-card">
+              <span className="workspace-label">Empresa en foco</span>
+              <strong>{currentFocusLabel}</strong>
+              <p>{currentFocusMeta}</p>
+              <div className="focus-kpis">
+                <span>
+                  Docs <strong>{formatNumber(documentsState.data.totals.documents)}</strong>
+                </span>
+                <span>
+                  Devices <strong>{formatNumber(deviceTotal ?? deviceSummary.total)}</strong>
+                </span>
+                <span>
+                  Alertas <strong>{formatNumber(alertsTotal ?? alertsSummary.total)}</strong>
+                </span>
+              </div>
+            </article>
+
+            <article className="workspace-card priority-card">
+              <span className="workspace-label">Candidatos a ticket</span>
+              {topOperationalAlerts.length > 0 ? (
+                <div className="priority-list">
+                  {topOperationalAlerts.map((item, index) => (
+                    <a
+                      href="#alertas"
+                      key={`${item.source}-${item.tenant_id}-${item.rut}-${item.entity_id ?? index}`}
+                    >
+                      <span className={`badge alert-${item.severity.toLowerCase()}`}>
+                        {item.severity}
+                      </span>
+                      <strong>{item.title}</strong>
+                      <small>{item.empresa_name ?? item.tenant_name}</small>
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <p className="workspace-empty">Sin alertas visibles para los filtros actuales.</p>
+              )}
+            </article>
+
+            <article className="workspace-card sii-card">
+              <span className="workspace-label">SII / CAF por DTE</span>
+              <div className="dte-summary-grid">
+                {dteOperationalSummary.map((item) => (
+                  <a className="dte-summary-card" href="#folios" key={item.documentType}>
+                    <span className={`badge alert-${item.severity.toLowerCase()}`}>
+                      {item.severity}
+                    </span>
+                    <strong>{documentTypeLabel(item.documentType)}</strong>
+                    <small>
+                      {formatNumber(item.foliosDisponibles)} folios disponibles |{" "}
+                      {formatNumber(item.caf)} CAF
+                    </small>
+                    <small>
+                      {formatNumber(item.ranges)} rangos | {formatNumber(item.cafAlerts)} CAF alerta
+                    </small>
+                  </a>
+                ))}
+              </div>
+            </article>
           </div>
         </section>
 

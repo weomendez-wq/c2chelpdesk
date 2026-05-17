@@ -12,6 +12,8 @@ El foco es construir una interfaz profesional, compacta y accionable.
 
 - La pantalla inicial debe ser operativa, no una portada.
 - El usuario debe poder partir desde una empresa o desde una alerta.
+- El diseno debe quedar preparado para integrar una mesa de ayuda con gestion de tickets.
+- Las alertas actuales deben poder evolucionar a casos/tickets sin rehacer el layout principal.
 - Los numeros grandes deben estar en cards.
 - Los detalles deben estar en tablas compactas.
 - Las acciones deben estar cerca del dato que afectan.
@@ -86,6 +88,10 @@ AlertPanel
 DetailDrawer
 ExportButton
 ThresholdEditor
+TicketInbox
+TicketDetail
+TicketTimeline
+TicketStatusBadge
 ```
 
 ## Flujos principales
@@ -123,6 +129,16 @@ ThresholdEditor
 4. Confirma cambios.
 5. Sistema registra auditoria.
 6. Torre de Control refleja nueva clasificacion.
+
+### Flujo 5: soporte gestiona ticket futuro
+
+1. Entra a Mesa de Ayuda.
+2. Revisa bandeja de tickets por prioridad.
+3. Abre ticket asociado a empresa, device, folio o alerta.
+4. Revisa timeline de gestion y evidencias.
+5. Cambia estado del ticket.
+6. Registra observacion o accion realizada.
+7. Vuelve al contexto operativo de la empresa.
 
 ## Pruebas funcionales manuales
 
@@ -173,6 +189,14 @@ ThresholdEditor
 - Guardar umbral invalido muestra error.
 - Guardar umbral valido actualiza la tabla local.
 - Cambios quedan auditados.
+
+### Mesa de ayuda futura
+
+- Un ticket puede vincularse a tenant/RUT.
+- Un ticket puede vincularse a una alerta operacional.
+- Un ticket puede vincularse a device, CAF, rango o tipo DTE.
+- El estado del ticket no debe modificar datos origen.
+- Toda accion debe quedar en timeline.
 
 ## Pruebas tecnicas recomendadas
 
@@ -225,4 +249,3 @@ Antes de tocar mantenedores editables:
 8. Mantenedor Tipos DTE.
 9. Mantenedor Umbrales.
 10. Exportacion y procesos.
-

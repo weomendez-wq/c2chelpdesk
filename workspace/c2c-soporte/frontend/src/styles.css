@@ -335,6 +335,163 @@ h1 {
   grid-template-columns: repeat(4, minmax(140px, 1fr));
 }
 
+.helpdesk-workspace {
+  background: #ffffff;
+  border: 1px solid #cfd9e5;
+  border-radius: 8px;
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  scroll-margin-top: 18px;
+}
+
+.workspace-header {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.workspace-header h2 {
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.workspace-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.workspace-actions a {
+  background: #eef3f8;
+  border: 1px solid #d7e0ea;
+  border-radius: 6px;
+  color: #1d2733;
+  font-size: 0.82rem;
+  font-weight: 800;
+  min-height: 34px;
+  padding: 8px 10px;
+  text-decoration: none;
+}
+
+.workspace-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(260px, 0.9fr) minmax(280px, 1fr) minmax(360px, 1.25fr);
+}
+
+.workspace-card {
+  background: #f8fbfd;
+  border: 1px solid #e0e8f1;
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  min-height: 190px;
+  padding: 14px;
+}
+
+.workspace-label {
+  color: #536275;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.focus-card > strong {
+  color: #111827;
+  font-size: 1.08rem;
+  line-height: 1.25;
+}
+
+.focus-card > p,
+.workspace-empty {
+  color: #66758a;
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.focus-kpis {
+  display: grid;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.focus-kpis span {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e5ebf2;
+  border-radius: 6px;
+  color: #536275;
+  display: flex;
+  font-size: 0.78rem;
+  font-weight: 800;
+  justify-content: space-between;
+  min-height: 34px;
+  padding: 8px 10px;
+}
+
+.focus-kpis strong {
+  color: #111827;
+}
+
+.priority-list,
+.dte-summary-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.priority-list a,
+.dte-summary-card {
+  background: #ffffff;
+  border: 1px solid #e5ebf2;
+  border-radius: 7px;
+  color: #1d2733;
+  display: grid;
+  gap: 6px;
+  min-height: 68px;
+  padding: 10px;
+  text-decoration: none;
+}
+
+.priority-list a {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.priority-list strong,
+.priority-list small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.priority-list small {
+  color: #66758a;
+  font-size: 0.76rem;
+  font-weight: 800;
+  grid-column: 2;
+}
+
+.dte-summary-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dte-summary-card strong {
+  font-size: 0.88rem;
+  line-height: 1.25;
+}
+
+.dte-summary-card small {
+  color: #66758a;
+  font-size: 0.76rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
 .metrics.documents {
   grid-template-columns: repeat(4, minmax(140px, 1fr));
 }
@@ -956,8 +1113,19 @@ tbody tr {
   .metrics,
   .metrics.documents,
   .analytics-grid,
+  .workspace-grid,
+  .dte-summary-grid,
   .module-planning-grid {
     grid-template-columns: 1fr;
+  }
+
+  .workspace-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .workspace-actions {
+    justify-content: flex-start;
   }
 
   .tenant-trigger {
