@@ -76,18 +76,24 @@ select {
 
 .module-link {
   align-items: center;
+  background: transparent;
+  border: 0;
   border-radius: 7px;
   color: #d1d5db;
+  cursor: pointer;
   display: flex;
   gap: 10px;
   justify-content: space-between;
   min-height: 39px;
   padding: 9px 10px;
   text-decoration: none;
+  text-align: left;
+  width: 100%;
 }
 
 .module-link:hover,
-.module-link:focus {
+.module-link:focus,
+.module-link.is-selected {
   background: #1f2937;
   color: #ffffff;
 }
@@ -119,6 +125,36 @@ select {
   min-height: 100vh;
   padding: 24px;
   width: 100%;
+}
+
+.module-section:not(.is-active-module) {
+  display: none;
+}
+
+.module-focus-bar {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #d7e0ea;
+  border-radius: 8px;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  min-height: 70px;
+  padding: 14px 16px;
+}
+
+.module-focus-bar strong {
+  color: #111827;
+  display: block;
+  font-size: 1rem;
+}
+
+.module-focus-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .toolbar {

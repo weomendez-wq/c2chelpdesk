@@ -108,6 +108,7 @@ const alertSourceOptions: Array<{ value: "" | AlertSource; label: string }> = [
 ];
 
 const navigationItems = [
+  { id: "all", label: "Todo", status: "Vista" },
   { id: "prototipo-helpdesk", label: "Helpdesk", status: "Nuevo" },
   { id: "mesa-ayuda", label: "Mesa Ayuda", status: "Nuevo" },
   { id: "torre-control", label: "Torre de Control", status: "Activo" },
@@ -226,6 +227,7 @@ const emptyCacheStatus: CacheStatus = {
 };
 
 export const App = () => {
+  const [activeModule, setActiveModule] = useState("prototipo-helpdesk");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [alert, setAlert] = useState<"" | CompanyControlAlert>("");
@@ -1081,9 +1083,12 @@ export const App = () => {
   const currentFocusMeta = selectedCompany
     ? `RUT ${selectedCompany.rut ?? "-"} | Tenant ${selectedCompany.tenant_id.slice(0, 8)}`
     : `${formatNumber(companyTotal ?? companySummary.total)} empresas en monitoreo`;
+  const isModuleVisible = (moduleId: string) => activeModule === "all" || activeModule === moduleId;
+  const moduleSectionClass = (baseClass: string, moduleId: string) =>
+    `${baseClass} module-section ${isModuleVisible(moduleId) ? "is-active-module" : ""}`;
 
   return (
-    <div className="product-shell">
+    <div className="product-shell" data-active-module={activeModule}>
       <aside className="sidebar" aria-label="Modulos C2C Helpdesk">
         <div className="brand-block">
           <span className="brand-mark">C2C</span>
@@ -1094,10 +1099,21 @@ export const App = () => {
         </div>
         <nav className="module-nav" aria-label="Navegacion principal">
           {navigationItems.map((item) => (
-            <a className="module-link" href={`#${item.id}`} key={item.id}>
+            <button
+              className={`module-link ${activeModule === item.id ? "is-selected" : ""}`}
+              key={item.id}
+              type="button"
+              onClick={() => setActiveModule(item.id)}
+            >
               <span>{item.label}</span>
-              <small className={item.status === "Activo" ? "is-active" : ""}>{item.status}</small>
-            </a>
+              <small
+                className={
+                  item.status === "Activo" || activeModule === item.id ? "is-active" : ""
+                }
+              >
+                {item.status}
+              </small>
+            </button>
           ))}
         </nav>
       </aside>
@@ -1150,8 +1166,33 @@ export const App = () => {
           </div>
         </section>
 
+        <section className="module-focus-bar" aria-label="Modulo activo">
+          <div>
+            <p className="eyebrow">Modulo activo</p>
+            <strong>
+              {navigationItems.find((item) => item.id === activeModule)?.label ?? "Modulo"}
+            </strong>
+          </div>
+          <div className="module-focus-actions">
+            <button
+              className="ghost-button compact"
+              type="button"
+              onClick={() => setActiveModule("all")}
+            >
+              Ver todo
+            </button>
+            <button
+              className="primary-button compact"
+              type="button"
+              onClick={() => setActiveModule("prototipo-helpdesk")}
+            >
+              Ir a Helpdesk
+            </button>
+          </div>
+        </section>
+
         <section
-          className="helpdesk-workspace"
+          className={moduleSectionClass("helpdesk-workspace", "prototipo-helpdesk")}
           id="prototipo-helpdesk"
           aria-label="Prototipo operativo Helpdesk"
         >
@@ -1236,7 +1277,11 @@ export const App = () => {
           </div>
         </section>
 
-        <section className="ticket-workbench" id="mesa-ayuda" aria-label="Mesa de ayuda">
+        <section
+          className={moduleSectionClass("ticket-workbench", "mesa-ayuda")}
+          id="mesa-ayuda"
+          aria-label="Mesa de ayuda"
+        >
           <div className="detail-heading">
             <div>
               <p className="eyebrow">Mesa de ayuda</p>
@@ -1305,7 +1350,11 @@ export const App = () => {
           ) : null}
         </section>
 
-      <section className="metrics" id="torre-control" aria-label="Torre de control">
+        <section
+          className={moduleSectionClass("metrics", "torre-control")}
+          id="torre-control"
+          aria-label="Torre de control"
+        >
         <MetricCard
           label="Empresas"
           value={formatNumber(companyTotal ?? companySummary.total)}
@@ -1320,7 +1369,11 @@ export const App = () => {
         <MetricCard label="Urgentes" value={formatNumber(companySummary.urgent)} tone="urgent" />
       </section>
 
-      <section className="detail-panel" id="documentos" aria-label="Resumen documental">
+        <section
+          className={moduleSectionClass("detail-panel", "documentos")}
+          id="documentos"
+          aria-label="Resumen documental"
+        >
         <div className="detail-heading">
           <div>
             <p className="eyebrow">Documentos 2026</p>
@@ -1384,7 +1437,11 @@ export const App = () => {
         </div>
       </section>
 
-      <section className="detail-panel" id="folios" aria-label="Control folios y CAF">
+        <section
+          className={moduleSectionClass("detail-panel", "folios")}
+          id="folios"
+          aria-label="Control folios y CAF"
+        >
         <div className="detail-heading">
           <div>
             <p className="eyebrow">Folios y CAF</p>
@@ -1488,7 +1545,11 @@ export const App = () => {
         </div>
       </section>
 
-      <section className="detail-panel" id="cajeros" aria-label="Control devices">
+        <section
+          className={moduleSectionClass("detail-panel", "cajeros")}
+          id="cajeros"
+          aria-label="Control devices"
+        >
         <div className="detail-heading">
           <div>
             <p className="eyebrow">Devices operativos</p>
@@ -1580,7 +1641,11 @@ export const App = () => {
         <LoadingIndicator label="Cargando datos certificados..." />
       ) : null}
 
-      <section className="table-wrap" id="empresas" aria-label="Control empresas">
+        <section
+          className={moduleSectionClass("table-wrap", "empresas")}
+          id="empresas"
+          aria-label="Control empresas"
+        >
         <table>
           <thead>
             <tr>
@@ -1647,7 +1712,7 @@ export const App = () => {
       </section>
 
         <section className="module-planning-grid" aria-label="Modulos planificados">
-          <article className="planning-card ranges-card" id="rangos">
+          <article className={moduleSectionClass("planning-card ranges-card", "rangos")} id="rangos">
             <div className="detail-heading">
               <div>
                 <p className="eyebrow">Rangos SII</p>
@@ -1793,7 +1858,7 @@ export const App = () => {
               />
             </div>
           </article>
-          <article className="planning-card alerts-card" id="alertas">
+          <article className={moduleSectionClass("planning-card alerts-card", "alertas")} id="alertas">
             <div className="detail-heading">
               <div>
                 <p className="eyebrow">Alertas</p>
@@ -1934,7 +1999,7 @@ export const App = () => {
               />
             </div>
           </article>
-          <article className="planning-card process-card" id="procesos">
+          <article className={moduleSectionClass("planning-card process-card", "procesos")} id="procesos">
             <div className="detail-heading">
               <div>
                 <p className="eyebrow">Procesos</p>
@@ -2008,7 +2073,10 @@ export const App = () => {
               </div>
             </div>
           </article>
-          <article className="planning-card maintainers-card" id="mantenedores">
+          <article
+            className={moduleSectionClass("planning-card maintainers-card", "mantenedores")}
+            id="mantenedores"
+          >
             <div className="detail-heading">
               <div>
                 <p className="eyebrow">Mantenedores</p>
@@ -2408,7 +2476,7 @@ export const App = () => {
               ) : null}
             </div>
           </article>
-          <article className="planning-card" id="configuracion">
+          <article className={moduleSectionClass("planning-card", "configuracion")} id="configuracion">
             <p className="eyebrow">Configuracion</p>
             <h2>Estado del sistema</h2>
             <p>
