@@ -50,9 +50,10 @@ Orden propuesto:
 5. Folios / CAF
 6. Rangos SII
 7. Alertas
-8. Procesos
-9. Mantenedores
-10. Configuracion
+8. Mesa de Ayuda
+9. Procesos
+10. Mantenedores
+11. Configuracion
 ```
 
 ## Modulos
@@ -332,7 +333,53 @@ Componentes:
 - Filtro por severidad y fuente.
 - Acceso al detalle de empresa/device/rango.
 
-### 8. Procesos
+### 8. Mesa de Ayuda
+
+Proposito:
+
+Gestionar casos de soporte a partir de alertas, empresas, devices, CAF, rangos o solicitudes manuales.
+
+Debe responder:
+
+- Que tickets estan abiertos.
+- Que tickets son urgentes.
+- Que tickets dependen del cliente.
+- Que tickets dependen del equipo interno.
+- Que tickets estan relacionados con una alerta operacional.
+- Que historial de gestion existe para cada caso.
+
+Tablas propuestas:
+
+```txt
+rr_gestion_soporte.helpdesk_ticket
+rr_gestion_soporte.helpdesk_ticket_event
+rr_gestion_soporte.helpdesk_ticket_link
+```
+
+Endpoints propuestos:
+
+```txt
+GET  /api/support/helpdesk/tickets
+GET  /api/support/helpdesk/tickets/:ticketId
+POST /api/support/helpdesk/tickets
+PATCH /api/support/helpdesk/tickets/:ticketId/status
+POST /api/support/helpdesk/tickets/:ticketId/events
+POST /api/support/helpdesk/tickets/from-alert
+```
+
+Componentes:
+
+- Bandeja de tickets.
+- Detalle de ticket.
+- Timeline de gestion.
+- Selector de estado y prioridad.
+- Vinculo a empresa, device, CAF, rango o alerta.
+
+Regla:
+
+La mesa de ayuda no modifica datos origen. Solo registra gestion de soporte en tablas locales `rr_gestion_soporte`.
+
+### 9. Procesos
 
 Proposito:
 
@@ -363,7 +410,7 @@ Componentes:
 - Estado del proceso.
 - Resultado y errores.
 
-### 9. Mantenedores
+### 10. Mantenedores
 
 Proposito:
 
@@ -382,7 +429,7 @@ Regla:
 
 Los primeros mantenedores editables deben modificar solo tablas locales `rr_gestion_soporte`.
 
-### 10. Configuracion
+### 11. Configuracion
 
 Proposito:
 

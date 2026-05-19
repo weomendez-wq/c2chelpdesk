@@ -107,6 +107,8 @@ El plan de optimizacion de querys para evitar timeouts y esperas excesivas esta 
 
 El orden operativo de la fase SII/CAF esta en `docs/25-plan-sii-caf-operacional.md`; define validaciones, endpoints sugeridos, reglas de decision y criterios de cierre antes de ampliar frontend o backend.
 
+El modelo local propuesto para la futura Mesa de Ayuda y gestion de tickets esta en `docs/26-modelo-mesa-ayuda-tickets.md`.
+
 La primera optimizacion local de indices y caches quedo registrada en `docs/bitacora/2026-05-16-optimizacion-querys-local.md`.
 
 El refresco manual de caches locales y su modulo de procesos quedo registrado en `docs/bitacora/2026-05-16-refresco-caches.md`.
