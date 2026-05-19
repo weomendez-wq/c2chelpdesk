@@ -198,6 +198,9 @@ TicketStatusBadge
 - El estado del ticket no debe modificar datos origen.
 - Toda accion debe quedar en timeline.
 - La primera bandeja puede usar alertas actuales como candidatos antes de crear persistencia.
+- La primera version permitira tickets manuales.
+- La primera version usara catalogo local de responsables.
+- Los adjuntos quedan para una fase posterior.
 
 ## Pruebas tecnicas recomendadas
 

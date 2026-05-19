@@ -128,6 +128,28 @@ Tipos de link:
 - `DOCUMENTO`
 - `AGOTAMIENTO`
 
+### `rr_gestion_soporte.helpdesk_assignee`
+
+Catalogo local de responsables internos.
+
+Campos propuestos:
+
+- `assignee_id`
+- `display_name`
+- `email`
+- `role`
+- `team`
+- `active`
+- `created_at`
+- `updated_at`
+
+Uso:
+
+- Asignar tickets.
+- Filtrar bandejas.
+- Medir carga de trabajo.
+- Evitar responsables escritos como texto libre.
+
 ## Estados de ticket
 
 Estados iniciales:
@@ -313,6 +335,69 @@ Antes de crear SQL:
 - Confirmar si se requiere responsable interno desde un catalogo local.
 - Confirmar si habra adjuntos en primera version.
 - Confirmar si el ticket puede crearse manualmente sin alerta.
+
+## Decisiones tomadas
+
+### Tickets manuales
+
+Decision:
+
+```txt
+Permitidos desde la primera version
+```
+
+Referencia:
+
+```txt
+docs/decisiones/2026-05-18-tickets-manuales.md
+```
+
+Regla:
+
+- `source = MANUAL`.
+- No requiere alerta asociada.
+- Debe tener contexto minimo por empresa/categoria/descripcion.
+- Debe registrar evento `CREATED`.
+
+### Catalogo de responsables
+
+Decision:
+
+```txt
+Incluido desde la primera version
+```
+
+Referencia:
+
+```txt
+docs/decisiones/2026-05-18-catalogo-responsables-helpdesk.md
+```
+
+Regla:
+
+- Tabla local `rr_gestion_soporte.helpdesk_assignee`.
+- Un ticket puede crearse sin responsable.
+- Cambiar responsable registra evento `ASSIGNED`.
+
+### Adjuntos
+
+Decision:
+
+```txt
+Fuera de la primera version
+```
+
+Referencia:
+
+```txt
+docs/decisiones/2026-05-18-adjuntos-helpdesk.md
+```
+
+Regla:
+
+- No se implementa upload inicialmente.
+- No se guardan archivos en tickets v1.
+- El modelo queda preparado para una futura tabla `helpdesk_ticket_attachment`.
 
 Antes de crear frontend editable:
 
