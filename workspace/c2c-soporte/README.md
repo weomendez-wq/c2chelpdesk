@@ -111,6 +111,8 @@ El modelo local propuesto para la futura Mesa de Ayuda y gestion de tickets esta
 
 El analisis del script base de prueba para Mesa de Ayuda esta en `docs/27-analisis-scriptbdsoporte.md`. La version normalizada inicial queda propuesta en `database/sql/38-create-helpdesk-foundation.sql` y se verifica con `database/sql/39-verify-helpdesk-foundation.sql`.
 
+La prueba transaccional de ingreso de ticket Helpdesk esta en `database/sql/40-test-helpdesk-ticket-entry.sql` y su bitacora en `docs/bitacora/2026-05-19-prueba-ingreso-helpdesk.md`.
+
 Las decisiones iniciales de Mesa de Ayuda quedan en `docs/decisiones/2026-05-18-tickets-manuales.md`, `docs/decisiones/2026-05-18-catalogo-responsables-helpdesk.md` y `docs/decisiones/2026-05-18-adjuntos-helpdesk.md`.
 
 La primera optimizacion local de indices y caches quedo registrada en `docs/bitacora/2026-05-16-optimizacion-querys-local.md`.
