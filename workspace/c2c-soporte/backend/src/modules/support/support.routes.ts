@@ -13,9 +13,12 @@ import {
   devicesQuerySchema,
   foliosAlertConfigUpdateRequestSchema,
   folioRangesQuerySchema,
-  foliosControlQuerySchema
+  foliosControlQuerySchema,
+  helpdeskManualTicketRequestSchema,
+  helpdeskTicketQuerySchema
 } from "./support.schemas.js";
 import {
+  createManualHelpdeskTicket,
   getCacheStatus,
   listDteConfig,
   getDocumentsSummary,
@@ -28,6 +31,7 @@ import {
   listFolioRanges,
   listFoliosAlertConfig,
   listFoliosControl,
+  listHelpdeskTickets,
   refreshLocalCaches,
   updateDteConfig,
   updateFoliosAlertConfig
@@ -220,6 +224,46 @@ supportRouter.get("/control/cache-status", async (req, res, next) => {
     const data = await getCacheStatus();
 
     res.json(ok({ data, requestId: req.requestId }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+supportRouter.get("/helpdesk/tickets", async (req, res, next) => {
+  try {
+    const parsedQuery = helpdeskTicketQuerySchema.safeParse(req.query);
+
+    if (!parsedQuery.success) {
+      throw new AppError({
+        code: "VALIDATION_ERROR",
+        message: "Parametros de tickets invalidos",
+        statusCode: 400
+      });
+    }
+
+    const data = await listHelpdeskTickets(parsedQuery.data);
+
+    res.json(ok({ data, requestId: req.requestId }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+supportRouter.post("/helpdesk/tickets/manual", async (req, res, next) => {
+  try {
+    const parsedBody = helpdeskManualTicketRequestSchema.safeParse(req.body);
+
+    if (!parsedBody.success) {
+      throw new AppError({
+        code: "VALIDATION_ERROR",
+        message: "Ticket manual invalido",
+        statusCode: 400
+      });
+    }
+
+    const data = await createManualHelpdeskTicket(parsedBody.data);
+
+    res.status(201).json(ok({ data, requestId: req.requestId }));
   } catch (error) {
     next(error);
   }

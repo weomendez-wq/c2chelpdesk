@@ -12,7 +12,9 @@ import type {
   DteConfigUpdateRequest,
   FoliosAlertConfigUpdateRequest,
   FolioRangesQuery,
-  FoliosControlQuery
+  FoliosControlQuery,
+  HelpdeskManualTicketRequest,
+  HelpdeskTicketQuery
 } from "./support.schemas.js";
 
 export type PaginatedResult<TItem> = {
@@ -59,6 +61,26 @@ export type CacheStatusResult = {
   currentCounts: Record<string, number>;
 };
 
+export type HelpdeskTicketItem = {
+  ticketId: number;
+  ticketNumber: number;
+  title: string;
+  description: string | null;
+  statusCode: string;
+  priorityCode: string;
+  categoryCode: string | null;
+  channelCode: string | null;
+  communicationTypeCode: string | null;
+  source: string;
+  tenantId: string | null;
+  rut: string | null;
+  companyName: string | null;
+  contactName: string | null;
+  contactEmail: string | null;
+  openedAt: string;
+  dueAt: string | null;
+};
+
 const addFilter = (clauses: string[], values: unknown[], sql: string, value: unknown) => {
   if (value === undefined) {
     return;
@@ -76,6 +98,44 @@ const appendPagination = (values: unknown[], limit: number, offset: number) => {
 
   return `LIMIT ${limitPlaceholder} OFFSET ${offsetPlaceholder}`;
 };
+
+const mapHelpdeskTicket = (row: {
+  ticket_id: string | number;
+  ticket_number: string | number;
+  title: string;
+  description: string | null;
+  status_code: string;
+  priority_code: string;
+  category_code: string | null;
+  channel_code: string | null;
+  communication_type_code: string | null;
+  source: string;
+  tenant_id: string | null;
+  rut: string | null;
+  company_name_snapshot: string | null;
+  contact_name: string | null;
+  contact_email: string | null;
+  opened_at: Date;
+  due_at: Date | null;
+}): HelpdeskTicketItem => ({
+  ticketId: Number(row.ticket_id),
+  ticketNumber: Number(row.ticket_number),
+  title: row.title,
+  description: row.description,
+  statusCode: row.status_code,
+  priorityCode: row.priority_code,
+  categoryCode: row.category_code,
+  channelCode: row.channel_code,
+  communicationTypeCode: row.communication_type_code,
+  source: row.source,
+  tenantId: row.tenant_id,
+  rut: row.rut,
+  companyName: row.company_name_snapshot,
+  contactName: row.contact_name,
+  contactEmail: row.contact_email,
+  openedAt: row.opened_at.toISOString(),
+  dueAt: row.due_at?.toISOString() ?? null
+});
 
 const cacheCountSql = `
   SELECT jsonb_object_agg(cache_name, rows_count) AS cache_counts
@@ -1260,4 +1320,241 @@ export const getDocumentsSummary = async (
       documents: Number(row.documents)
     }))
   };
+};
+
+export const listHelpdeskTickets = async (
+  query: HelpdeskTicketQuery
+): Promise<PaginatedResult<HelpdeskTicketItem>> => {
+  const clauses: string[] = [];
+  const values: unknown[] = [];
+
+  addFilter(clauses, values, "t.status_code = ?", query.status);
+  addFilter(clauses, values, "t.priority_code = ?", query.priority);
+  addFilter(clauses, values, "t.tenant_id = ?::uuid", query.tenantId);
+  addFilter(clauses, values, "t.rut = ?", query.rut);
+
+  if (query.search) {
+    values.push(`%${query.search}%`);
+    clauses.push(`(
+      t.title ILIKE $${values.length}
+      OR t.description ILIKE $${values.length}
+      OR t.company_name_snapshot ILIKE $${values.length}
+      OR c.display_name ILIKE $${values.length}
+      OR c.email ILIKE $${values.length}
+    )`);
+  }
+
+  const whereSql = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
+  const totalValues = [...values];
+  const paginationSql = appendPagination(values, query.limit, query.offset);
+
+  const [itemsResult, totalResult] = await Promise.all([
+    dbPool.query(
+      `
+        SELECT
+          t.ticket_id,
+          t.ticket_number,
+          t.title,
+          t.description,
+          t.status_code,
+          t.priority_code,
+          t.category_code,
+          t.channel_code,
+          t.communication_type_code,
+          t.source,
+          t.tenant_id,
+          t.rut,
+          t.company_name_snapshot,
+          c.display_name AS contact_name,
+          c.email AS contact_email,
+          t.opened_at,
+          t.due_at
+        FROM rr_gestion_soporte.helpdesk_ticket t
+        LEFT JOIN rr_gestion_soporte.helpdesk_contact c ON c.contact_id = t.contact_id
+        ${whereSql}
+        ORDER BY t.opened_at DESC, t.ticket_id DESC
+        ${paginationSql}
+      `,
+      values
+    ),
+    dbPool.query(
+      `
+        SELECT count(*)::bigint AS total
+        FROM rr_gestion_soporte.helpdesk_ticket t
+        LEFT JOIN rr_gestion_soporte.helpdesk_contact c ON c.contact_id = t.contact_id
+        ${whereSql}
+      `,
+      totalValues
+    )
+  ]);
+
+  return {
+    items: itemsResult.rows.map(mapHelpdeskTicket),
+    pagination: {
+      limit: query.limit,
+      offset: query.offset,
+      total: Number(totalResult.rows[0]?.total ?? 0)
+    }
+  };
+};
+
+export const createManualHelpdeskTicket = async (
+  input: HelpdeskManualTicketRequest
+): Promise<HelpdeskTicketItem> => {
+  const client = await dbPool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    let contactId: number | null = null;
+
+    if (input.contactName || input.contactEmail || input.contactPhone) {
+      const contactResult = await client.query(
+        `
+          INSERT INTO rr_gestion_soporte.helpdesk_contact
+            (
+              display_name,
+              email,
+              phone_1,
+              tenant_id,
+              rut,
+              company_name_snapshot,
+              status,
+              notes
+            )
+          VALUES
+            ($1, $2, $3, $4::uuid, $5, $6, 'ACTIVO', 'Creado desde ingreso manual externo')
+          RETURNING contact_id
+        `,
+        [
+          input.contactName ?? input.contactEmail ?? "Contacto externo",
+          input.contactEmail ?? null,
+          input.contactPhone ?? null,
+          input.tenantId ?? null,
+          input.rut ?? null,
+          input.companyName ?? null
+        ]
+      );
+
+      contactId = Number(contactResult.rows[0].contact_id);
+    }
+
+    const ticketResult = await client.query(
+      `
+        INSERT INTO rr_gestion_soporte.helpdesk_ticket
+          (
+            title,
+            description,
+            status_code,
+            priority_code,
+            category_code,
+            support_type_code,
+            communication_type_code,
+            channel_code,
+            source,
+            tenant_id,
+            rut,
+            company_name_snapshot,
+            contact_id,
+            due_at
+          )
+        VALUES
+          (
+            $1,
+            $2,
+            'OPEN',
+            $3,
+            $4,
+            $5,
+            $6,
+            $7,
+            'MANUAL',
+            $8::uuid,
+            $9,
+            $10,
+            $11,
+            $12::timestamptz
+          )
+        RETURNING ticket_id
+      `,
+      [
+        input.title,
+        input.description ?? null,
+        input.priorityCode,
+        input.categoryCode ?? "GENERAL",
+        input.supportTypeCode ?? "SOPORTE",
+        input.communicationTypeCode,
+        input.channelCode,
+        input.tenantId ?? null,
+        input.rut ?? null,
+        input.companyName ?? null,
+        contactId,
+        input.dueAt ?? null
+      ]
+    );
+
+    const ticketId = Number(ticketResult.rows[0].ticket_id);
+
+    await client.query(
+      `
+        INSERT INTO rr_gestion_soporte.helpdesk_ticket_event
+          (ticket_id, event_type, to_status_code, comment, metadata)
+        VALUES
+          (
+            $1,
+            'CREATED',
+            'OPEN',
+            $2,
+            jsonb_build_object(
+              'source', 'MANUAL',
+              'channelCode', $3::text,
+              'requestedBy', $4::text,
+              'externalEntry', true
+            )
+          )
+      `,
+      [
+        ticketId,
+        `Ticket creado desde canal externo por ${input.requestedBy}`,
+        input.channelCode,
+        input.requestedBy
+      ]
+    );
+
+    const createdResult = await client.query(
+      `
+        SELECT
+          t.ticket_id,
+          t.ticket_number,
+          t.title,
+          t.description,
+          t.status_code,
+          t.priority_code,
+          t.category_code,
+          t.channel_code,
+          t.communication_type_code,
+          t.source,
+          t.tenant_id,
+          t.rut,
+          t.company_name_snapshot,
+          c.display_name AS contact_name,
+          c.email AS contact_email,
+          t.opened_at,
+          t.due_at
+        FROM rr_gestion_soporte.helpdesk_ticket t
+        LEFT JOIN rr_gestion_soporte.helpdesk_contact c ON c.contact_id = t.contact_id
+        WHERE t.ticket_id = $1
+      `,
+      [ticketId]
+    );
+
+    await client.query("COMMIT");
+
+    return mapHelpdeskTicket(createdResult.rows[0]);
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 };

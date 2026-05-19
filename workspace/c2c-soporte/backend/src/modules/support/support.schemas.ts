@@ -107,6 +107,31 @@ export const foliosAlertConfigUpdateRequestSchema = z.object({
   requestedBy: z.string().trim().min(1).max(120).default("local-support")
 });
 
+export const helpdeskTicketQuerySchema = paginationQuerySchema.extend({
+  status: z.string().trim().min(1).max(80).optional(),
+  priority: z.string().trim().min(1).max(80).optional(),
+  rut: z.string().trim().min(1).max(20).optional(),
+  tenantId: z.string().uuid().optional()
+});
+
+export const helpdeskManualTicketRequestSchema = z.object({
+  title: z.string().trim().min(5).max(180),
+  description: z.string().trim().max(4000).optional(),
+  channelCode: z.string().trim().min(2).max(80).default("EMAIL"),
+  communicationTypeCode: z.string().trim().min(2).max(80).default("EXTERNAL"),
+  priorityCode: z.string().trim().min(2).max(80).default("MEDIUM"),
+  categoryCode: z.string().trim().min(2).max(80).optional(),
+  supportTypeCode: z.string().trim().min(2).max(80).optional(),
+  contactName: z.string().trim().min(2).max(200).optional(),
+  contactEmail: z.string().trim().email().max(255).optional(),
+  contactPhone: z.string().trim().min(5).max(30).optional(),
+  tenantId: z.string().uuid().optional(),
+  rut: z.string().trim().min(1).max(20).optional(),
+  companyName: z.string().trim().min(2).max(220).optional(),
+  requestedBy: z.string().trim().min(1).max(120).default("external-channel"),
+  dueAt: z.string().datetime().optional()
+});
+
 export type AlertsQuery = z.infer<typeof alertsQuerySchema>;
 export type CacheRefreshRequest = z.infer<typeof cacheRefreshRequestSchema>;
 export type CompaniesQuery = z.infer<typeof companiesQuerySchema>;
@@ -121,3 +146,5 @@ export type DteConfigUpdateRequest = z.infer<typeof dteConfigUpdateRequestSchema
 export type FoliosAlertConfigUpdateRequest = z.infer<
   typeof foliosAlertConfigUpdateRequestSchema
 >;
+export type HelpdeskTicketQuery = z.infer<typeof helpdeskTicketQuerySchema>;
+export type HelpdeskManualTicketRequest = z.infer<typeof helpdeskManualTicketRequestSchema>;

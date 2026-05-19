@@ -272,6 +272,54 @@ export type FoliosAlertConfigUpdateRequest = {
   minimoFoliosWarning: number;
 };
 
+export type HelpdeskTicket = {
+  ticketId: number;
+  ticketNumber: number;
+  title: string;
+  description: string | null;
+  statusCode: string;
+  priorityCode: string;
+  categoryCode: string | null;
+  channelCode: string | null;
+  communicationTypeCode: string | null;
+  source: string;
+  tenantId: string | null;
+  rut: string | null;
+  companyName: string | null;
+  contactName: string | null;
+  contactEmail: string | null;
+  openedAt: string;
+  dueAt: string | null;
+};
+
+export type HelpdeskTicketQuery = {
+  limit?: number;
+  offset?: number;
+  search?: string;
+  status?: string;
+  priority?: string;
+  tenantId?: string;
+  rut?: string;
+};
+
+export type HelpdeskManualTicketRequest = {
+  title: string;
+  description?: string;
+  channelCode: string;
+  communicationTypeCode: string;
+  priorityCode: string;
+  categoryCode?: string;
+  supportTypeCode?: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  tenantId?: string;
+  rut?: string;
+  companyName?: string;
+  requestedBy: string;
+  dueAt?: string;
+};
+
 export type AlertsQuery = {
   limit?: number;
   offset?: number;
@@ -434,6 +482,51 @@ export const getOperationalAlerts = async (
   }
 
   const payload = (await response.json()) as ApiSuccess<PaginatedResponse<OperationalAlert>>;
+
+  if (!payload.ok) {
+    throw new Error("Respuesta API invalida");
+  }
+
+  return payload.data;
+};
+
+export const getHelpdeskTickets = async (
+  query: HelpdeskTicketQuery,
+  signal?: AbortSignal
+): Promise<PaginatedResponse<HelpdeskTicket>> => {
+  const response = await fetch(`/api/support/helpdesk/tickets${buildQueryString(query)}`, {
+    signal
+  });
+
+  if (!response.ok) {
+    throw new Error("No se pudo consultar tickets helpdesk");
+  }
+
+  const payload = (await response.json()) as ApiSuccess<PaginatedResponse<HelpdeskTicket>>;
+
+  if (!payload.ok) {
+    throw new Error("Respuesta API invalida");
+  }
+
+  return payload.data;
+};
+
+export const createManualHelpdeskTicket = async (
+  request: HelpdeskManualTicketRequest
+): Promise<HelpdeskTicket> => {
+  const response = await fetch("/api/support/helpdesk/tickets/manual", {
+    body: JSON.stringify(request),
+    headers: {
+      "content-type": "application/json"
+    },
+    method: "POST"
+  });
+
+  if (!response.ok) {
+    throw new Error("No se pudo crear el ticket manual");
+  }
+
+  const payload = (await response.json()) as ApiSuccess<HelpdeskTicket>;
 
   if (!payload.ok) {
     throw new Error("Respuesta API invalida");

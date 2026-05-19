@@ -91,6 +91,8 @@ GET /api/support/control/folio-ranges
 GET /api/support/control/alerts
 GET /api/support/control/cache-status
 POST /api/support/control/cache-refresh
+GET /api/support/helpdesk/tickets
+POST /api/support/helpdesk/tickets/manual
 GET /api/support/control/maintainers/dte-config
 PATCH /api/support/control/maintainers/dte-config/:configId
 GET /api/support/control/maintainers/folios-alert-config
@@ -134,6 +136,43 @@ Respuesta:
 `GET /api/support/control/alerts` consolida alertas de empresas, devices, folios y proyeccion de agotamiento desde vistas locales `rr_gestion_soporte`. No consulta `public` ni ejecuta acciones de escritura.
 
 `GET /api/support/control/cache-status` devuelve conteos actuales de caches locales y el ultimo refresh registrado.
+
+`GET /api/support/helpdesk/tickets` devuelve la bandeja reciente de tickets desde `rr_gestion_soporte.helpdesk_ticket`, con datos de contacto cuando existan. Filtros iniciales:
+
+- `status`: estado del ticket, por ejemplo `OPEN`.
+- `priority`: prioridad, por ejemplo `MEDIUM`, `HIGH` o `URGENT`.
+- `tenantId`: tenant seleccionado.
+- `rut`: RUT de empresa.
+- `search`: busqueda por asunto, detalle, empresa, contacto o correo.
+
+`POST /api/support/helpdesk/tickets/manual` registra un ticket manual externo. Caso inicial: correo recibido por soporte. Escribe solo en `rr_gestion_soporte.helpdesk_ticket`, `rr_gestion_soporte.helpdesk_contact` cuando hay contacto, y `rr_gestion_soporte.helpdesk_ticket_event` con evento `CREATED`.
+
+Request minimo:
+
+```json
+{
+  "title": "Cliente informa error al emitir boletas",
+  "channelCode": "EMAIL",
+  "communicationTypeCode": "EXTERNAL",
+  "priorityCode": "MEDIUM",
+  "requestedBy": "soporte-local"
+}
+```
+
+Campos opcionales relevantes:
+
+- `description`
+- `categoryCode`
+- `supportTypeCode`
+- `contactName`
+- `contactEmail`
+- `contactPhone`
+- `tenantId`
+- `rut`
+- `companyName`
+- `dueAt`
+
+Este endpoint no consulta ni modifica `public`.
 
 `POST /api/support/control/cache-refresh` ejecuta un refresco manual de caches locales en `rr_gestion_soporte`. Requiere confirmacion explicita:
 

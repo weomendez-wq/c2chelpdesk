@@ -9,10 +9,12 @@ import {
   getFolioRanges,
   getFoliosControl,
   getFoliosAlertConfig,
+  getHelpdeskTickets,
   getCacheStatus,
   getDteConfig,
   getOperationalAlerts,
   refreshLocalCaches,
+  createManualHelpdeskTicket,
   updateDteConfig,
   updateFoliosAlertConfig,
   type AlertSeverity,
@@ -28,6 +30,8 @@ import {
   type FolioRange,
   type FolioRangeOperationalState,
   type FoliosControl,
+  type HelpdeskTicket,
+  type HelpdeskManualTicketRequest,
   type OperationalAlert
 } from "../services/supportApi";
 
@@ -52,6 +56,22 @@ type FoliosAlertConfigDraft = {
   diasSinEmisionWarning: string;
   minimoFoliosUrgente: string;
   minimoFoliosWarning: string;
+};
+
+type ManualTicketDraft = {
+  title: string;
+  description: string;
+  channelCode: string;
+  communicationTypeCode: string;
+  priorityCode: string;
+  categoryCode: string;
+  supportTypeCode: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  rut: string;
+  companyName: string;
+  requestedBy: string;
 };
 
 const emptyDocumentsSummary: DocumentsSummary = {
@@ -226,6 +246,22 @@ const emptyCacheStatus: CacheStatus = {
   lastRefresh: null
 };
 
+const emptyManualTicketDraft: ManualTicketDraft = {
+  title: "",
+  description: "",
+  channelCode: "EMAIL",
+  communicationTypeCode: "EXTERNAL",
+  priorityCode: "MEDIUM",
+  categoryCode: "GENERAL",
+  supportTypeCode: "SOPORTE",
+  contactName: "",
+  contactEmail: "",
+  contactPhone: "",
+  rut: "",
+  companyName: "",
+  requestedBy: "soporte-local"
+};
+
 export const App = () => {
   const [activeModule, setActiveModule] = useState("prototipo-helpdesk");
   const [search, setSearch] = useState("");
@@ -280,6 +316,15 @@ export const App = () => {
     data: [],
     error: null
   });
+  const [helpdeskTicketsState, setHelpdeskTicketsState] = useState<LoadState<HelpdeskTicket[]>>({
+    status: "idle",
+    data: [],
+    error: null
+  });
+  const [manualTicketDraft, setManualTicketDraft] =
+    useState<ManualTicketDraft>(emptyManualTicketDraft);
+  const [manualTicketSaving, setManualTicketSaving] = useState(false);
+  const [manualTicketSuccess, setManualTicketSuccess] = useState<string | null>(null);
   const [cacheState, setCacheState] = useState<LoadState<CacheStatus>>({
     status: "idle",
     data: emptyCacheStatus,
@@ -456,6 +501,11 @@ export const App = () => {
 
   useEffect(() => {
     setDeviceOffset(0);
+    setManualTicketDraft((current) => ({
+      ...current,
+      companyName: selectedCompany?.empresa_name ?? current.companyName,
+      rut: selectedCompany?.rut ? String(selectedCompany.rut) : current.rut
+    }));
   }, [selectedCompany]);
 
   useEffect(() => {
@@ -614,6 +664,44 @@ export const App = () => {
     setAlertsOffset(0);
   }, [alertSource, operationalAlert, search, selectedCompany]);
 
+  const loadHelpdeskTickets = () => {
+    const abortController = new AbortController();
+
+    setHelpdeskTicketsState((current) => ({
+      status: "loading",
+      data: current.data,
+      error: null
+    }));
+
+    getHelpdeskTickets({ limit: 12, offset: 0 }, abortController.signal)
+      .then((response) => {
+        setHelpdeskTicketsState({
+          status: "success",
+          data: response.items,
+          error: null
+        });
+      })
+      .catch((error: unknown) => {
+        if (abortController.signal.aborted) {
+          return;
+        }
+
+        setHelpdeskTicketsState({
+          status: "error",
+          data: [],
+          error: error instanceof Error ? error.message : "No se pudo cargar tickets"
+        });
+      });
+
+    return abortController;
+  };
+
+  useEffect(() => {
+    const abortController = loadHelpdeskTickets();
+
+    return () => abortController.abort();
+  }, []);
+
   useEffect(() => {
     const abortController = new AbortController();
 
@@ -734,6 +822,71 @@ export const App = () => {
         }));
       })
       .finally(() => setCacheRefreshRunning(false));
+  };
+
+  const handleManualTicketChange = (field: keyof ManualTicketDraft, value: string) => {
+    setManualTicketDraft((current) => ({
+      ...current,
+      [field]: value
+    }));
+    setManualTicketSuccess(null);
+  };
+
+  const handleCreateManualTicket = () => {
+    const title = manualTicketDraft.title.trim();
+    const requestedBy = manualTicketDraft.requestedBy.trim();
+
+    if (!title || title.length < 5 || !requestedBy) {
+      setHelpdeskTicketsState((current) => ({
+        status: "error",
+        data: current.data,
+        error: "Titulo y solicitado por son obligatorios"
+      }));
+      return;
+    }
+
+    const request: HelpdeskManualTicketRequest = {
+      title,
+      requestedBy,
+      categoryCode: manualTicketDraft.categoryCode.trim() || undefined,
+      channelCode: manualTicketDraft.channelCode,
+      communicationTypeCode: manualTicketDraft.communicationTypeCode,
+      companyName: manualTicketDraft.companyName.trim() || undefined,
+      contactEmail: manualTicketDraft.contactEmail.trim() || undefined,
+      contactName: manualTicketDraft.contactName.trim() || undefined,
+      contactPhone: manualTicketDraft.contactPhone.trim() || undefined,
+      description: manualTicketDraft.description.trim() || undefined,
+      priorityCode: manualTicketDraft.priorityCode,
+      rut: manualTicketDraft.rut.trim() || undefined,
+      supportTypeCode: manualTicketDraft.supportTypeCode.trim() || undefined,
+      tenantId: selectedCompany?.tenant_id
+    };
+
+    setManualTicketSaving(true);
+    setManualTicketSuccess(null);
+
+    createManualHelpdeskTicket(request)
+      .then((ticket) => {
+        setHelpdeskTicketsState((current) => ({
+          status: "success",
+          data: [ticket, ...current.data.filter((item) => item.ticketId !== ticket.ticketId)],
+          error: null
+        }));
+        setManualTicketDraft({
+          ...emptyManualTicketDraft,
+          companyName: selectedCompany?.empresa_name ?? "",
+          rut: selectedCompany?.rut ? String(selectedCompany.rut) : ""
+        });
+        setManualTicketSuccess(`Ticket #${ticket.ticketNumber} creado correctamente`);
+      })
+      .catch((error: unknown) => {
+        setHelpdeskTicketsState((current) => ({
+          status: "error",
+          data: current.data,
+          error: error instanceof Error ? error.message : "No se pudo crear el ticket"
+        }));
+      })
+      .finally(() => setManualTicketSaving(false));
   };
 
   const startEditDteConfig = (item: DteConfig) => {
@@ -1285,19 +1438,19 @@ export const App = () => {
           <div className="detail-heading">
             <div>
               <p className="eyebrow">Mesa de ayuda</p>
-              <h2>Bandeja candidata</h2>
+              <h2>Ingreso manual externo</h2>
               <p className="compact-id">
                 {selectedCompany
-                  ? `Gestion inicial para ${selectedCompany.empresa_name}`
-                  : "Alertas operativas priorizadas para gestion de soporte"}
+                  ? `Nuevo caso para ${selectedCompany.empresa_name}`
+                  : "Registra solicitudes recibidas por correo u otro canal antes de asociarlas a alertas"}
               </p>
             </div>
             <div className="ticket-summary">
               <span>
-                Urgentes <strong>{formatNumber(ticketCandidateSummary.urgent)}</strong>
+                Tickets <strong>{formatNumber(helpdeskTicketsState.data.length)}</strong>
               </span>
               <span>
-                Revision <strong>{formatNumber(ticketCandidateSummary.revision)}</strong>
+                Urgentes <strong>{formatNumber(ticketCandidateSummary.urgent)}</strong>
               </span>
               <span>
                 Folios <strong>{formatNumber(ticketCandidateSummary.folios)}</strong>
@@ -1308,9 +1461,176 @@ export const App = () => {
             </div>
           </div>
 
+          <div className="manual-ticket-layout">
+            <article className="manual-ticket-form" aria-label="Formulario ticket manual">
+              <div className="form-grid">
+                <label className="field field-wide">
+                  <span>Asunto</span>
+                  <input
+                    value={manualTicketDraft.title}
+                    onChange={(event) => handleManualTicketChange("title", event.target.value)}
+                    placeholder="Ej: Cliente informa error al emitir boletas"
+                  />
+                </label>
+                <label className="field">
+                  <span>Canal</span>
+                  <select
+                    value={manualTicketDraft.channelCode}
+                    onChange={(event) =>
+                      handleManualTicketChange("channelCode", event.target.value)
+                    }
+                  >
+                    <option value="EMAIL">Correo</option>
+                    <option value="PHONE">Telefono</option>
+                    <option value="WHATSAPP">WhatsApp</option>
+                    <option value="OTHER">Otro</option>
+                  </select>
+                </label>
+                <label className="field">
+                  <span>Prioridad</span>
+                  <select
+                    value={manualTicketDraft.priorityCode}
+                    onChange={(event) =>
+                      handleManualTicketChange("priorityCode", event.target.value)
+                    }
+                  >
+                    <option value="LOW">Baja</option>
+                    <option value="MEDIUM">Media</option>
+                    <option value="HIGH">Alta</option>
+                    <option value="URGENT">Urgente</option>
+                  </select>
+                </label>
+                <label className="field">
+                  <span>Empresa</span>
+                  <input
+                    value={manualTicketDraft.companyName}
+                    onChange={(event) =>
+                      handleManualTicketChange("companyName", event.target.value)
+                    }
+                    placeholder="Nombre cliente"
+                  />
+                </label>
+                <label className="field">
+                  <span>RUT</span>
+                  <input
+                    value={manualTicketDraft.rut}
+                    onChange={(event) => handleManualTicketChange("rut", event.target.value)}
+                    placeholder="11111111-1"
+                  />
+                </label>
+                <label className="field">
+                  <span>Contacto</span>
+                  <input
+                    value={manualTicketDraft.contactName}
+                    onChange={(event) =>
+                      handleManualTicketChange("contactName", event.target.value)
+                    }
+                    placeholder="Nombre contacto"
+                  />
+                </label>
+                <label className="field">
+                  <span>Correo contacto</span>
+                  <input
+                    value={manualTicketDraft.contactEmail}
+                    onChange={(event) =>
+                      handleManualTicketChange("contactEmail", event.target.value)
+                    }
+                    placeholder="contacto@cliente.cl"
+                  />
+                </label>
+                <label className="field">
+                  <span>Telefono</span>
+                  <input
+                    value={manualTicketDraft.contactPhone}
+                    onChange={(event) =>
+                      handleManualTicketChange("contactPhone", event.target.value)
+                    }
+                    placeholder="+56..."
+                  />
+                </label>
+                <label className="field">
+                  <span>Solicitado por</span>
+                  <input
+                    value={manualTicketDraft.requestedBy}
+                    onChange={(event) =>
+                      handleManualTicketChange("requestedBy", event.target.value)
+                    }
+                    placeholder="usuario soporte"
+                  />
+                </label>
+                <label className="field field-wide">
+                  <span>Detalle</span>
+                  <textarea
+                    value={manualTicketDraft.description}
+                    onChange={(event) =>
+                      handleManualTicketChange("description", event.target.value)
+                    }
+                    placeholder="Describe el correo, solicitud o problema informado por el cliente"
+                  />
+                </label>
+              </div>
+              <div className="form-actions">
+                <button
+                  className="primary-button"
+                  disabled={manualTicketSaving}
+                  type="button"
+                  onClick={handleCreateManualTicket}
+                >
+                  {manualTicketSaving ? "Creando..." : "Crear ticket"}
+                </button>
+                {manualTicketSuccess ? <span className="status success">{manualTicketSuccess}</span> : null}
+              </div>
+            </article>
+
+            <article className="recent-ticket-panel" aria-label="Tickets recientes">
+              <div className="ticket-panel-heading">
+                <div>
+                  <p className="eyebrow">Bandeja</p>
+                  <h3>Tickets recientes</h3>
+                </div>
+                <button
+                  className="ghost-button compact"
+                  type="button"
+                  onClick={() => loadHelpdeskTickets()}
+                >
+                  Actualizar
+                </button>
+              </div>
+              {helpdeskTicketsState.status === "loading" ? (
+                <LoadingIndicator label="Cargando tickets..." />
+              ) : null}
+              {helpdeskTicketsState.status === "error" ? (
+                <p className="status error">{helpdeskTicketsState.error}</p>
+              ) : null}
+              <div className="recent-ticket-list">
+                {helpdeskTicketsState.data.map((ticket) => (
+                  <div className="recent-ticket-item" key={ticket.ticketId}>
+                    <strong>#{ticket.ticketNumber} {ticket.title}</strong>
+                    <span>
+                      {ticket.companyName ?? "Sin empresa"} | {ticket.channelCode ?? "-"} |{" "}
+                      {ticket.priorityCode}
+                    </span>
+                    <small>{formatDateTime(ticket.openedAt)}</small>
+                  </div>
+                ))}
+                {helpdeskTicketsState.status !== "loading" &&
+                helpdeskTicketsState.data.length === 0 ? (
+                  <p className="empty">Aun no hay tickets manuales registrados.</p>
+                ) : null}
+              </div>
+            </article>
+          </div>
+
           {alertsState.status === "loading" ? (
             <LoadingIndicator label="Preparando bandeja de soporte..." />
           ) : null}
+
+          <div className="ticket-section-heading">
+            <div>
+              <p className="eyebrow">Candidatos desde alertas</p>
+              <h3>Casos sugeridos por monitoreo</h3>
+            </div>
+          </div>
 
           <div className="ticket-board">
             {ticketCandidates.map((item, index) => (
