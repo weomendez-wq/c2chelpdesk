@@ -320,6 +320,29 @@ export type HelpdeskManualTicketRequest = {
   dueAt?: string;
 };
 
+export type GmailSyncResult = {
+  enabled: boolean;
+  mailbox: string | null;
+  processed: number;
+  created: number;
+  duplicates: number;
+  skipped: number;
+  items: Array<{
+    duplicate?: boolean;
+    emailMessageId?: number;
+    gmailId: string;
+    messageId: string;
+    subject: string;
+    ticketNumber?: number;
+  }>;
+};
+
+export type GmailSyncRequest = {
+  maxResults?: number;
+  query?: string;
+  requestedBy?: string;
+};
+
 export type AlertsQuery = {
   limit?: number;
   offset?: number;
@@ -362,6 +385,27 @@ const buildQueryString = (query: Record<string, string | number | undefined>) =>
 
   const queryString = params.toString();
   return queryString ? `?${queryString}` : "";
+};
+
+const readApiError = async (response: Response, fallback: string) => {
+  try {
+    const payload = (await response.json()) as {
+      error?: {
+        code?: string;
+        message?: string;
+      };
+    };
+
+    if (payload.error?.message) {
+      return payload.error.code
+        ? `${payload.error.code}: ${payload.error.message}`
+        : payload.error.message;
+    }
+  } catch {
+    return fallback;
+  }
+
+  return fallback;
 };
 
 export const getCompanyControl = async (
@@ -527,6 +571,35 @@ export const createManualHelpdeskTicket = async (
   }
 
   const payload = (await response.json()) as ApiSuccess<HelpdeskTicket>;
+
+  if (!payload.ok) {
+    throw new Error("Respuesta API invalida");
+  }
+
+  return payload.data;
+};
+
+export const syncGmailHelpdesk = async (
+  request: GmailSyncRequest = {}
+): Promise<GmailSyncResult> => {
+  const response = await fetch("/api/support/helpdesk/email-intake/gmail/sync", {
+    body: JSON.stringify({
+      confirm: "SYNC_GMAIL_HELPDESK",
+      maxResults: request.maxResults ?? 10,
+      query: request.query,
+      requestedBy: request.requestedBy ?? "frontend-local"
+    }),
+    headers: {
+      "content-type": "application/json"
+    },
+    method: "POST"
+  });
+
+  if (!response.ok) {
+    throw new Error(await readApiError(response, "No se pudo sincronizar Gmail"));
+  }
+
+  const payload = (await response.json()) as ApiSuccess<GmailSyncResult>;
 
   if (!payload.ok) {
     throw new Error("Respuesta API invalida");

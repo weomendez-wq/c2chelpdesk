@@ -16,6 +16,7 @@ import {
   getOperationalAlerts,
   refreshLocalCaches,
   createManualHelpdeskTicket,
+  syncGmailHelpdesk,
   updateDteConfig,
   updateFoliosAlertConfig,
   type AlertSeverity,
@@ -31,6 +32,7 @@ import {
   type FolioRange,
   type FolioRangeOperationalState,
   type FoliosControl,
+  type GmailSyncResult,
   type HelpdeskTicket,
   type HelpdeskManualTicketRequest,
   type OperationalAlert
@@ -348,6 +350,10 @@ export const App = () => {
     useState<ManualTicketDraft>(emptyManualTicketDraft);
   const [manualTicketSaving, setManualTicketSaving] = useState(false);
   const [manualTicketSuccess, setManualTicketSuccess] = useState<string | null>(null);
+  const [gmailSyncRunning, setGmailSyncRunning] = useState(false);
+  const [gmailSyncResult, setGmailSyncResult] = useState<GmailSyncResult | null>(null);
+  const [gmailSyncMessage, setGmailSyncMessage] = useState<string | null>(null);
+  const [gmailSyncError, setGmailSyncError] = useState<string | null>(null);
   const [cacheState, setCacheState] = useState<LoadState<CacheStatus>>({
     status: "idle",
     data: emptyCacheStatus,
@@ -938,6 +944,29 @@ export const App = () => {
       .finally(() => setManualTicketSaving(false));
   };
 
+  const handleGmailSync = () => {
+    setGmailSyncRunning(true);
+    setGmailSyncError(null);
+    setGmailSyncMessage(null);
+
+    syncGmailHelpdesk({ maxResults: 10, requestedBy: "frontend-local" })
+      .then((response) => {
+        setGmailSyncResult(response);
+        setGmailSyncMessage(
+          `Gmail revisado: ${formatNumber(response.created)} tickets nuevos de ${formatNumber(
+            response.processed
+          )} correos procesados`
+        );
+        loadHelpdeskTickets();
+      })
+      .catch((error: unknown) => {
+        setGmailSyncError(
+          error instanceof Error ? error.message : "No se pudo sincronizar Gmail"
+        );
+      })
+      .finally(() => setGmailSyncRunning(false));
+  };
+
   const startEditDteConfig = (item: DteConfig) => {
     setEditingDteConfigId(item.config_id);
     setDteConfigDraft({
@@ -1509,6 +1538,46 @@ export const App = () => {
               </span>
             </div>
           </div>
+
+          <article className="gmail-sync-panel" aria-label="Sincronizacion Gmail">
+            <div className="ticket-panel-heading">
+              <div>
+                <p className="eyebrow">Canal correo</p>
+                <h3>Entrada Gmail</h3>
+                <p className="compact-id">
+                  Ejecuta una revision manual del buzon de soporte y crea tickets nuevos cuando
+                  encuentre mensajes no procesados.
+                </p>
+              </div>
+              <button
+                className="primary-button compact"
+                disabled={gmailSyncRunning}
+                type="button"
+                onClick={handleGmailSync}
+              >
+                {gmailSyncRunning ? "Sincronizando..." : "Sincronizar Gmail"}
+              </button>
+            </div>
+            {gmailSyncRunning ? <LoadingIndicator label="Revisando Gmail..." /> : null}
+            {gmailSyncMessage ? <p className="status success">{gmailSyncMessage}</p> : null}
+            {gmailSyncError ? <p className="status error">{gmailSyncError}</p> : null}
+            {gmailSyncResult ? (
+              <div className="gmail-sync-metrics">
+                <span>
+                  Procesados <strong>{formatNumber(gmailSyncResult.processed)}</strong>
+                </span>
+                <span>
+                  Creados <strong>{formatNumber(gmailSyncResult.created)}</strong>
+                </span>
+                <span>
+                  Duplicados <strong>{formatNumber(gmailSyncResult.duplicates)}</strong>
+                </span>
+                <span>
+                  Omitidos <strong>{formatNumber(gmailSyncResult.skipped)}</strong>
+                </span>
+              </div>
+            ) : null}
+          </article>
 
           <div className="manual-ticket-layout">
             <article className="manual-ticket-form" aria-label="Formulario ticket manual">

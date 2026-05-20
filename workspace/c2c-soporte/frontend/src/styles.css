@@ -551,6 +551,7 @@ h1 {
 }
 
 .manual-ticket-form,
+.gmail-sync-panel,
 .recent-ticket-panel {
   background: #f8fbfd;
   border: 1px solid #e0e8f1;
@@ -558,6 +559,35 @@ h1 {
   display: grid;
   gap: 12px;
   padding: 14px;
+}
+
+.gmail-sync-panel {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbfd 100%);
+}
+
+.gmail-sync-metrics {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+}
+
+.gmail-sync-metrics span {
+  background: #ffffff;
+  border: 1px solid #e5ebf2;
+  border-radius: 7px;
+  color: #536275;
+  display: grid;
+  font-size: 0.74rem;
+  font-weight: 900;
+  gap: 4px;
+  min-height: 54px;
+  padding: 8px 10px;
+  text-transform: uppercase;
+}
+
+.gmail-sync-metrics strong {
+  color: #111827;
+  font-size: 1rem;
 }
 
 .form-grid {
@@ -1576,6 +1606,7 @@ tbody tr {
   .analytics-grid,
   .workspace-grid,
   .dte-summary-grid,
+  .gmail-sync-metrics,
   .manual-ticket-layout,
   .form-grid,
   .ticket-filter-grid,
