@@ -76,9 +76,9 @@ Comando local sugerido:
 cd C:\RODPROJECTSCODEX\workspace\c2c-soporte
 $env:Path += ";C:\Program Files\PostgreSQL\18\bin"
 $env:PGPASSWORD = "postgres"
-psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\performance\40-measure-current-objects.sql
-psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\performance\41-inspect-local-indexes.sql
-psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\performance\42-explain-local-heavy-views.sql
+psql -h localhost -p 5492 -U postgres -d soporte -f .\database\sql\performance\40-measure-current-objects.sql
+psql -h localhost -p 5492 -U postgres -d soporte -f .\database\sql\performance\41-inspect-local-indexes.sql
+psql -h localhost -p 5492 -U postgres -d soporte -f .\database\sql\performance\42-explain-local-heavy-views.sql
 ```
 
 Medir:
@@ -115,7 +115,7 @@ Comando local sugerido:
 cd C:\RODPROJECTSCODEX\workspace\c2c-soporte
 $env:Path += ";C:\Program Files\PostgreSQL\18\bin"
 $env:PGPASSWORD = "postgres"
-psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\performance\44-create-local-performance-indexes.sql
+psql -h localhost -p 5492 -U postgres -d soporte -f .\database\sql\performance\44-create-local-performance-indexes.sql
 ```
 
 Indices candidatos:

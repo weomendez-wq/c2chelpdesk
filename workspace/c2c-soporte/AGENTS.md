@@ -30,9 +30,9 @@
 
 - **Nombre**: c2c-soporte
 - **Ruta oficial**: C:\RODPROJECTSCODEX\workspace\c2c-soporte
-- **Frontend**: 5173
-- **Backend**: 3000
-- **Base de datos**: 5434
+- **Frontend**: 5490
+- **Backend**: 5491
+- **Base de datos**: 5492
 - **Registrado en orquestador**: sí
 
 ---

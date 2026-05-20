@@ -23,7 +23,7 @@
 
 - **Proyecto**: c2c-soporte
 - **Ruta oficial**: C:\RODPROJECTSCODEX\workspace\c2c-soporte
-- **Puertos**: frontend 5173 · backend 3000 · db 5434
+- **Puertos**: frontend 5490 · backend 5491 · db 5492
 
 ## Reglas para Claude en este proyecto
 

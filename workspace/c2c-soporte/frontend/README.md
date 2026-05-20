@@ -23,10 +23,10 @@ npm run dev
 Durante desarrollo, Vite redirige `/api` hacia:
 
 ```txt
-http://localhost:3000
+http://localhost:5491
 ```
 
-Por eso el backend debe estar levantado en el puerto `3000` para probar la pantalla contra datos reales.
+Por eso el backend debe estar levantado en el puerto `5491` para probar la pantalla contra datos reales.
 
 ## Pantalla inicial
 

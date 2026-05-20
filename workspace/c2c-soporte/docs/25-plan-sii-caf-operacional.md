@@ -100,7 +100,7 @@ Comando local sugerido:
 cd C:\RODPROJECTSCODEX\workspace\c2c-soporte
 $env:Path += ";C:\Program Files\PostgreSQL\18\bin"
 $env:PGPASSWORD = "postgres"
-psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\36-certify-sii-caf-operational-base.sql
+psql -h localhost -p 5492 -U postgres -d soporte -f .\database\sql\36-certify-sii-caf-operational-base.sql
 ```
 
 Decision si aparece hallazgo:

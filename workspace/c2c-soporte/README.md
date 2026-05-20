@@ -65,7 +65,7 @@ El frontend inicial esta en `frontend/` y consume `GET /api/support/company-devi
 
 Los scripts locales estan en `database/sql/` y preparan la base `soporte` con schemas `staging_public` y `rr_gestion_soporte`. No se ejecutan automaticamente ni deben usarse contra produccion.
 
-La conexion local validada usa PostgreSQL en `localhost:5434` con base `soporte`.
+La conexion local validada para esta etapa usa PostgreSQL en `localhost:5492` con base `soporte`.
 
 La estrategia de copia controlada esta documentada en `docs/09-estrategia-copia-controlada.md`.
 

@@ -8,8 +8,8 @@ Definir como se preparara el entorno local antes de crear codigo.
 
 ```txt
 NODE_ENV=development
-PORT=3000
-DATABASE_URL=postgres://postgres:postgres@localhost:5434/soporte
+PORT=5491
+DATABASE_URL=postgres://postgres:postgres@localhost:5492/soporte
 LOG_LEVEL=debug
 ```
 
@@ -24,7 +24,7 @@ LOG_LEVEL=debug
 
 - Nombre objetivo: `soporte`.
 - Host local: `localhost`.
-- Puerto local: `5434`.
+- Puerto local: `5492`.
 - Usuario local confirmado: `postgres`.
 - Schemas objetivo:
   - `staging_public`
@@ -32,7 +32,7 @@ LOG_LEVEL=debug
 
 ## Estado confirmado
 
-- PostgreSQL local disponible en puerto `5434`.
+- PostgreSQL local disponible en puerto `5492`.
 - Usuario local: `postgres`.
 - Scripts SQL base ejecutados localmente.
 
@@ -41,7 +41,7 @@ LOG_LEVEL=debug
 Antes de validar frontend/backend juntos:
 
 ```powershell
-Test-NetConnection localhost -Port 5434
+Test-NetConnection localhost -Port 5492
 ```
 
 Resultado esperado:

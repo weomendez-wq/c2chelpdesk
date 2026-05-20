@@ -28,8 +28,8 @@ Crear un `.env` local basado en `.env.example`.
 
 ```txt
 NODE_ENV=development
-PORT=3000
-DATABASE_URL=postgres://postgres:postgres@localhost:5434/soporte
+PORT=5491
+DATABASE_URL=postgres://postgres:postgres@localhost:5492/soporte
 LOG_LEVEL=debug
 ```
 

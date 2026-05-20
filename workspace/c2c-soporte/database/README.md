@@ -27,7 +27,7 @@ soporte
 
 ```txt
 host: localhost
-port: 5434
+port: 5492
 user: postgres
 database: soporte
 ```
@@ -214,15 +214,15 @@ Resultado validado:
 ## Comandos de referencia
 
 ```powershell
-psql -h localhost -p 5434 -U postgres -d postgres -f .\database\sql\00-create-database.sql
-psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\01-create-schemas.sql
-psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\99-verify-local.sql
-psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\10-inspect-schemas.sql
-psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\11-inspect-tables-columns.sql
-psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\12-inspect-indexes.sql
-psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\13-inspect-table-estimates.sql
-psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\41-create-helpdesk-email-intake.sql
-psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\42-verify-helpdesk-email-intake.sql
+psql -h localhost -p 5492 -U postgres -d postgres -f .\database\sql\00-create-database.sql
+psql -h localhost -p 5492 -U postgres -d soporte -f .\database\sql\01-create-schemas.sql
+psql -h localhost -p 5492 -U postgres -d soporte -f .\database\sql\99-verify-local.sql
+psql -h localhost -p 5492 -U postgres -d soporte -f .\database\sql\10-inspect-schemas.sql
+psql -h localhost -p 5492 -U postgres -d soporte -f .\database\sql\11-inspect-tables-columns.sql
+psql -h localhost -p 5492 -U postgres -d soporte -f .\database\sql\12-inspect-indexes.sql
+psql -h localhost -p 5492 -U postgres -d soporte -f .\database\sql\13-inspect-table-estimates.sql
+psql -h localhost -p 5492 -U postgres -d soporte -f .\database\sql\41-create-helpdesk-email-intake.sql
+psql -h localhost -p 5492 -U postgres -d soporte -f .\database\sql\42-verify-helpdesk-email-intake.sql
 ```
 
 ## Estado

@@ -76,7 +76,7 @@ La base local esperada es:
 
 ```txt
 Host: localhost
-Puerto: 5434
+Puerto: 5492
 Base: soporte
 Usuario: postgres
 ```
@@ -90,7 +90,7 @@ Resultado esperado:
 Validacion de puerto:
 
 ```powershell
-Test-NetConnection localhost -Port 5434
+Test-NetConnection localhost -Port 5492
 ```
 
 Resultado esperado:
@@ -117,13 +117,13 @@ npm run dev
 
 Resultado esperado:
 
-- Backend levantado en `http://localhost:3000`.
-- Healthcheck disponible en `http://localhost:3000/api/health`.
+- Backend levantado en `http://localhost:5491`.
+- Healthcheck disponible en `http://localhost:5491/api/health`.
 
 Validacion rapida:
 
 ```powershell
-Invoke-RestMethod http://localhost:3000/api/health
+Invoke-RestMethod http://localhost:5491/api/health
 ```
 
 Se espera una respuesta con:
@@ -151,8 +151,8 @@ npm run dev
 Resultado esperado:
 
 - Vite levanta el frontend.
-- La terminal muestra una URL local, normalmente `http://localhost:5173`.
-- El frontend usa proxy hacia `http://localhost:3000` para llamadas `/api`.
+- La terminal muestra una URL local, normalmente `http://localhost:5490`.
+- El frontend usa proxy hacia `http://localhost:5491` para llamadas `/api`.
 
 ## Validacion funcional primaria
 
@@ -299,12 +299,12 @@ Causa probable:
 - Vite redirige correctamente hacia el backend.
 - El backend recibe la peticion.
 - El endpoint intenta leer `rr_gestion_soporte.empresa_dispositivo_resumen`.
-- PostgreSQL local `localhost:5434` no esta escuchando o la base `soporte` no esta disponible.
+- PostgreSQL local `localhost:5492` no esta escuchando o la base `soporte` no esta disponible.
 
 Como verificar:
 
 ```powershell
-Test-NetConnection localhost -Port 5434
+Test-NetConnection localhost -Port 5492
 ```
 
 Si retorna `TcpTestSucceeded: False`, primero hay que levantar o corregir la instancia local de PostgreSQL antes de revisar el frontend.

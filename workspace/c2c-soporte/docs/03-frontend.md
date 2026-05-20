@@ -140,7 +140,7 @@ npm install
 npm run dev
 ```
 
-El proxy de Vite apunta a `http://localhost:3000`, por lo que el backend debe estar levantado en ese puerto para consumir `/api/support/control/companies` durante desarrollo.
+El proxy de Vite apunta a `http://localhost:5491`, por lo que el backend debe estar levantado en ese puerto para consumir `/api/support/control/companies` durante desarrollo.
 
 ## Manual de validacion
 
