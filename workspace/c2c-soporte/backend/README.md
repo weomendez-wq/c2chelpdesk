@@ -33,6 +33,18 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5492/soporte
 LOG_LEVEL=debug
 ```
 
+## Gmail Helpdesk
+
+La sincronizacion Gmail parte como comando manual controlado:
+
+```powershell
+npm run gmail:sync -- --max 10 --requested-by soporte-local
+```
+
+Con `GMAIL_ENABLED=false`, el comando responde `GMAIL_DISABLED` y no intenta
+conectar con Google. Para activar la casilla real se requieren variables OAuth
+fuera del repositorio.
+
 ## Endpoint inicial
 
 ```txt

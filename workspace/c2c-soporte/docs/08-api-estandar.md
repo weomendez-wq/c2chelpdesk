@@ -233,6 +233,13 @@ Errores esperados:
 - `GMAIL_TOKEN_ERROR`: no se pudo renovar token.
 - `GMAIL_API_ERROR`: Gmail API rechazo la consulta.
 
+Comando local equivalente para validar antes de exponer UI:
+
+```powershell
+cd C:\RODPROJECTSCODEX\workspace\c2c-soporte\backend
+npm run gmail:sync -- --max 10 --requested-by soporte-local
+```
+
 `POST /api/support/control/cache-refresh` ejecuta un refresco manual de caches locales en `rr_gestion_soporte`. Requiere confirmacion explicita:
 
 ```json
