@@ -127,6 +127,23 @@ const alertSourceOptions: Array<{ value: "" | AlertSource; label: string }> = [
   { value: "CAF_VENCIMIENTO", label: "Vencimiento CAF" }
 ];
 
+const ticketStatusOptions = [
+  { value: "", label: "Todos" },
+  { value: "OPEN", label: "Abiertos" },
+  { value: "IN_PROGRESS", label: "En proceso" },
+  { value: "WAITING_CUSTOMER", label: "Esperando cliente" },
+  { value: "RESOLVED", label: "Resueltos" },
+  { value: "CLOSED", label: "Cerrados" }
+];
+
+const ticketPriorityOptions = [
+  { value: "", label: "Todas" },
+  { value: "LOW", label: "Baja" },
+  { value: "MEDIUM", label: "Media" },
+  { value: "HIGH", label: "Alta" },
+  { value: "URGENT", label: "Urgente" }
+];
+
 const navigationItems = [
   { id: "all", label: "Todo", status: "Vista" },
   { id: "prototipo-helpdesk", label: "Helpdesk", status: "Nuevo" },
@@ -321,6 +338,10 @@ export const App = () => {
     data: [],
     error: null
   });
+  const [ticketSearch, setTicketSearch] = useState("");
+  const [ticketStatusFilter, setTicketStatusFilter] = useState("");
+  const [ticketPriorityFilter, setTicketPriorityFilter] = useState("");
+  const [ticketTotal, setTicketTotal] = useState<number | undefined>();
   const [manualTicketDraft, setManualTicketDraft] =
     useState<ManualTicketDraft>(emptyManualTicketDraft);
   const [manualTicketSaving, setManualTicketSaving] = useState(false);
@@ -673,13 +694,23 @@ export const App = () => {
       error: null
     }));
 
-    getHelpdeskTickets({ limit: 12, offset: 0 }, abortController.signal)
+    getHelpdeskTickets(
+      {
+        limit: 12,
+        offset: 0,
+        priority: ticketPriorityFilter || undefined,
+        search: ticketSearch.trim() || undefined,
+        status: ticketStatusFilter || undefined
+      },
+      abortController.signal
+    )
       .then((response) => {
         setHelpdeskTicketsState({
           status: "success",
           data: response.items,
           error: null
         });
+        setTicketTotal(response.pagination.total);
       })
       .catch((error: unknown) => {
         if (abortController.signal.aborted) {
@@ -867,11 +898,27 @@ export const App = () => {
 
     createManualHelpdeskTicket(request)
       .then((ticket) => {
+        const normalizedSearch = ticketSearch.trim().toLowerCase();
+        const searchMatches =
+          !normalizedSearch ||
+          [ticket.title, ticket.description, ticket.companyName, ticket.contactName, ticket.contactEmail]
+            .filter(Boolean)
+            .some((value) => value?.toLowerCase().includes(normalizedSearch));
+        const ticketMatchesFilters =
+          (!ticketStatusFilter || ticket.statusCode === ticketStatusFilter) &&
+          (!ticketPriorityFilter || ticket.priorityCode === ticketPriorityFilter) &&
+          searchMatches;
+
         setHelpdeskTicketsState((current) => ({
           status: "success",
-          data: [ticket, ...current.data.filter((item) => item.ticketId !== ticket.ticketId)],
+          data: ticketMatchesFilters
+            ? [ticket, ...current.data.filter((item) => item.ticketId !== ticket.ticketId)]
+            : current.data,
           error: null
         }));
+        setTicketTotal((current) =>
+          current === undefined || !ticketMatchesFilters ? current : current + 1
+        );
         setManualTicketDraft({
           ...emptyManualTicketDraft,
           companyName: selectedCompany?.empresa_name ?? "",
@@ -1447,7 +1494,7 @@ export const App = () => {
             </div>
             <div className="ticket-summary">
               <span>
-                Tickets <strong>{formatNumber(helpdeskTicketsState.data.length)}</strong>
+                Tickets <strong>{formatNumber(ticketTotal ?? helpdeskTicketsState.data.length)}</strong>
               </span>
               <span>
                 Urgentes <strong>{formatNumber(ticketCandidateSummary.urgent)}</strong>
@@ -1594,6 +1641,49 @@ export const App = () => {
                   onClick={() => loadHelpdeskTickets()}
                 >
                   Actualizar
+                </button>
+              </div>
+              <div className="ticket-filter-grid" aria-label="Filtros de tickets">
+                <label className="field field-wide">
+                  <span>Buscar</span>
+                  <input
+                    value={ticketSearch}
+                    onChange={(event) => setTicketSearch(event.target.value)}
+                    placeholder="Asunto, empresa, contacto o correo"
+                  />
+                </label>
+                <label className="field">
+                  <span>Estado</span>
+                  <select
+                    value={ticketStatusFilter}
+                    onChange={(event) => setTicketStatusFilter(event.target.value)}
+                  >
+                    {ticketStatusOptions.map((option) => (
+                      <option value={option.value} key={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field">
+                  <span>Prioridad</span>
+                  <select
+                    value={ticketPriorityFilter}
+                    onChange={(event) => setTicketPriorityFilter(event.target.value)}
+                  >
+                    {ticketPriorityOptions.map((option) => (
+                      <option value={option.value} key={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  className="ghost-button compact"
+                  type="button"
+                  onClick={() => loadHelpdeskTickets()}
+                >
+                  Filtrar
                 </button>
               </div>
               {helpdeskTicketsState.status === "loading" ? (

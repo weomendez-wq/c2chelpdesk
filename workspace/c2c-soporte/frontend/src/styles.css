@@ -592,6 +592,13 @@ h1 {
   margin: 0;
 }
 
+.ticket-filter-grid {
+  align-items: end;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) minmax(108px, 0.55fr) minmax(108px, 0.55fr) auto;
+}
+
 .recent-ticket-list {
   display: grid;
   gap: 8px;
@@ -1378,6 +1385,7 @@ tbody tr {
   .dte-summary-grid,
   .manual-ticket-layout,
   .form-grid,
+  .ticket-filter-grid,
   .ticket-board,
   .ticket-summary,
   .module-planning-grid {
