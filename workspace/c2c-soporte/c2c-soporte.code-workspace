@@ -1,0 +1,25 @@
+{
+  "folders": [
+    { "name": "c2c-soporte", "path": "." },
+    { "name": "Orquestador (RODCONFIGALLPROJECTS)", "path": "C:\\RODCONFIGALLPROJECTS" }
+  ],
+  "settings": {
+    "editor.tabSize": 2,
+    "editor.formatOnSave": false,
+    "files.eol": "\n",
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/.git": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "editorconfig.editorconfig",
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode"
+    ]
+  }
+}
