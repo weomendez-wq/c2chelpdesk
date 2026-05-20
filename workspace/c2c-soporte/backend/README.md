@@ -43,7 +43,18 @@ npm run gmail:sync -- --max 10 --requested-by soporte-local
 
 Con `GMAIL_ENABLED=false`, el comando responde `GMAIL_DISABLED` y no intenta
 conectar con Google. Para activar la casilla real se requieren variables OAuth
-fuera del repositorio.
+fuera del repositorio:
+
+```txt
+GMAIL_ENABLED=true
+GMAIL_SUPPORT_MAILBOX=soporte@example.com
+GMAIL_CLIENT_ID=
+GMAIL_CLIENT_SECRET=
+GMAIL_REFRESH_TOKEN=
+```
+
+La validacion guiada queda documentada en
+`../docs/29-validacion-gmail-helpdesk.md`.
 
 ## Endpoint inicial
 
