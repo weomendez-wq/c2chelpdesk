@@ -14,10 +14,12 @@ import {
   foliosAlertConfigUpdateRequestSchema,
   folioRangesQuerySchema,
   foliosControlQuerySchema,
+  gmailSyncRequestSchema,
   helpdeskEmailIntakeRequestSchema,
   helpdeskManualTicketRequestSchema,
   helpdeskTicketQuerySchema
 } from "./support.schemas.js";
+import { syncGmailHelpdesk } from "./gmail.service.js";
 import {
   createManualHelpdeskTicket,
   getCacheStatus,
@@ -286,6 +288,26 @@ supportRouter.post("/helpdesk/email-intake/simulated", async (req, res, next) =>
     const data = await intakeSimulatedHelpdeskEmail(parsedBody.data);
 
     res.status(data.duplicate ? 200 : 201).json(ok({ data, requestId: req.requestId }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+supportRouter.post("/helpdesk/email-intake/gmail/sync", async (req, res, next) => {
+  try {
+    const parsedBody = gmailSyncRequestSchema.safeParse(req.body);
+
+    if (!parsedBody.success) {
+      throw new AppError({
+        code: "VALIDATION_ERROR",
+        message: "Solicitud de sincronizacion Gmail invalida",
+        statusCode: 400
+      });
+    }
+
+    const data = await syncGmailHelpdesk(parsedBody.data);
+
+    res.json(ok({ data, requestId: req.requestId }));
   } catch (error) {
     next(error);
   }

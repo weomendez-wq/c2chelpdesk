@@ -210,6 +210,29 @@ sincronizacion controlada de Gmail. Debe requerir confirmacion explicita,
 respetar deduplicacion por `message_id` y escribir solo en
 `rr_gestion_soporte.helpdesk_*`. No debe tocar `public`.
 
+Request minimo:
+
+```json
+{
+  "confirm": "SYNC_GMAIL_HELPDESK",
+  "requestedBy": "soporte-local",
+  "maxResults": 10
+}
+```
+
+Campos opcionales:
+
+- `query`: query Gmail avanzada. Si se omite, usa `in:inbox`, excluye etiquetas
+  de procesado/revision y limita a mensajes recientes.
+- `maxResults`: maximo 25 mensajes por ejecucion.
+
+Errores esperados:
+
+- `GMAIL_DISABLED`: conector apagado por configuracion.
+- `GMAIL_NOT_CONFIGURED`: faltan variables OAuth.
+- `GMAIL_TOKEN_ERROR`: no se pudo renovar token.
+- `GMAIL_API_ERROR`: Gmail API rechazo la consulta.
+
 `POST /api/support/control/cache-refresh` ejecuta un refresco manual de caches locales en `rr_gestion_soporte`. Requiere confirmacion explicita:
 
 ```json

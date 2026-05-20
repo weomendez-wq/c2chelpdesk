@@ -150,6 +150,13 @@ export const helpdeskEmailIntakeRequestSchema = z.object({
   tenantId: z.string().uuid().optional()
 });
 
+export const gmailSyncRequestSchema = z.object({
+  confirm: z.literal("SYNC_GMAIL_HELPDESK"),
+  maxResults: z.coerce.number().int().min(1).max(25).default(10),
+  query: z.string().trim().min(1).max(500).optional(),
+  requestedBy: z.string().trim().min(1).max(120).default("gmail-sync-local")
+});
+
 export type AlertsQuery = z.infer<typeof alertsQuerySchema>;
 export type CacheRefreshRequest = z.infer<typeof cacheRefreshRequestSchema>;
 export type CompaniesQuery = z.infer<typeof companiesQuerySchema>;
@@ -167,3 +174,4 @@ export type FoliosAlertConfigUpdateRequest = z.infer<
 export type HelpdeskTicketQuery = z.infer<typeof helpdeskTicketQuerySchema>;
 export type HelpdeskManualTicketRequest = z.infer<typeof helpdeskManualTicketRequestSchema>;
 export type HelpdeskEmailIntakeRequest = z.infer<typeof helpdeskEmailIntakeRequestSchema>;
+export type GmailSyncRequest = z.infer<typeof gmailSyncRequestSchema>;

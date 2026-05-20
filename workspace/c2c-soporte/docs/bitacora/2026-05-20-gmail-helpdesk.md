@@ -30,3 +30,19 @@ con trazabilidad, deduplicacion y revision por agente antes de automatizar todo.
 
 Definir casilla Gmail exacta, estrategia OAuth y si el primer sync sera manual
 por boton o proceso programado local.
+
+## Implementacion inicial
+
+Se agrega endpoint manual:
+
+```txt
+POST /api/support/helpdesk/email-intake/gmail/sync
+```
+
+La primera version:
+
+- usa Gmail API via OAuth refresh token desde variables de entorno.
+- no instala dependencias nuevas.
+- limita `maxResults` a 25.
+- reutiliza el flujo local de ingesta de correo para crear tickets.
+- queda desactivada por defecto con `GMAIL_ENABLED=false`.
