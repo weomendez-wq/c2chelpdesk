@@ -94,6 +94,7 @@ POST /api/support/control/cache-refresh
 GET /api/support/helpdesk/tickets
 POST /api/support/helpdesk/tickets/manual
 POST /api/support/helpdesk/email-intake/simulated
+POST /api/support/helpdesk/email-intake/gmail/sync
 GET /api/support/control/maintainers/dte-config
 PATCH /api/support/control/maintainers/dte-config/:configId
 GET /api/support/control/maintainers/folios-alert-config
@@ -203,6 +204,11 @@ Respuesta:
 Si el `messageId` o hash de deduplicacion ya existe, no crea otro ticket y devuelve `duplicate: true` cuando el correo ya tiene ticket asociado.
 
 Este endpoint escribe solo en `rr_gestion_soporte.helpdesk_*` y no conecta una casilla real.
+
+`POST /api/support/helpdesk/email-intake/gmail/sync` queda reservado para la
+sincronizacion controlada de Gmail. Debe requerir confirmacion explicita,
+respetar deduplicacion por `message_id` y escribir solo en
+`rr_gestion_soporte.helpdesk_*`. No debe tocar `public`.
 
 `POST /api/support/control/cache-refresh` ejecuta un refresco manual de caches locales en `rr_gestion_soporte`. Requiere confirmacion explicita:
 
