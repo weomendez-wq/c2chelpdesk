@@ -111,6 +111,8 @@ El modelo local propuesto para la futura Mesa de Ayuda y gestion de tickets esta
 
 El analisis del script base de prueba para Mesa de Ayuda esta en `docs/27-analisis-scriptbdsoporte.md`. La version normalizada inicial queda propuesta en `database/sql/38-create-helpdesk-foundation.sql` y se verifica con `database/sql/39-verify-helpdesk-foundation.sql`.
 
+El plan actualizado de objetivos para Helpdesk v1 esta en `docs/28-plan-objetivos-helpdesk-v1.md`; ordena el siguiente tramo desde contrato del orquestador, Gmail, Mesa de Ayuda, mantenedores, UX y pruebas guiadas.
+
 La prueba transaccional de ingreso de ticket Helpdesk esta en `database/sql/40-test-helpdesk-ticket-entry.sql` y su bitacora en `docs/bitacora/2026-05-19-prueba-ingreso-helpdesk.md`.
 
 La mejora de layout para trabajar por modulos enfocados esta registrada en `docs/bitacora/2026-05-19-layout-modulos-enfocados.md`.
