@@ -93,6 +93,7 @@ GET /api/support/control/cache-status
 POST /api/support/control/cache-refresh
 GET /api/support/helpdesk/tickets
 POST /api/support/helpdesk/tickets/manual
+POST /api/support/helpdesk/email-intake/simulated
 GET /api/support/control/maintainers/dte-config
 PATCH /api/support/control/maintainers/dte-config/:configId
 GET /api/support/control/maintainers/folios-alert-config
@@ -173,6 +174,35 @@ Campos opcionales relevantes:
 - `dueAt`
 
 Este endpoint no consulta ni modifica `public`.
+
+`POST /api/support/helpdesk/email-intake/simulated` simula la recepcion de un correo de soporte y crea ticket, contacto, evento y trazabilidad local. Requiere confirmacion explicita:
+
+```json
+{
+  "confirm": "SIMULATE_EMAIL_INTAKE",
+  "messageId": "correo-prueba-001",
+  "fromEmail": "cliente@example.invalid",
+  "fromName": "Cliente Prueba",
+  "subject": "Cliente informa error al emitir boletas",
+  "bodyText": "Favor revisar emision. RUT 11111111-1",
+  "priorityCode": "HIGH",
+  "requestedBy": "soporte-local"
+}
+```
+
+Respuesta:
+
+```json
+{
+  "duplicate": false,
+  "emailMessageId": 1,
+  "ticket": {}
+}
+```
+
+Si el `messageId` o hash de deduplicacion ya existe, no crea otro ticket y devuelve `duplicate: true` cuando el correo ya tiene ticket asociado.
+
+Este endpoint escribe solo en `rr_gestion_soporte.helpdesk_*` y no conecta una casilla real.
 
 `POST /api/support/control/cache-refresh` ejecuta un refresco manual de caches locales en `rr_gestion_soporte`. Requiere confirmacion explicita:
 

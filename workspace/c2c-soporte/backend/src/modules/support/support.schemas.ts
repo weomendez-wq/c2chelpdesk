@@ -132,6 +132,24 @@ export const helpdeskManualTicketRequestSchema = z.object({
   dueAt: z.string().datetime().optional()
 });
 
+export const helpdeskEmailIntakeRequestSchema = z.object({
+  bodyText: z.string().trim().min(1).max(12000),
+  companyName: z.string().trim().min(2).max(220).optional(),
+  confirm: z.literal("SIMULATE_EMAIL_INTAKE"),
+  conversationId: z.string().trim().min(1).max(512).optional(),
+  fromEmail: z.string().trim().email().max(255),
+  fromName: z.string().trim().min(2).max(255).optional(),
+  mailbox: z.string().trim().email().max(255).optional(),
+  messageId: z.string().trim().min(3).max(512).optional(),
+  priorityCode: z.string().trim().min(2).max(80).default("MEDIUM"),
+  receivedAt: z.string().datetime().optional(),
+  replyTo: z.string().trim().email().max(255).optional(),
+  requestedBy: z.string().trim().min(1).max(120).default("email-intake-simulated"),
+  rut: z.string().trim().min(1).max(20).optional(),
+  subject: z.string().trim().min(3).max(300),
+  tenantId: z.string().uuid().optional()
+});
+
 export type AlertsQuery = z.infer<typeof alertsQuerySchema>;
 export type CacheRefreshRequest = z.infer<typeof cacheRefreshRequestSchema>;
 export type CompaniesQuery = z.infer<typeof companiesQuerySchema>;
@@ -148,3 +166,4 @@ export type FoliosAlertConfigUpdateRequest = z.infer<
 >;
 export type HelpdeskTicketQuery = z.infer<typeof helpdeskTicketQuerySchema>;
 export type HelpdeskManualTicketRequest = z.infer<typeof helpdeskManualTicketRequestSchema>;
+export type HelpdeskEmailIntakeRequest = z.infer<typeof helpdeskEmailIntakeRequestSchema>;

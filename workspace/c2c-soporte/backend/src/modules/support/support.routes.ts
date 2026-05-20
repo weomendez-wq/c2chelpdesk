@@ -14,6 +14,7 @@ import {
   foliosAlertConfigUpdateRequestSchema,
   folioRangesQuerySchema,
   foliosControlQuerySchema,
+  helpdeskEmailIntakeRequestSchema,
   helpdeskManualTicketRequestSchema,
   helpdeskTicketQuerySchema
 } from "./support.schemas.js";
@@ -32,6 +33,7 @@ import {
   listFoliosAlertConfig,
   listFoliosControl,
   listHelpdeskTickets,
+  intakeSimulatedHelpdeskEmail,
   refreshLocalCaches,
   updateDteConfig,
   updateFoliosAlertConfig
@@ -264,6 +266,26 @@ supportRouter.post("/helpdesk/tickets/manual", async (req, res, next) => {
     const data = await createManualHelpdeskTicket(parsedBody.data);
 
     res.status(201).json(ok({ data, requestId: req.requestId }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+supportRouter.post("/helpdesk/email-intake/simulated", async (req, res, next) => {
+  try {
+    const parsedBody = helpdeskEmailIntakeRequestSchema.safeParse(req.body);
+
+    if (!parsedBody.success) {
+      throw new AppError({
+        code: "VALIDATION_ERROR",
+        message: "Correo simulado invalido",
+        statusCode: 400
+      });
+    }
+
+    const data = await intakeSimulatedHelpdeskEmail(parsedBody.data);
+
+    res.status(data.duplicate ? 200 : 201).json(ok({ data, requestId: req.requestId }));
   } catch (error) {
     next(error);
   }

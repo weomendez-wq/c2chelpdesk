@@ -1,3 +1,4 @@
+import { createHash, randomUUID } from "node:crypto";
 import { dbPool } from "../../config/database.js";
 import { AppError } from "../../shared/appError.js";
 import type {
@@ -13,6 +14,7 @@ import type {
   FoliosAlertConfigUpdateRequest,
   FolioRangesQuery,
   FoliosControlQuery,
+  HelpdeskEmailIntakeRequest,
   HelpdeskManualTicketRequest,
   HelpdeskTicketQuery
 } from "./support.schemas.js";
@@ -81,6 +83,12 @@ export type HelpdeskTicketItem = {
   dueAt: string | null;
 };
 
+export type HelpdeskEmailIntakeResult = {
+  duplicate: boolean;
+  emailMessageId: number;
+  ticket: HelpdeskTicketItem;
+};
+
 const addFilter = (clauses: string[], values: unknown[], sql: string, value: unknown) => {
   if (value === undefined) {
     return;
@@ -136,6 +144,19 @@ const mapHelpdeskTicket = (row: {
   openedAt: row.opened_at.toISOString(),
   dueAt: row.due_at?.toISOString() ?? null
 });
+
+const buildSimulatedMessageId = () => `simulated-${Date.now()}-${randomUUID()}`;
+
+const buildEmailDedupHash = (input: Pick<HelpdeskEmailIntakeRequest, "fromEmail" | "subject" | "receivedAt">) =>
+  createHash("sha256")
+    .update(`${input.fromEmail.toLowerCase()}|${input.subject.trim().toLowerCase()}|${input.receivedAt ?? ""}`)
+    .digest("hex");
+
+const extractRutFromEmailContent = (subject: string, bodyText: string) => {
+  const match = `${subject}\n${bodyText}`.match(/\b\d{1,2}\.?\d{3}\.?\d{3}-[\dkK]\b/);
+
+  return match?.[0].replace(/\./g, "") ?? null;
+};
 
 const cacheCountSql = `
   SELECT jsonb_object_agg(cache_name, rows_count) AS cache_counts
@@ -1553,6 +1574,303 @@ export const createManualHelpdeskTicket = async (
     return mapHelpdeskTicket(createdResult.rows[0]);
   } catch (error) {
     await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+export const intakeSimulatedHelpdeskEmail = async (
+  input: HelpdeskEmailIntakeRequest
+): Promise<HelpdeskEmailIntakeResult> => {
+  const client = await dbPool.connect();
+  const messageId = input.messageId ?? buildSimulatedMessageId();
+  const receivedAt = input.receivedAt ?? new Date().toISOString();
+  const rut = input.rut ?? extractRutFromEmailContent(input.subject, input.bodyText);
+  const hashDedup = buildEmailDedupHash({ ...input, receivedAt });
+
+  try {
+    await client.query("BEGIN");
+
+    const existingEmailResult = await client.query(
+      `
+        SELECT
+          email_message_id,
+          ticket_id
+        FROM rr_gestion_soporte.helpdesk_email_message
+        WHERE message_id = $1
+           OR hash_dedup = $2
+        LIMIT 1
+      `,
+      [messageId, hashDedup]
+    );
+
+    const existingEmail = existingEmailResult.rows[0] as
+      | { email_message_id: string | number; ticket_id: string | number | null }
+      | undefined;
+
+    if (existingEmail?.ticket_id) {
+      const existingTicketResult = await client.query(
+        `
+          SELECT
+            t.ticket_id,
+            t.ticket_number,
+            t.title,
+            t.description,
+            t.status_code,
+            t.priority_code,
+            t.category_code,
+            t.channel_code,
+            t.communication_type_code,
+            t.source,
+            t.tenant_id,
+            t.rut,
+            t.company_name_snapshot,
+            c.display_name AS contact_name,
+            c.email AS contact_email,
+            t.opened_at,
+            t.due_at
+          FROM rr_gestion_soporte.helpdesk_ticket t
+          LEFT JOIN rr_gestion_soporte.helpdesk_contact c ON c.contact_id = t.contact_id
+          WHERE t.ticket_id = $1
+        `,
+        [existingEmail.ticket_id]
+      );
+
+      await client.query("COMMIT");
+
+      return {
+        duplicate: true,
+        emailMessageId: Number(existingEmail.email_message_id),
+        ticket: mapHelpdeskTicket(existingTicketResult.rows[0])
+      };
+    }
+
+    const contactResult = await client.query(
+      `
+        INSERT INTO rr_gestion_soporte.helpdesk_contact
+          (
+            display_name,
+            email,
+            tenant_id,
+            rut,
+            company_name_snapshot,
+            status,
+            notes
+          )
+        VALUES
+          ($1, $2, $3::uuid, $4, $5, 'ACTIVO', 'Creado desde ingesta simulada de correo')
+        RETURNING contact_id
+      `,
+      [
+        input.fromName ?? input.fromEmail,
+        input.fromEmail,
+        input.tenantId ?? null,
+        rut,
+        input.companyName ?? null
+      ]
+    );
+
+    const contactId = Number(contactResult.rows[0].contact_id);
+    const ticketResult = await client.query(
+      `
+        INSERT INTO rr_gestion_soporte.helpdesk_ticket
+          (
+            title,
+            description,
+            status_code,
+            priority_code,
+            category_code,
+            support_type_code,
+            communication_type_code,
+            channel_code,
+            source,
+            tenant_id,
+            rut,
+            company_name_snapshot,
+            contact_id,
+            requested_at
+          )
+        VALUES
+          (
+            $1,
+            $2,
+            'OPEN',
+            $3,
+            'GENERAL',
+            'SOPORTE',
+            'EXTERNAL',
+            'EMAIL',
+            'EMAIL',
+            $4::uuid,
+            $5,
+            $6,
+            $7,
+            $8::timestamptz
+          )
+        RETURNING ticket_id
+      `,
+      [
+        input.subject,
+        input.bodyText,
+        input.priorityCode,
+        input.tenantId ?? null,
+        rut,
+        input.companyName ?? null,
+        contactId,
+        receivedAt
+      ]
+    );
+
+    const ticketId = Number(ticketResult.rows[0].ticket_id);
+    const emailResult = await client.query(
+      `
+        INSERT INTO rr_gestion_soporte.helpdesk_email_message
+          (
+            ticket_id,
+            provider,
+            mailbox,
+            message_id,
+            conversation_id,
+            from_email,
+            from_name,
+            reply_to,
+            subject,
+            body_text,
+            body_preview,
+            received_at,
+            processed_at,
+            status,
+            tenant_id,
+            rut,
+            company_name_snapshot,
+            contact_id,
+            hash_dedup,
+            metadata
+          )
+        VALUES
+          (
+            $1,
+            'SIMULATED',
+            $2,
+            $3,
+            $4,
+            $5,
+            $6,
+            $7,
+            $8,
+            $9,
+            left($9, 500),
+            $10::timestamptz,
+            now(),
+            'TICKET_CREATED',
+            $11::uuid,
+            $12,
+            $13,
+            $14,
+            $15,
+            jsonb_build_object('requestedBy', $16::text, 'simulated', true)
+          )
+        RETURNING email_message_id
+      `,
+      [
+        ticketId,
+        input.mailbox ?? null,
+        messageId,
+        input.conversationId ?? null,
+        input.fromEmail,
+        input.fromName ?? null,
+        input.replyTo ?? null,
+        input.subject,
+        input.bodyText,
+        receivedAt,
+        input.tenantId ?? null,
+        rut,
+        input.companyName ?? null,
+        contactId,
+        hashDedup,
+        input.requestedBy
+      ]
+    );
+
+    await client.query(
+      `
+        INSERT INTO rr_gestion_soporte.helpdesk_ticket_event
+          (ticket_id, event_type, to_status_code, comment, metadata)
+        VALUES
+          (
+            $1,
+            'CREATED',
+            'OPEN',
+            $2,
+            jsonb_build_object(
+              'source', 'EMAIL',
+              'provider', 'SIMULATED',
+              'messageId', $3::text,
+              'fromEmail', $4::text,
+              'requestedBy', $5::text
+            )
+          )
+      `,
+      [
+        ticketId,
+        `Ticket creado desde correo simulado por ${input.requestedBy}`,
+        messageId,
+        input.fromEmail,
+        input.requestedBy
+      ]
+    );
+
+    const createdTicketResult = await client.query(
+      `
+        SELECT
+          t.ticket_id,
+          t.ticket_number,
+          t.title,
+          t.description,
+          t.status_code,
+          t.priority_code,
+          t.category_code,
+          t.channel_code,
+          t.communication_type_code,
+          t.source,
+          t.tenant_id,
+          t.rut,
+          t.company_name_snapshot,
+          c.display_name AS contact_name,
+          c.email AS contact_email,
+          t.opened_at,
+          t.due_at
+        FROM rr_gestion_soporte.helpdesk_ticket t
+        LEFT JOIN rr_gestion_soporte.helpdesk_contact c ON c.contact_id = t.contact_id
+        WHERE t.ticket_id = $1
+      `,
+      [ticketId]
+    );
+
+    await client.query("COMMIT");
+
+    return {
+      duplicate: false,
+      emailMessageId: Number(emailResult.rows[0].email_message_id),
+      ticket: mapHelpdeskTicket(createdTicketResult.rows[0])
+    };
+  } catch (error) {
+    await client.query("ROLLBACK");
+
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      (error as { code?: string }).code === "23505"
+    ) {
+      throw new AppError({
+        code: "EMAIL_ALREADY_PROCESSED",
+        message: "El correo ya fue procesado",
+        statusCode: 409
+      });
+    }
+
     throw error;
   } finally {
     client.release();
