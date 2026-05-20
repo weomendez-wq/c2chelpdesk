@@ -16,7 +16,13 @@ const envSchema = z.object({
   GMAIL_LABEL_REVIEW: z.string().trim().min(1).default("C2C_HELPDESK_REVIEW"),
   GMAIL_POLL_INTERVAL_SECONDS: z.coerce.number().int().min(30).max(3600).default(60),
   GMAIL_REFRESH_TOKEN: z.string().trim().min(1).optional(),
-  GMAIL_SUPPORT_MAILBOX: z.string().trim().email().optional()
+  GMAIL_SUPPORT_MAILBOX: z.string().trim().email().optional(),
+  GOOGLE_SHEETS_HELPDESK_ENABLED: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+  GOOGLE_SHEETS_HELPDESK_TOKEN: z.string().trim().min(1).optional(),
+  GOOGLE_SHEETS_HELPDESK_WEBAPP_URL: z.string().trim().url().optional()
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

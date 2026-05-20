@@ -56,6 +56,31 @@ GMAIL_REFRESH_TOKEN=
 La validacion guiada queda documentada en
 `../docs/29-validacion-gmail-helpdesk.md`.
 
+## Gmail -> Planilla temporal
+
+El primer envio a la planilla se realiza mediante Apps Script:
+
+```powershell
+npm run gmail:send-sheet -- --max 1 --query "subject:\"PRUEBA HELPDESK C2C\"" --requested-by soporte-local
+```
+
+Modo revision sin enviar a la planilla:
+
+```powershell
+npm run gmail:send-sheet -- --max 1 --query "subject:\"PRUEBA HELPDESK C2C\"" --requested-by soporte-local --dry-run
+```
+
+Requiere variables locales no versionadas:
+
+```txt
+GOOGLE_SHEETS_HELPDESK_ENABLED=true
+GOOGLE_SHEETS_HELPDESK_WEBAPP_URL=
+GOOGLE_SHEETS_HELPDESK_TOKEN=
+```
+
+La plantilla para Apps Script esta en
+`../scripts/google-apps-script/helpdesk-gmail-webapp.gs`.
+
 ## Endpoint inicial
 
 ```txt

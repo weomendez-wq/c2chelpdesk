@@ -36,6 +36,21 @@ type GmailMessage = {
   threadId: string;
 };
 
+export type NormalizedGmailHelpdeskMessage = {
+  bodyText: string;
+  conversationId: string;
+  fromEmail: string;
+  fromName?: string;
+  gmailId: string;
+  internalDate: string;
+  mailbox?: string;
+  messageId: string;
+  receivedAt: string;
+  replyTo?: string;
+  subject: string;
+  threadId: string;
+};
+
 export type GmailSyncResult = {
   enabled: boolean;
   mailbox: string | null;
@@ -153,7 +168,7 @@ const defaultGmailQuery = () =>
     "newer_than:30d"
   ].join(" ");
 
-const normalizeGmailMessage = (message: GmailMessage, requestedBy: string) => {
+const normalizeGmailMessage = (message: GmailMessage): NormalizedGmailHelpdeskMessage => {
   const headers = message.payload?.headers ?? [];
   const fromHeader = getHeader(headers, "From") ?? env.GMAIL_SUPPORT_MAILBOX ?? "desconocido@example.com";
   const subject = getHeader(headers, "Subject") ?? "(Sin asunto)";
@@ -166,23 +181,25 @@ const normalizeGmailMessage = (message: GmailMessage, requestedBy: string) => {
 
   return {
     bodyText,
-    confirm: "SIMULATE_EMAIL_INTAKE" as const,
     conversationId: message.threadId,
     fromEmail,
     fromName: fromName || undefined,
+    gmailId: message.id,
+    internalDate: message.internalDate ?? "",
     mailbox: env.GMAIL_SUPPORT_MAILBOX,
     messageId,
-    priorityCode: "MEDIUM",
     receivedAt: message.internalDate
       ? new Date(Number(message.internalDate)).toISOString()
       : new Date().toISOString(),
     replyTo: replyTo?.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0],
-    requestedBy,
-    subject
+    subject,
+    threadId: message.threadId
   };
 };
 
-export const syncGmailHelpdesk = async (input: GmailSyncRequest): Promise<GmailSyncResult> => {
+export const listGmailHelpdeskMessages = async (
+  input: GmailSyncRequest
+): Promise<NormalizedGmailHelpdeskMessage[]> => {
   const accessToken = await fetchGmailAccessToken();
   const query = encodeURIComponent(input.query ?? defaultGmailQuery());
   const list = await gmailFetch<GmailListResponse>(
@@ -190,21 +207,44 @@ export const syncGmailHelpdesk = async (input: GmailSyncRequest): Promise<GmailS
     accessToken
   );
   const messages = list.messages ?? [];
+
+  return Promise.all(
+    messages.map(async (messageRef) => {
+      const message = await gmailFetch<GmailMessage>(
+        `messages/${messageRef.id}?format=full`,
+        accessToken
+      );
+
+      return normalizeGmailMessage(message);
+    })
+  );
+};
+
+export const syncGmailHelpdesk = async (input: GmailSyncRequest): Promise<GmailSyncResult> => {
+  const messages = await listGmailHelpdeskMessages(input);
   const items: GmailSyncResult["items"] = [];
   let created = 0;
   let duplicates = 0;
   let skipped = 0;
 
-  for (const messageRef of messages) {
-    const message = await gmailFetch<GmailMessage>(
-      `messages/${messageRef.id}?format=full`,
-      accessToken
-    );
-    const intakeInput = normalizeGmailMessage(message, input.requestedBy);
+  for (const message of messages) {
     let intakeResult: HelpdeskEmailIntakeResult;
 
     try {
-      intakeResult = await intakeSimulatedHelpdeskEmail(intakeInput);
+      intakeResult = await intakeSimulatedHelpdeskEmail({
+        bodyText: message.bodyText,
+        confirm: "SIMULATE_EMAIL_INTAKE",
+        conversationId: message.conversationId,
+        fromEmail: message.fromEmail,
+        fromName: message.fromName,
+        mailbox: message.mailbox,
+        messageId: message.messageId,
+        priorityCode: "MEDIUM",
+        receivedAt: message.receivedAt,
+        replyTo: message.replyTo,
+        requestedBy: input.requestedBy,
+        subject: message.subject
+      });
     } catch (error) {
       skipped += 1;
       continue;
@@ -219,9 +259,9 @@ export const syncGmailHelpdesk = async (input: GmailSyncRequest): Promise<GmailS
     items.push({
       duplicate: intakeResult.duplicate,
       emailMessageId: intakeResult.emailMessageId,
-      gmailId: message.id,
-      messageId: intakeInput.messageId ?? `gmail:${message.id}`,
-      subject: intakeInput.subject,
+      gmailId: message.gmailId,
+      messageId: message.messageId,
+      subject: message.subject,
       ticketNumber: intakeResult.ticket.ticketNumber
     });
   }
