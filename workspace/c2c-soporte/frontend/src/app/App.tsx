@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { MetricCard } from "../components/MetricCard";
 import { PaginationBar } from "../components/PaginationBar";
 import { TenantSelector } from "../components/TenantSelector";
+import { CompaniesModule } from "../modules/companies/components/CompaniesModule";
 import {
   getCompanyControl,
   getDeviceControl,
@@ -288,6 +289,7 @@ export const App = () => {
   const [companyLimit, setCompanyLimit] = useState(25);
   const [companyOffset, setCompanyOffset] = useState(0);
   const [companyTotal, setCompanyTotal] = useState<number | undefined>();
+  const [companyRefreshKey, setCompanyRefreshKey] = useState(0);
   const [deviceLimit, setDeviceLimit] = useState(25);
   const [deviceOffset, setDeviceOffset] = useState(0);
   const [deviceTotal, setDeviceTotal] = useState<number | undefined>();
@@ -426,7 +428,7 @@ export const App = () => {
       });
 
     return () => abortController.abort();
-  }, [alert, companyLimit, companyOffset, search, status]);
+  }, [alert, companyLimit, companyOffset, companyRefreshKey, search, status]);
 
   useEffect(() => {
     setCompanyOffset(0);
@@ -2046,80 +2048,41 @@ export const App = () => {
         </div>
       </section>
 
-      {companyState.status === "error" ? <p className="status error">{companyState.error}</p> : null}
-      {companyState.status === "loading" ? (
-        <LoadingIndicator label="Cargando datos certificados..." />
-      ) : null}
-
-        <section
-          className={moduleSectionClass("table-wrap", "empresas")}
-          id="empresas"
-          aria-label="Control empresas"
-        >
-        <table>
-          <thead>
-            <tr>
-              <th>Empresa</th>
-              <th>RUT</th>
-              <th>Estado</th>
-              <th>Alerta</th>
-              <th>Docs 2026</th>
-              <th>Primera emision</th>
-              <th>Ultima emision</th>
-              <th>Dias sin emitir</th>
-              <th>Comuna</th>
-            </tr>
-          </thead>
-          <tbody>
-            {companyState.data.map((item) => {
-              const selected =
-                selectedCompany?.tenant_id === item.tenant_id && selectedCompany.rut === item.rut;
-
-              return (
-                <tr
-                  className={selected ? "selected-row" : ""}
-                  key={`${item.tenant_id}-${item.rut}`}
-                  onClick={() => setSelectedCompany(item)}
-                >
-                  <td>
-                    <strong className="table-title">{item.empresa_name}</strong>
-                    <span className="table-subtitle">{item.tenant_id}</span>
-                  </td>
-                  <td>{item.rut}</td>
-                  <td>
-                    <span className={`badge ${item.empresa_status ?? ""}`}>{item.empresa_status}</span>
-                  </td>
-                  <td>
-                    <span className={`badge alert-${item.nivel_alerta_emision.toLowerCase()}`}>
-                      {item.nivel_alerta_emision}
-                    </span>
-                  </td>
-                  <td>{formatNumber(item.documentos_emitidos_2026)}</td>
-                  <td>{formatDate(item.primera_emision)}</td>
-                  <td>{formatDate(item.ultima_emision)}</td>
-                  <td>{formatDays(item.dias_sin_emitir)}</td>
-                  <td>{item.comuna ?? item.ciudad ?? "-"}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-
-        {companyState.status === "success" && companyState.data.length === 0 ? (
-          <p className="empty">No hay empresas para los filtros seleccionados.</p>
-        ) : null}
-        <PaginationBar
-          itemCount={companyState.data.length}
-          limit={companyLimit}
-          offset={companyOffset}
-          total={companyTotal}
-          onLimitChange={(nextLimit) => {
-            setCompanyLimit(nextLimit);
-            setCompanyOffset(0);
-          }}
-          onOffsetChange={setCompanyOffset}
-        />
-      </section>
+      <CompaniesModule
+        alert={alert}
+        alertOptions={alertOptions}
+        companyLimit={companyLimit}
+        companyOffset={companyOffset}
+        companyState={companyState}
+        companyTotal={companyTotal}
+        formatDate={formatDate}
+        formatDays={formatDays}
+        formatNumber={formatNumber}
+        moduleClassName={moduleSectionClass("companies-module", "empresas")}
+        onAlertChange={(nextAlert) => {
+          setAlert(nextAlert);
+          setCompanyOffset(0);
+        }}
+        onCompanyLimitChange={(nextLimit) => {
+          setCompanyLimit(nextLimit);
+          setCompanyOffset(0);
+        }}
+        onCompanyOffsetChange={setCompanyOffset}
+        onRetry={() => setCompanyRefreshKey((current) => current + 1)}
+        onSearchChange={(nextSearch) => {
+          setSearch(nextSearch);
+          setCompanyOffset(0);
+        }}
+        onSelectCompany={setSelectedCompany}
+        onStatusChange={(nextStatus) => {
+          setStatus(nextStatus);
+          setCompanyOffset(0);
+        }}
+        search={search}
+        selectedCompany={selectedCompany}
+        status={status}
+        statusOptions={statusOptions}
+      />
 
         <section className="module-planning-grid" aria-label="Modulos planificados">
           <article className={moduleSectionClass("planning-card ranges-card", "rangos")} id="rangos">

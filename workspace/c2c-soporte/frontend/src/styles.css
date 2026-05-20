@@ -1062,6 +1062,196 @@ h1 {
   padding-bottom: 8px;
 }
 
+.companies-module {
+  display: grid;
+}
+
+.companies-layout {
+  align-items: start;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) 320px;
+}
+
+.companies-main,
+.company-side-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.enterprise-section-header {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #d7e0ea;
+  border-radius: 8px;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 16px;
+}
+
+.enterprise-section-header h2,
+.side-panel-card h3 {
+  color: #111827;
+  margin: 0;
+}
+
+.enterprise-section-header p:last-child,
+.side-panel-card p {
+  color: #536275;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  margin: 6px 0 0;
+}
+
+.secondary-action {
+  background: #111827;
+  border: 1px solid #111827;
+  border-radius: 7px;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 800;
+  min-height: 38px;
+  padding: 8px 12px;
+}
+
+.company-kpi-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
+}
+
+.company-toolbar {
+  align-items: end;
+  background: #ffffff;
+  border: 1px solid #d7e0ea;
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(240px, 1fr) repeat(2, minmax(150px, 190px));
+  padding: 14px;
+}
+
+.search-field input {
+  width: 100%;
+}
+
+.action-status {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.action-status button {
+  background: #ffffff;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  color: inherit;
+  cursor: pointer;
+  font-weight: 800;
+  padding: 7px 10px;
+}
+
+.enterprise-table-shell {
+  background: #ffffff;
+  border: 1px solid #d7e0ea;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table-status-bar {
+  align-items: center;
+  background: #f8fbfd;
+  border-bottom: 1px solid #e5ebf2;
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 12px;
+}
+
+.table-status-bar span,
+.table-status-bar strong {
+  color: #536275;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.companies-table {
+  min-width: 1220px;
+}
+
+.tenant-chip {
+  background: #eef3f8;
+  border: 1px solid #d7e0ea;
+  border-radius: 999px;
+  color: #344256;
+  display: inline-flex;
+  font-size: 0.76rem;
+  font-weight: 900;
+  padding: 6px 8px;
+}
+
+.company-side-panel {
+  position: sticky;
+  top: 18px;
+}
+
+.side-panel-card {
+  background: #ffffff;
+  border: 1px solid #d7e0ea;
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.risk-list,
+.crud-action-stack {
+  display: grid;
+  gap: 8px;
+}
+
+.risk-item {
+  align-items: center;
+  background: #f8fbfd;
+  border: 1px solid #e5ebf2;
+  border-radius: 8px;
+  color: #1d2733;
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  padding: 10px;
+  text-align: left;
+}
+
+.risk-item strong,
+.risk-item small {
+  display: block;
+}
+
+.risk-item small,
+.side-note {
+  color: #66758a;
+  font-size: 0.78rem;
+}
+
+.crud-action-stack button {
+  background: #ffffff;
+  border: 1px solid #c7d1dd;
+  border-radius: 7px;
+  color: #1d2733;
+  font-weight: 800;
+  min-height: 36px;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.crud-action-stack button:disabled {
+  background: #f8fbfd;
+  color: #9aa6b2;
+}
+
 table {
   border-collapse: collapse;
   min-width: 1180px;
@@ -1380,6 +1570,9 @@ tbody tr {
   .cache-status-grid,
   .metrics,
   .metrics.documents,
+  .company-kpi-grid,
+  .company-toolbar,
+  .companies-layout,
   .analytics-grid,
   .workspace-grid,
   .dte-summary-grid,
@@ -1412,6 +1605,15 @@ tbody tr {
   .detail-heading {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .enterprise-section-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .company-side-panel {
+    position: static;
   }
 
   .month-row {
