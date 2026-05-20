@@ -221,6 +221,8 @@ psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\10-inspect-sc
 psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\11-inspect-tables-columns.sql
 psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\12-inspect-indexes.sql
 psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\13-inspect-table-estimates.sql
+psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\41-create-helpdesk-email-intake.sql
+psql -h localhost -p 5434 -U postgres -d soporte -f .\database\sql\42-verify-helpdesk-email-intake.sql
 ```
 
 ## Estado

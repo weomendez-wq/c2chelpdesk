@@ -117,6 +117,8 @@ La mejora de layout para trabajar por modulos enfocados esta registrada en `docs
 
 El ingreso manual externo de tickets para Mesa de Ayuda esta registrado en `docs/bitacora/2026-05-19-ingreso-manual-ticket-helpdesk.md`; agrega bandeja reciente y formulario inicial para casos recibidos por correo u otro canal, persistiendo solo en `rr_gestion_soporte.helpdesk_*`.
 
+La integracion de correo Helpdesk queda definida en `docs/decisiones/2026-05-19-correo-helpdesk.md` y su avance en `docs/bitacora/2026-05-19-correo-helpdesk.md`; primero se valida ingesta simulada y trazabilidad local antes de conectar una casilla real.
+
 Las decisiones iniciales de Mesa de Ayuda quedan en `docs/decisiones/2026-05-18-tickets-manuales.md`, `docs/decisiones/2026-05-18-catalogo-responsables-helpdesk.md` y `docs/decisiones/2026-05-18-adjuntos-helpdesk.md`.
 
 La primera optimizacion local de indices y caches quedo registrada en `docs/bitacora/2026-05-16-optimizacion-querys-local.md`.
