@@ -81,6 +81,12 @@ GOOGLE_SHEETS_HELPDESK_TOKEN=
 La plantilla para Apps Script esta en
 `../scripts/google-apps-script/helpdesk-gmail-webapp.gs`.
 
+Para probar solo Apps Script y la hoja, sin depender de Gmail:
+
+```powershell
+npm run sheet:test -- --requested-by soporte-local
+```
+
 ## Endpoint inicial
 
 ```txt

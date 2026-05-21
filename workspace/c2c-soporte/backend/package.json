@@ -8,6 +8,7 @@
     "build": "tsc -p tsconfig.json",
     "gmail:send-sheet": "tsx src/scripts/sendGmailToSheet.ts",
     "gmail:sync": "tsx src/scripts/syncGmailHelpdesk.ts",
+    "sheet:test": "tsx src/scripts/testSheetHelpdesk.ts",
     "start": "node dist/server.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "npm run build && node dist/test.js"

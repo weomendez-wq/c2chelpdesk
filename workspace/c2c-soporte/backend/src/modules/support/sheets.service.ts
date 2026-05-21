@@ -113,18 +113,28 @@ export const sendSheetTickets = async (
 ): Promise<SheetAppendResult> => {
   assertSheetsConfigured();
 
-  const response = await fetch(env.GOOGLE_SHEETS_HELPDESK_WEBAPP_URL!, {
-    body: JSON.stringify({
-      requestedBy,
-      rows,
-      targetSheet: "INFO_TICKETS_SOPORTE",
-      token: env.GOOGLE_SHEETS_HELPDESK_TOKEN
-    }),
-    headers: {
-      "content-type": "application/json"
-    },
-    method: "POST"
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(env.GOOGLE_SHEETS_HELPDESK_WEBAPP_URL!, {
+      body: JSON.stringify({
+        requestedBy,
+        rows,
+        targetSheet: "INFO_TICKETS_SOPORTE",
+        token: env.GOOGLE_SHEETS_HELPDESK_TOKEN
+      }),
+      headers: {
+        "content-type": "application/json"
+      },
+      method: "POST"
+    });
+  } catch (error) {
+    throw new AppError({
+      code: "SHEETS_FETCH_FAILED",
+      message: error instanceof Error ? error.message : "No se pudo conectar con Apps Script",
+      statusCode: 502
+    });
+  }
 
   const payload = (await response.json()) as AppsScriptResponse;
 

@@ -175,6 +175,51 @@ Antes del envio real, se puede revisar el payload sin escribir en la planilla:
 npm run gmail:send-sheet -- --max 1 --query "subject:\"PRUEBA HELPDESK C2C\"" --requested-by soporte-local --dry-run
 ```
 
+Para probar solo Apps Script y la escritura en `INFO_TICKETS_SOPORTE`, sin leer
+Gmail, se puede usar:
+
+```powershell
+npm run sheet:test -- --requested-by soporte-local
+```
+
+Ese comando envia una fila artificial con `message_id_gmail` unico para validar
+URL, token, permisos y estructura de la hoja.
+
+## Utilitario PowerShell de emergencia
+
+Si el backend o Gmail no estan listos, se puede insertar una fila manual en
+`INFO_TICKETS_SOPORTE` usando PowerShell:
+
+```powershell
+cd C:\RODPROJECTSCODEX\workspace\c2c-soporte
+.\scripts\emergency\send-helpdesk-ticket-to-sheet.ps1 `
+  -Subject "Cliente informa problema de emision" `
+  -FromEmail "cliente@example.com" `
+  -FromName "Contacto cliente" `
+  -CompanyName "Empresa prueba" `
+  -Rut "11111111-1" `
+  -Observation "Detalle del caso reportado por correo o telefono."
+```
+
+El script lee por defecto:
+
+```txt
+backend\.env
+```
+
+Variables usadas:
+
+```txt
+GOOGLE_SHEETS_HELPDESK_WEBAPP_URL
+GOOGLE_SHEETS_HELPDESK_TOKEN
+```
+
+Modo revision sin enviar:
+
+```powershell
+.\scripts\emergency\send-helpdesk-ticket-to-sheet.ps1 -DryRun
+```
+
 Agregar columnas tecnicas al final para evitar duplicados y facilitar migracion posterior:
 
 ```txt

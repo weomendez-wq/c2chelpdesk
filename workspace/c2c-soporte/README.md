@@ -117,6 +117,8 @@ La validacion controlada de Gmail Helpdesk esta en `docs/29-validacion-gmail-hel
 
 El plan temporal para usar la planilla `Hoja de Tickets Soporte S1.xlsx` como bandeja mientras termina el aplicativo esta en `docs/30-plan-planilla-temporal-tickets.md`.
 
+El utilitario PowerShell de emergencia para insertar una fila manual en `INFO_TICKETS_SOPORTE` esta en `scripts/emergency/send-helpdesk-ticket-to-sheet.ps1`.
+
 La prueba transaccional de ingreso de ticket Helpdesk esta en `database/sql/40-test-helpdesk-ticket-entry.sql` y su bitacora en `docs/bitacora/2026-05-19-prueba-ingreso-helpdesk.md`.
 
 La mejora de layout para trabajar por modulos enfocados esta registrada en `docs/bitacora/2026-05-19-layout-modulos-enfocados.md`.
